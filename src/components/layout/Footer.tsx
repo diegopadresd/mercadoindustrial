@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Clock, ExternalLink } from 'lucide-react';
 
@@ -52,9 +53,9 @@ const sectors = [
   { name: 'Agroindustria', href: '/catalogo?sector=agroindustria' },
 ];
 
-export const Footer = () => {
+export const Footer = forwardRef<HTMLElement>((_, ref) => {
   return (
-    <footer className="bg-secondary text-secondary-foreground">
+    <footer ref={ref} className="bg-secondary text-secondary-foreground">
       {/* Locations Section */}
       <div className="border-b border-secondary-foreground/10">
         <div className="container mx-auto px-4 py-12">
@@ -196,4 +197,6 @@ export const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+Footer.displayName = 'Footer';
