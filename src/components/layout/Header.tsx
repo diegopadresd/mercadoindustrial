@@ -126,7 +126,7 @@ export const Header = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
-                <Button className="bg-secondary hover:bg-secondary/90 text-white rounded-none rounded-r-xl px-6">
+                <Button className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-none rounded-r-xl px-6">
                   <Search size={20} />
                   <span className="ml-2 hidden xl:inline">Buscar</span>
                 </Button>
@@ -169,15 +169,15 @@ export const Header = () => {
               <li key={item.name}>
                 <Link
                   to={item.href}
-                  className={`relative block px-4 py-3 text-sm font-medium rounded-md transition-colors ${
+                  className={`relative inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                     location.pathname === item.href
-                      ? 'bg-secondary/10 text-secondary'
-                      : 'text-muted-foreground hover:bg-secondary/10 hover:text-secondary'
+                      ? 'bg-secondary text-secondary-foreground'
+                      : 'text-secondary hover:bg-secondary hover:text-secondary-foreground'
                   }`}
                 >
                   {item.name}
                   {location.pathname === item.href && (
-                    <span className="absolute bottom-0 left-4 right-4 h-[3px] bg-primary rounded-t-full" />
+                    <span className="absolute -bottom-[10px] left-4 right-4 h-[3px] bg-primary rounded-t-full" />
                   )}
                 </Link>
               </li>
@@ -218,7 +218,7 @@ export const Header = () => {
                       className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                         location.pathname === item.href
                           ? 'bg-secondary text-secondary-foreground'
-                          : 'text-foreground hover:bg-secondary/10 hover:text-secondary'
+                          : 'text-secondary hover:bg-secondary hover:text-secondary-foreground'
                       }`}
                     >
                       {item.name}
