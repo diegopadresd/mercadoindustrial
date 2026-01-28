@@ -4,6 +4,7 @@ import { Search, ShoppingCart, Menu, X, Phone, Mail, MapPin, ChevronDown } from 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
 
 const navigation = [
   { name: 'Inicio', href: '/' },
@@ -68,7 +69,7 @@ export const Header = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center shrink-0">
               <img 
-                src="/logo-mercado-industrial.webp" 
+                src={logoMercadoIndustrial} 
                 alt="Mercado Industrial" 
                 className="h-10 md:h-12 w-auto"
               />
