@@ -66,11 +66,12 @@ export const Header = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-8">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 shrink-0">
-              <div className="flex items-center">
-                <span className="text-3xl font-display font-black text-primary">MERCADO</span>
-                <span className="text-3xl font-display font-black text-secondary ml-2">INDUSTRIAL</span>
-              </div>
+            <Link to="/" className="flex items-center shrink-0">
+              <img 
+                src="/logo-mercado-industrial.webp" 
+                alt="Mercado Industrial" 
+                className="h-10 md:h-12 w-auto"
+              />
             </Link>
 
             {/* Search Bar - Desktop */}
