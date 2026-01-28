@@ -9,7 +9,6 @@ const categories = [
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2024/08/VEHI-008-NAV_ECV_9_med_thumb.webp',
     href: '/catalogo?categoria=maquinaria-pesada',
     count: 312,
-    color: 'from-amber-500/80 to-orange-600/80',
   },
   {
     title: 'Quebradores y Trituradoras',
@@ -17,7 +16,6 @@ const categories = [
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2024/11/CONO_TRI-009_3_med_thumb.webp',
     href: '/catalogo?categoria=quebradores',
     count: 198,
-    color: 'from-blue-500/80 to-indigo-600/80',
   },
   {
     title: 'Motores Eléctricos',
@@ -25,7 +23,6 @@ const categories = [
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/07/PMN-1690_Motoresel%C3%A9ctricos_3_med_thumb.webp',
     href: '/catalogo?categoria=motores-electricos',
     count: 245,
-    color: 'from-emerald-500/80 to-teal-600/80',
   },
   {
     title: 'Cribas y Zarandas',
@@ -33,7 +30,6 @@ const categories = [
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/06/CRIB-038_NEWSSS_2_med_thumb.webp',
     href: '/catalogo?categoria=cribas',
     count: 145,
-    color: 'from-purple-500/80 to-pink-600/80',
   },
   {
     title: 'Compresores',
@@ -41,7 +37,6 @@ const categories = [
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/11/1000555805_med_thumb.webp',
     href: '/catalogo?categoria=compresores',
     count: 156,
-    color: 'from-cyan-500/80 to-blue-600/80',
   },
   {
     title: 'Tanques y Contenedores',
@@ -49,7 +44,6 @@ const categories = [
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/07/TAN-002-NACZ_6_med_thumb.webp',
     href: '/catalogo?categoria=tanques',
     count: 78,
-    color: 'from-rose-500/80 to-red-600/80',
   },
 ];
 
@@ -81,7 +75,7 @@ export const CategoriesSection = () => {
           </Link>
         </motion.div>
 
-        {/* Categories Grid - Bento Style */}
+        {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((category, index) => (
             <motion.div
@@ -89,50 +83,70 @@ export const CategoriesSection = () => {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className={`group relative overflow-hidden rounded-3xl ${
-                index === 0 ? 'md:col-span-2 md:row-span-2' : ''
-              }`}
+              transition={{ delay: index * 0.08 }}
             >
-              <Link to={category.href} className="block">
-                <div className={`relative ${index === 0 ? 'aspect-[16/10]' : 'aspect-[4/3]'} overflow-hidden`}>
-                  {/* Image */}
+              <Link 
+                to={category.href} 
+                className="group block bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              >
+                {/* Image */}
+                <div className="relative aspect-[4/3] overflow-hidden">
                   <img
                     src={category.image}
                     alt={category.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   
-                  {/* Gradient Overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-80 group-hover:opacity-70 transition-opacity`} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  {/* Subtle Dark Gradient for Readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-                  {/* Content */}
-                  <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="inline-block bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-3 py-1 rounded-full mb-3">
-                          {category.count} productos
-                        </span>
-                        <h3 className={`font-display font-bold text-white mb-2 ${
-                          index === 0 ? 'text-2xl md:text-4xl' : 'text-xl md:text-2xl'
-                        }`}>
-                          {category.title}
-                        </h3>
-                        <p className={`text-white/80 ${index === 0 ? 'text-base' : 'text-sm'}`}>
-                          {category.description}
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all">
-                        <ArrowUpRight className="text-white" size={20} />
-                      </div>
+                  {/* Badge */}
+                  <div className="absolute top-4 left-4">
+                    <span className="inline-block bg-secondary/90 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+                      {category.count} productos
+                    </span>
+                  </div>
+
+                  {/* Arrow Button */}
+                  <div className="absolute top-4 right-4">
+                    <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all">
+                      <ArrowUpRight className="text-white" size={18} />
                     </div>
+                  </div>
+
+                  {/* Content Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-5">
+                    <h3 className="text-xl md:text-2xl font-display font-bold text-white mb-1">
+                      {category.title}
+                    </h3>
+                    <p className="text-white/80 text-sm">
+                      {category.description}
+                    </p>
                   </div>
                 </div>
               </Link>
             </motion.div>
           ))}
         </div>
+
+        {/* Bottom CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-12 text-center"
+        >
+          <p className="text-muted-foreground mb-4">
+            ¿No encuentras lo que buscas?
+          </p>
+          <Link
+            to="/catalogo"
+            className="inline-flex items-center gap-2 px-6 py-3 border-2 border-secondary text-secondary font-semibold rounded-xl hover:bg-secondary hover:text-secondary-foreground transition-all"
+          >
+            Explorar todas las categorías
+            <ArrowRight size={18} />
+          </Link>
+        </motion.div>
       </div>
     </section>
   );
