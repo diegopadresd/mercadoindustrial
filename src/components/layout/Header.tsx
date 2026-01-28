@@ -126,7 +126,7 @@ export const Header = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
-                <Button className="btn-gold rounded-none rounded-r-xl px-6">
+                <Button className="bg-secondary hover:bg-secondary/90 text-white rounded-none rounded-r-xl px-6">
                   <Search size={20} />
                   <span className="ml-2 hidden xl:inline">Buscar</span>
                 </Button>
@@ -202,7 +202,7 @@ export const Header = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 border-0 rounded-l-xl focus-visible:ring-0"
                 />
-                <Button className="btn-gold rounded-none rounded-r-xl px-4">
+                <Button className="bg-secondary hover:bg-secondary/90 text-white rounded-none rounded-r-xl px-4">
                   <Search size={20} />
                 </Button>
               </div>
