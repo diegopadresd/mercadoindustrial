@@ -1,12 +1,18 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, CheckCircle } from 'lucide-react';
+import { Send, CheckCircle, MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
+
+const locations = [
+  { city: 'Hermosillo', address: 'Sonora, México', phone: '662-168-0047' },
+  { city: 'Monterrey', address: 'Nuevo León, México', phone: '81-1234-5678' },
+  { city: 'CDMX', address: 'Ciudad de México', phone: '55-1234-5678' },
+  { city: 'McAllen', address: 'Texas, USA', phone: '956-321-8438' },
+];
 
 export const ContactSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,10 +22,7 @@ export const ContactSection = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
     setIsSubmitting(false);
     setIsSubmitted(true);
     toast({
@@ -28,141 +31,148 @@ export const ContactSection = () => {
     });
   };
 
-  if (isSubmitted) {
-    return (
-      <section className="py-20 bg-muted">
-        <div className="container mx-auto px-4 max-w-2xl text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-card rounded-2xl p-12 shadow-card"
-          >
-            <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="text-green-500" size={32} />
-            </div>
-            <h3 className="section-title mb-4">¡Gracias por contactarnos!</h3>
-            <p className="text-muted-foreground">
-              Hemos recibido tu mensaje. Un asesor se pondrá en contacto contigo pronto.
-            </p>
-            <Button 
-              onClick={() => setIsSubmitted(false)} 
-              className="btn-gold mt-6"
-            >
-              Enviar otro mensaje
-            </Button>
-          </motion.div>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section className="py-20 bg-muted">
+    <section className="py-24 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-16">
+          {/* Left Side - Info */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
           >
-            <h2 className="section-title mb-4">¿Necesitas ayuda?</h2>
-            <p className="section-subtitle">
-              Completa este formulario y un asesor te contactará para ayudarte con lo que necesitas.
+            <span className="text-primary font-semibold text-sm uppercase tracking-wider mb-2 block">
+              Contacto
+            </span>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-black text-foreground mb-6">
+              ¿Necesitas ayuda?
+            </h2>
+            <p className="text-muted-foreground text-lg mb-10">
+              Nuestro equipo de asesores está listo para ayudarte a encontrar el equipo perfecto para tu negocio.
             </p>
+
+            {/* Contact Info */}
+            <div className="space-y-6 mb-10">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                  <Mail className="text-primary" size={24} />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Email</p>
+                  <a href="mailto:ventas@mercadoindustrial.mx" className="text-muted-foreground hover:text-primary transition-colors">
+                    ventas@mercadoindustrial.mx
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                  <Phone className="text-primary" size={24} />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Teléfono México</p>
+                  <a href="tel:+526621680047" className="text-muted-foreground hover:text-primary transition-colors">
+                    +52 662-168-0047
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                  <Clock className="text-primary" size={24} />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Horario</p>
+                  <p className="text-muted-foreground">Lun - Vie: 9:00 AM - 6:00 PM</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Locations */}
+            <div>
+              <p className="font-semibold text-foreground mb-4">Nuestras ubicaciones</p>
+              <div className="grid grid-cols-2 gap-4">
+                {locations.map((loc) => (
+                  <div key={loc.city} className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin size={16} className="text-primary shrink-0" />
+                    <span className="text-sm">{loc.city}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </motion.div>
 
-          <motion.form
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+          {/* Right Side - Form */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            onSubmit={handleSubmit}
-            className="bg-card rounded-2xl p-8 shadow-card space-y-6"
           >
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nombre *</Label>
-                <Input id="name" required placeholder="Tu nombre completo" />
+            {isSubmitted ? (
+              <div className="bg-card rounded-3xl p-12 shadow-lg text-center h-full flex flex-col items-center justify-center">
+                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="text-emerald-500" size={40} />
+                </div>
+                <h3 className="text-2xl font-display font-bold text-foreground mb-4">
+                  ¡Gracias por contactarnos!
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Hemos recibido tu mensaje. Un asesor se pondrá en contacto contigo pronto.
+                </p>
+                <Button onClick={() => setIsSubmitted(false)} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                  Enviar otro mensaje
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="company">Empresa</Label>
-                <Input id="company" placeholder="Nombre de tu empresa" />
-              </div>
-            </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="bg-card rounded-3xl p-8 md:p-10 shadow-lg space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nombre *</Label>
+                    <Input id="name" required placeholder="Tu nombre completo" className="h-12" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Empresa</Label>
+                    <Input id="company" placeholder="Nombre de tu empresa" className="h-12" />
+                  </div>
+                </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="email">Correo electrónico *</Label>
-                <Input id="email" type="email" required placeholder="tu@email.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Teléfono *</Label>
-                <Input id="phone" type="tel" required placeholder="+52 (662) 123-4567" />
-              </div>
-            </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Correo electrónico *</Label>
+                    <Input id="email" type="email" required placeholder="tu@email.com" className="h-12" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Teléfono *</Label>
+                    <Input id="phone" type="tel" required placeholder="+52 (662) 123-4567" className="h-12" />
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="message">Mensaje *</Label>
-              <Textarea 
-                id="message" 
-                required 
-                placeholder="¿En qué podemos ayudarte?"
-                rows={4}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="message">Mensaje *</Label>
+                  <Textarea 
+                    id="message" 
+                    required 
+                    placeholder="¿En qué podemos ayudarte?"
+                    rows={5}
+                    className="resize-none"
+                  />
+                </div>
 
-            <div className="space-y-3">
-              <Label>¿Cómo prefieres que te contactemos?</Label>
-              <RadioGroup defaultValue="whatsapp" className="flex flex-wrap gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="whatsapp" id="whatsapp" />
-                  <Label htmlFor="whatsapp" className="font-normal">WhatsApp</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="phone" id="phone-contact" />
-                  <Label htmlFor="phone-contact" className="font-normal">Teléfono</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="email" id="email-contact" />
-                  <Label htmlFor="email-contact" className="font-normal">Correo electrónico</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="visit" id="visit" />
-                  <Label htmlFor="visit" className="font-normal">Visita</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <div className="space-y-3">
-              <Label>¿Quieres envío a domicilio?</Label>
-              <RadioGroup defaultValue="no" className="flex gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="no-shipping" />
-                  <Label htmlFor="no-shipping" className="font-normal">No</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="yes-shipping" />
-                  <Label htmlFor="yes-shipping" className="font-normal">Sí</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <Button 
-              type="submit" 
-              className="btn-gold w-full"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>Enviando...</>
-              ) : (
-                <>
-                  <Send size={18} className="mr-2" />
-                  Enviar solicitud
-                </>
-              )}
-            </Button>
-          </motion.form>
+                <Button 
+                  type="submit" 
+                  className="w-full h-14 bg-primary text-secondary hover:bg-primary/90 font-bold text-lg"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    'Enviando...'
+                  ) : (
+                    <>
+                      <Send size={20} className="mr-2" />
+                      Enviar mensaje
+                    </>
+                  )}
+                </Button>
+              </form>
+            )}
+          </motion.div>
         </div>
       </div>
     </section>

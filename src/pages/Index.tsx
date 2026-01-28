@@ -1,12 +1,11 @@
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { HeroSection } from '@/components/home/HeroSection';
-import { PartnersSection } from '@/components/home/PartnersSection';
+import { StatsSection } from '@/components/home/StatsSection';
 import { CategoriesSection } from '@/components/home/CategoriesSection';
-import { MIComponentsSection } from '@/components/home/MIComponentsSection';
 import { ProductsSection } from '@/components/home/ProductsSection';
 import { HowToBuySection } from '@/components/home/HowToBuySection';
-import { SectorsSection } from '@/components/home/SectorsSection';
+import { CTASection } from '@/components/home/CTASection';
 import { ContactSection } from '@/components/home/ContactSection';
 
 const Index = () => {
@@ -15,12 +14,11 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
-        <PartnersSection />
+        <StatsSection />
         <CategoriesSection />
-        <MIComponentsSection />
         <ProductsSection />
         <HowToBuySection />
-        <SectorsSection />
+        <CTASection />
         <ContactSection />
       </main>
       <Footer />
