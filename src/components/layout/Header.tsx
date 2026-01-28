@@ -162,7 +162,7 @@ export const Header = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="hidden lg:block border-b border-border bg-background">
+      <nav className="hidden lg:block bg-background">
         <div className="container mx-auto px-4">
           <ul className="flex items-center gap-1">
             {navigation.map((item) => (
