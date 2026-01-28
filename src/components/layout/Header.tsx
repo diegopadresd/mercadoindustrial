@@ -169,13 +169,16 @@ export const Header = () => {
               <li key={item.name}>
                 <Link
                   to={item.href}
-                  className={`block px-4 py-3 text-sm font-medium transition-colors hover:text-primary ${
+                  className={`relative block px-4 py-3 text-sm font-medium transition-colors hover:text-secondary ${
                     location.pathname === item.href
-                      ? 'text-primary border-b-2 border-primary'
-                      : 'text-foreground'
+                      ? 'text-secondary'
+                      : 'text-muted-foreground'
                   }`}
                 >
                   {item.name}
+                  {location.pathname === item.href && (
+                    <span className="absolute bottom-0 left-4 right-4 h-[3px] bg-primary rounded-t-full" />
+                  )}
                 </Link>
               </li>
             ))}
