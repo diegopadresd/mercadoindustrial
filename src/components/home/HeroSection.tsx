@@ -5,7 +5,7 @@ import heroImage from '@/assets/hero-industrial.jpg';
 
 export const HeroSection = () => {
   return (
-    <section className="relative min-h-[500px] lg:min-h-[550px] flex items-center overflow-hidden">
+    <section className="relative min-h-[480px] lg:min-h-[520px] flex items-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
@@ -74,9 +74,6 @@ export const HeroSection = () => {
           </motion.div>
         </div>
       </div>
-
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
     </section>
   );
 };
