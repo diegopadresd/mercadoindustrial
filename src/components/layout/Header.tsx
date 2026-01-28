@@ -169,10 +169,10 @@ export const Header = () => {
               <li key={item.name}>
                 <Link
                   to={item.href}
-                  className={`relative block px-4 py-3 text-sm font-medium transition-colors hover:text-secondary ${
+                  className={`relative block px-4 py-3 text-sm font-medium rounded-md transition-colors ${
                     location.pathname === item.href
-                      ? 'text-secondary'
-                      : 'text-muted-foreground'
+                      ? 'bg-secondary/10 text-secondary'
+                      : 'text-muted-foreground hover:bg-secondary/10 hover:text-secondary'
                   }`}
                 >
                   {item.name}
@@ -215,10 +215,10 @@ export const Header = () => {
                     <Link
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${
+                      className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                         location.pathname === item.href
-                          ? 'text-primary bg-muted'
-                          : 'text-foreground'
+                          ? 'bg-secondary text-secondary-foreground'
+                          : 'text-foreground hover:bg-secondary/10 hover:text-secondary'
                       }`}
                     >
                       {item.name}
