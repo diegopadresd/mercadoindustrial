@@ -1,4 +1,4 @@
 project_id = "hkhrxxbrmdpfuqpdpqeq"
 
-[functions.skydropx-quote]
+[functions.envia-quote]
 verify_jwt = false
