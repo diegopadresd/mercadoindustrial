@@ -80,38 +80,39 @@ serve(async (req) => {
     const accessToken = await getAccessToken(SKYDROPX_CLIENT_ID, SKYDROPX_CLIENT_SECRET);
 
     // Create quotation request to Skydropx PRO API with full address format
+    // Format according to Skydropx PRO API requirements
+    // The API requires address fields - we use placeholders since we only need postal codes for quoting
     const quotationPayload = {
-      shipper_address: {
-        postal_code: zipFrom,
-        country: 'MX',
-        address: 'Calle Principal',
-        city: 'Ciudad Origen',
-        state: 'Estado',
-        person_name: 'Remitente',
-        phone: '5555555555',
-        email: 'remitente@test.com',
-      },
-      recipient_address: {
-        postal_code: zipTo,
-        country: 'MX',
-        address: 'Calle Destino',
-        city: 'Ciudad Destino',
-        state: 'Estado',
-        person_name: 'Destinatario',
-        phone: '5555555555',
-        email: 'destinatario@test.com',
-      },
-      parcels: [
-        {
+      quotation: {
+        address_from: {
+          postal_code: zipFrom,
+          country_code: 'MX',
+          area_level1: 'Estado',
+          area_level2: 'Ciudad',
+          area_level3: 'Colonia',
+          street1: 'Calle',
+          name: 'Remitente',
+          phone: '5555555555',
+          email: 'cotizacion@mercadoindustrial.com',
+        },
+        address_to: {
+          postal_code: zipTo,
+          country_code: 'MX',
+          area_level1: 'Estado',
+          area_level2: 'Ciudad',
+          area_level3: 'Colonia',
+          street1: 'Calle',
+          name: 'Destinatario',
+          phone: '5555555555',
+          email: 'cotizacion@mercadoindustrial.com',
+        },
+        parcel: {
           weight: weight,
           height: height,
           width: width,
           length: length,
-          quantity: 1,
-          dimension_unit: 'CM',
-          mass_unit: 'KG',
         },
-      ],
+      },
     };
 
     console.log('Creating quotation with payload:', JSON.stringify(quotationPayload));
@@ -141,75 +142,30 @@ serve(async (req) => {
 
     const quotationData = JSON.parse(quotationText);
     
-    // The quotation is created asynchronously, we need to poll for rates
-    const quotationId = quotationData.data?.id;
+    // Skydropx PRO returns rates directly in the response
+    const quotationId = quotationData.id || quotationData.data?.id;
+    const rawRates = quotationData.rates || quotationData.data?.rates || [];
     
-    if (!quotationId) {
-      console.log('Full quotation response:', quotationText);
-      return new Response(
-        JSON.stringify({ error: 'No se pudo crear la cotización', details: quotationData }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    console.log('Quotation ID:', quotationId);
+    console.log('Raw rates count:', rawRates.length);
+    
+    // Filter only successful rates and transform to our format
+    const quotes = rawRates
+      .filter((rate: any) => rate.success === true && rate.total)
+      .map((rate: any) => ({
+        id: rate.id || `rate-${Math.random().toString(36).substr(2, 9)}`,
+        carrier: rate.provider_display_name || rate.provider_name || 'N/A',
+        service: rate.provider_service_name || 'Standard',
+        price: parseFloat(rate.total) || 0,
+        currency: rate.currency_code || 'MXN',
+        deliveryDays: rate.days || 'N/A',
+        outOfArea: false,
+        outOfAreaPrice: 0,
+        hasPickup: rate.pickup || false,
+      }))
+      .sort((a: any, b: any) => a.price - b.price);
 
-    console.log('Quotation created with ID:', quotationId);
-
-    // Wait for rates to be calculated (progressive completion)
-    let rates: any[] = [];
-    let attempts = 0;
-    const maxAttempts = 5;
-
-    while (attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      attempts++;
-
-      const detailsResponse = await fetch(`${SKYDROPX_PRO_API_URL}/api/v1/quotations/${quotationId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const detailsText = await detailsResponse.text();
-      console.log(`Attempt ${attempts} - Quotation details:`, detailsText.substring(0, 500));
-
-      if (!detailsResponse.ok) {
-        console.error('Error getting quotation details:', detailsText);
-        continue;
-      }
-
-      const detailsData = JSON.parse(detailsText);
-      const isCompleted = detailsData.data?.attributes?.is_completed;
-      
-      // Extract rates from included array or attributes
-      rates = detailsData.included?.filter((item: any) => item.type === 'rate') || 
-              detailsData.data?.attributes?.rates || 
-              [];
-      
-      console.log(`Attempt ${attempts} - is_completed: ${isCompleted}, rates found: ${rates.length}`);
-      
-      if (isCompleted || rates.length > 0) {
-        break;
-      }
-    }
-
-    // Transform rates to our format
-    const quotes = rates.map((rate: any, index: number) => {
-      const attrs = rate.attributes || rate;
-      return {
-        id: rate.id || `rate-${index}`,
-        carrier: attrs.carrier_name || attrs.provider || 'N/A',
-        service: attrs.service_level || attrs.service_level_name || 'Standard',
-        price: parseFloat(attrs.total_amount || attrs.total_pricing || attrs.amount_local || 0),
-        currency: attrs.currency || attrs.currency_local || 'MXN',
-        deliveryDays: attrs.estimated_days || attrs.days || 'N/A',
-        outOfArea: attrs.out_of_coverage || attrs.out_of_area || false,
-        outOfAreaPrice: parseFloat(attrs.out_of_coverage_amount || attrs.out_of_area_pricing || 0),
-      };
-    });
-
-    console.log('Final processed quotes:', quotes.length);
+    console.log('Processed quotes:', quotes.length);
 
     return new Response(
       JSON.stringify({ 
