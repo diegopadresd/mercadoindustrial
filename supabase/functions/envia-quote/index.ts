@@ -53,8 +53,25 @@ serve(async (req) => {
 
     // Create quotation request to Envia API
     // According to docs: need to specify carrier for each request
-    // Common Mexican carriers: fedex, estafeta, dhl, ups, redpack, paquetexpress
-    const carriers = ['fedex', 'estafeta', 'dhl', 'ups', 'redpack'];
+    // Mexican carriers available in Envia.com
+    const carriers = [
+      'fedex', 
+      'estafeta', 
+      'dhl', 
+      'ups', 
+      'redpack',
+      'paquetexpress',
+      'almex',
+      'sendex',
+      'afimex',
+      'castores',
+      'fletesMexico',
+      'entrega',
+      'dostavista',
+      'amPm',
+      'mensajerosUrbanos',
+      'noventa9Minutos', // 99 Minutos
+    ];
     
     const basePayload = {
       origin: {
@@ -187,6 +204,9 @@ serve(async (req) => {
         });
       }
     }
+    
+    // Filter out quotes with price 0 (carrier not available for route or not enabled)
+    quotes = quotes.filter(q => q.price > 0);
     
     // Sort by price
     quotes.sort((a, b) => a.price - b.price);
