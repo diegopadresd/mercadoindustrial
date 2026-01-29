@@ -102,12 +102,12 @@ serve(async (req) => {
       },
       packages: [
         {
-          content: "Mercancía general",
+          content: "Maquinaria industrial",
           amount: 1,
-          type: "box",
+          type: "pallet", // Tarima - para carga pesada industrial
           weight: weight,
           insurance: 0,
-          declaredValue: 100,
+          declaredValue: 1000,
           weightUnit: "KG",
           lengthUnit: "CM",
           dimensions: {
