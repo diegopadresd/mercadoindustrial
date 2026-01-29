@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -21,6 +22,24 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Filter, X, ChevronDown, RotateCcw } from 'lucide-react';
+
+// Mapeo de slugs URL a nombres de categorías
+const categorySlugMap: Record<string, string> = {
+  'maquinaria-pesada': 'Maquinaria pesada',
+  'quebradores': 'Quebradores Trituradores',
+  'motores-electricos': 'Motores eléctricos',
+  'cribas': 'Cribas',
+  'compresores': 'Compresores',
+  'tanques': 'Tanques',
+  'bandas-transportadoras': 'Bandas transportadoras',
+  'valvulas': 'Válvulas',
+  'refacciones': 'Refacciones',
+  'bulldozer': 'Bulldozer',
+  'racks': 'Racks de carga pesada',
+  'filtros-prensas': 'Filtros prensas',
+  'equipos-nuevos': 'Equipos Nuevos',
+  'plataforma-telescopica': 'Plataforma Telescópica',
+};
 
 const sectors = ['Industrial', 'Minería', 'Construcción', 'Alimenticio', 'Eléctrico', 'Agroindustria'];
 const categories = [
@@ -159,12 +178,50 @@ const allProducts = [
 ];
 
 const Catalogo = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [sortBy, setSortBy] = useState('sin-ordenar');
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+
+  // Leer categoría de la URL al cargar
+  useEffect(() => {
+    const categorySlug = searchParams.get('categoria');
+    if (categorySlug && categorySlugMap[categorySlug]) {
+      setSelectedCategories([categorySlugMap[categorySlug]]);
+    }
+  }, [searchParams]);
+
+  // Filtrar productos basado en los filtros seleccionados
+  const filteredProducts = allProducts.filter((product) => {
+    // Filtro por categoría
+    if (selectedCategories.length > 0) {
+      const hasCategory = product.categories.some(cat => 
+        selectedCategories.some(selected => 
+          cat.toLowerCase().includes(selected.toLowerCase()) || 
+          selected.toLowerCase().includes(cat.toLowerCase())
+        )
+      );
+      if (!hasCategory) return false;
+    }
+
+    // Filtro por marca
+    if (selectedBrands.length > 0) {
+      if (!selectedBrands.includes(product.brand)) return false;
+    }
+
+    // Filtro por ubicación
+    if (selectedLocations.length > 0) {
+      const hasLocation = selectedLocations.some(loc => 
+        product.location.includes(loc) || loc.includes('Virtual') && product.location === 'Virtual'
+      );
+      if (!hasLocation) return false;
+    }
+
+    return true;
+  });
 
   const toggleFilter = (value: string, list: string[], setList: (v: string[]) => void) => {
     if (list.includes(value)) {
@@ -179,6 +236,8 @@ const Catalogo = () => {
     setSelectedCategories([]);
     setSelectedBrands([]);
     setSelectedLocations([]);
+    // Limpiar parámetros de URL
+    setSearchParams({});
   };
 
   const hasActiveFilters = selectedSectors.length > 0 || selectedCategories.length > 0 || 
@@ -339,7 +398,7 @@ const Catalogo = () => {
 
               {/* Results Count */}
               <p className="text-sm text-muted-foreground hidden lg:block">
-                Mostrando {allProducts.length} productos
+                Mostrando {filteredProducts.length} productos
               </p>
 
               {/* Sort */}
@@ -391,7 +450,7 @@ const Catalogo = () => {
 
             {/* Products Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {allProducts.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductCard key={product.id} {...product} />
               ))}
             </div>
@@ -440,7 +499,7 @@ const Catalogo = () => {
                   className="btn-gold w-full"
                   onClick={() => setMobileFiltersOpen(false)}
                 >
-                  Ver {allProducts.length} resultados
+                  Ver {filteredProducts.length} resultados
                 </Button>
               </div>
             </motion.div>
