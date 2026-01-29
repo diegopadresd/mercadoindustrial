@@ -62,7 +62,7 @@ export const HeroFeaturedProducts = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {visibleProducts.map((product, index) => (
             <motion.div
               key={product.id}
@@ -72,10 +72,10 @@ export const HeroFeaturedProducts = () => {
             >
               <Link
                 to={product.link || `/productos/${product.id}`}
-                className="block bg-white/5 hover:bg-white/15 rounded-xl p-4 transition-all duration-300 group hover:shadow-lg hover:shadow-primary/10"
+                className="block bg-white/10 hover:bg-white/20 rounded-2xl p-5 transition-all duration-300 group hover:shadow-xl hover:shadow-primary/20 border border-white/10 hover:border-primary/30"
               >
-                <div className="flex gap-4">
-                  <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-xl overflow-hidden bg-white/10 flex-shrink-0 shadow-lg">
+                <div className="flex gap-5">
+                  <div className="w-32 h-32 lg:w-36 lg:h-36 rounded-xl overflow-hidden bg-white/10 flex-shrink-0 shadow-xl ring-2 ring-white/10 group-hover:ring-primary/30 transition-all">
                     {product.image_url ? (
                       <img
                         src={product.image_url}
@@ -84,21 +84,21 @@ export const HeroFeaturedProducts = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white/30">
-                        <Star size={32} />
+                        <Star size={40} />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <h4 className="text-white text-sm lg:text-base font-semibold line-clamp-2 group-hover:text-primary transition-colors mb-1">
+                    <h4 className="text-white text-base lg:text-lg font-bold line-clamp-2 group-hover:text-primary transition-colors mb-2">
                       {product.title}
                     </h4>
                     {product.brand && (
-                      <span className="text-white/60 text-xs lg:text-sm">{product.brand}</span>
+                      <span className="text-white/70 text-sm lg:text-base font-medium">{product.brand}</span>
                     )}
                     {product.price && (
-                      <p className="text-primary font-bold text-lg lg:text-xl mt-2">
+                      <p className="text-primary font-black text-xl lg:text-2xl mt-3">
                         ${product.price.toLocaleString('es-MX')}
-                        <span className="text-white/40 text-xs ml-1">MXN</span>
+                        <span className="text-white/50 text-sm ml-2 font-medium">MXN</span>
                       </p>
                     )}
                   </div>
