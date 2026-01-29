@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -40,64 +40,16 @@ import {
   Play,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock product data
-const productData = {
-  id: 'quebradora-kue-ken',
-  title: 'Quebradora de quijada 27x42 equipado con alimentador vibratorio marca KUE-KEN CRUSHER',
-  sku: 'QQ-001-COAH',
-  brand: 'KUE-KEN CRUSHER',
-  stock: 0,
-  location: 'Virtual',
-  branch: 'A1',
-  price: null,
-  images: [
-    'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/06/QQ-001-COAH_2_1.webp',
-    'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/06/QQ-001-COAH_1_1.webp',
-    'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/06/QQ-001-COAH_3_1.webp',
-    'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/06/QQ-001-COAH_4_1.webp',
-    'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/06/QQ-001-COAH_5_1.webp',
-    'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/06/QQ-001-COAH_6_1.webp',
-  ],
-  youtubeUrl: 'https://www.youtube.com/watch?v=P3fRnTxL-c8',
-  categories: ['Minería', 'Construcción'],
-  tags: ['QUEBRADORA', 'KUE-KEN CRUSHER', 'ALIMENTADOR VIBRATORIO', '27X42'],
-  specs: {
-    brand: 'Kue-Ken Crusher',
-    size: '27" × 42"',
-    type: 'Quebradora de quijada (Jaw Crusher) con alimentador vibratorio integrado',
-    motor: '100 HP, 4 polos, 1800 RPM marca US Motores de México',
-    feederBrand: 'TEREX PEGSON',
-    feederSize: '12×3 ft',
-    feederMotor: '15 HP, 4 polos, 1800 RPM',
-    condition: 'Disponible con servicio o sin servicio (lubricación completa y ajuste de configuración)',
-  },
-  description: `
-    Quebradora de quijada 27×42 con alimentador vibratorio marca Kue-Ken Crusher
-    
-    Descripción general:
-    • Marca: Kue-Ken Crusher
-    • Medida de boca: 27" × 42"
-    • Tipo: Quebradora de quijada (Jaw Crusher) con alimentador vibratorio integrado
-    • Motor principal: 100 HP, 4 polos, 1800 RPM marca US Motores de México
-    
-    Alimentador vibratorio Grizzly 12×3 ft:
-    • Marca: TEREX PEGSON
-    • Motor del alimentador: 15 HP, 4 polos, 1800 RPM marca US Motores de México
-    
-    Opciones disponibles:
-    • Disponible con servicio o sin servicio (lubricación completa y ajuste de configuración)
-  `,
-};
+import { getProductById } from '@/data/products';
 
 // Mock FAQ data
 const initialFaqs = [
   {
     id: '1',
-    question: '¿Cuál es el tamaño máximo de material que puede procesar esta quebradora?',
+    question: '¿Cuál es el tamaño máximo de material que puede procesar este equipo?',
     author: 'Carlos M.',
     date: '2024-01-15',
-    answer: 'La quebradora puede procesar material con un tamaño máximo de entrada de 27" x 42". El tamaño de salida es ajustable según sus necesidades de producción.',
+    answer: 'Por favor contáctanos directamente para obtener especificaciones detalladas sobre este producto.',
     answeredBy: 'Mercado Industrial',
     answeredDate: '2024-01-16',
   },
@@ -106,16 +58,16 @@ const initialFaqs = [
     question: '¿Incluye garantía el equipo?',
     author: 'Roberto L.',
     date: '2024-01-18',
-    answer: 'Sí, todos nuestros equipos incluyen garantía. Para este equipo en particular, ofrecemos 90 días de garantía en funcionamiento mecánico. Contáctanos para más detalles.',
+    answer: 'Sí, todos nuestros equipos incluyen garantía. Contáctanos para más detalles sobre las condiciones de garantía específicas.',
     answeredBy: 'Mercado Industrial',
     answeredDate: '2024-01-18',
   },
   {
     id: '3',
-    question: '¿Pueden enviar a Guadalajara?',
+    question: '¿Pueden enviar a mi ciudad?',
     author: 'Ana G.',
     date: '2024-01-20',
-    answer: 'Absolutamente. Realizamos envíos a toda la República Mexicana y también a Estados Unidos. El costo de envío se cotiza por separado según el destino.',
+    answer: 'Realizamos envíos a toda la República Mexicana y también a Estados Unidos. El costo de envío se cotiza por separado según el destino.',
     answeredBy: 'Mercado Industrial',
     answeredDate: '2024-01-20',
   },
@@ -130,6 +82,14 @@ const ProductoDetalle = () => {
   const [offerAmount, setOfferAmount] = useState('');
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
   const [questionDialogOpen, setQuestionDialogOpen] = useState(false);
+
+  // Get product data dynamically
+  const productData = getProductById(id || '');
+
+  // If product not found, redirect to catalog
+  if (!productData) {
+    return <Navigate to="/catalogo" replace />;
+  }
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => 
@@ -294,19 +254,21 @@ const ProductoDetalle = () => {
             )}
 
             {/* Tags */}
-            <div className="mt-6">
-              <h3 className="font-display font-bold text-lg mb-3 flex items-center gap-2">
-                <Tag size={18} className="text-primary" />
-                Etiquetas
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {productData.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="px-3 py-1">
-                    {tag}
-                  </Badge>
-                ))}
+            {productData.tags && productData.tags.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-display font-bold text-lg mb-3 flex items-center gap-2">
+                  <Tag size={18} className="text-primary" />
+                  Etiquetas
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {productData.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="px-3 py-1">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
 
           {/* Product Info */}
@@ -348,11 +310,11 @@ const ProductoDetalle = () => {
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Stock</span>
-                  <span className="font-semibold">{productData.stock} Disponible</span>
+                  <span className="font-semibold">{productData.stock ?? 1} Disponible</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Ubicación</span>
-                  <span className="font-semibold">{productData.branch}</span>
+                  <span className="font-semibold">{productData.branch ?? productData.location}</span>
                 </div>
                 <div className="flex justify-between py-2">
                   <span className="text-muted-foreground">Sucursal</span>
@@ -440,16 +402,18 @@ const ProductoDetalle = () => {
             </div>
 
             {/* Specifications */}
-            <div className="bg-card rounded-2xl p-6 shadow-card">
-              <h2 className="font-display font-bold text-xl mb-4 flex items-center gap-2">
-                <Package size={20} className="text-primary" />
-                Especificaciones
-              </h2>
-              
-              <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
-                {productData.description}
+            {productData.description && (
+              <div className="bg-card rounded-2xl p-6 shadow-card">
+                <h2 className="font-display font-bold text-xl mb-4 flex items-center gap-2">
+                  <Package size={20} className="text-primary" />
+                  Especificaciones
+                </h2>
+                
+                <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
+                  {productData.description}
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         </div>
 
