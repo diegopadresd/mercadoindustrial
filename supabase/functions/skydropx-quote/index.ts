@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SKYDROPX_PRO_API_URL = 'https://pro.skydropx.com';
+const SKYDROPX_PRO_API_URL = 'https://sb-pro.skydropx.com'; // Sandbox environment
 
 interface QuotationRequest {
   zipFrom: string;
@@ -79,24 +79,39 @@ serve(async (req) => {
     // Get OAuth access token
     const accessToken = await getAccessToken(SKYDROPX_CLIENT_ID, SKYDROPX_CLIENT_SECRET);
 
-    // Create quotation request to Skydropx PRO API
+    // Create quotation request to Skydropx PRO API with full address format
     const quotationPayload = {
-      address_from: {
-        zip_code: zipFrom,
-        country_code: 'MX',
+      shipper_address: {
+        postal_code: zipFrom,
+        country: 'MX',
+        address: 'Calle Principal',
+        city: 'Ciudad Origen',
+        state: 'Estado',
+        person_name: 'Remitente',
+        phone: '5555555555',
+        email: 'remitente@test.com',
       },
-      address_to: {
-        zip_code: zipTo,
-        country_code: 'MX',
+      recipient_address: {
+        postal_code: zipTo,
+        country: 'MX',
+        address: 'Calle Destino',
+        city: 'Ciudad Destino',
+        state: 'Estado',
+        person_name: 'Destinatario',
+        phone: '5555555555',
+        email: 'destinatario@test.com',
       },
-      parcel: {
-        weight: weight,
-        height: height,
-        width: width,
-        length: length,
-        weight_unit: 'kg',
-        dimension_unit: 'cm',
-      },
+      parcels: [
+        {
+          weight: weight,
+          height: height,
+          width: width,
+          length: length,
+          quantity: 1,
+          dimension_unit: 'CM',
+          mass_unit: 'KG',
+        },
+      ],
     };
 
     console.log('Creating quotation with payload:', JSON.stringify(quotationPayload));
@@ -130,59 +145,71 @@ serve(async (req) => {
     const quotationId = quotationData.data?.id;
     
     if (!quotationId) {
+      console.log('Full quotation response:', quotationText);
       return new Response(
-        JSON.stringify({ error: 'No se pudo crear la cotización' }),
+        JSON.stringify({ error: 'No se pudo crear la cotización', details: quotationData }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     console.log('Quotation created with ID:', quotationId);
 
-    // Wait a bit for rates to be calculated
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Wait for rates to be calculated (progressive completion)
+    let rates: any[] = [];
+    let attempts = 0;
+    const maxAttempts = 5;
 
-    // Get quotation details with rates
-    const detailsResponse = await fetch(`${SKYDROPX_PRO_API_URL}/api/v1/quotations/${quotationId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      attempts++;
 
-    const detailsText = await detailsResponse.text();
-    console.log('Quotation details response:', detailsText);
+      const detailsResponse = await fetch(`${SKYDROPX_PRO_API_URL}/api/v1/quotations/${quotationId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (!detailsResponse.ok) {
-      return new Response(
-        JSON.stringify({ 
-          error: `Error obteniendo cotización: ${detailsResponse.status}`,
-          details: detailsText 
-        }),
-        { status: detailsResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const detailsText = await detailsResponse.text();
+      console.log(`Attempt ${attempts} - Quotation details:`, detailsText.substring(0, 500));
+
+      if (!detailsResponse.ok) {
+        console.error('Error getting quotation details:', detailsText);
+        continue;
+      }
+
+      const detailsData = JSON.parse(detailsText);
+      const isCompleted = detailsData.data?.attributes?.is_completed;
+      
+      // Extract rates from included array or attributes
+      rates = detailsData.included?.filter((item: any) => item.type === 'rate') || 
+              detailsData.data?.attributes?.rates || 
+              [];
+      
+      console.log(`Attempt ${attempts} - is_completed: ${isCompleted}, rates found: ${rates.length}`);
+      
+      if (isCompleted || rates.length > 0) {
+        break;
+      }
     }
 
-    const detailsData = JSON.parse(detailsText);
-    
-    // Extract rates from the response
-    const rates = detailsData.data?.attributes?.rates || detailsData.included?.filter((item: any) => item.type === 'rates') || [];
-    
+    // Transform rates to our format
     const quotes = rates.map((rate: any, index: number) => {
       const attrs = rate.attributes || rate;
       return {
         id: rate.id || `rate-${index}`,
         carrier: attrs.carrier_name || attrs.provider || 'N/A',
         service: attrs.service_level || attrs.service_level_name || 'Standard',
-        price: parseFloat(attrs.total_amount || attrs.total_pricing || attrs.amount || 0),
-        currency: attrs.currency || 'MXN',
+        price: parseFloat(attrs.total_amount || attrs.total_pricing || attrs.amount_local || 0),
+        currency: attrs.currency || attrs.currency_local || 'MXN',
         deliveryDays: attrs.estimated_days || attrs.days || 'N/A',
-        outOfArea: attrs.out_of_coverage || attrs.out_of_area_service || false,
+        outOfArea: attrs.out_of_coverage || attrs.out_of_area || false,
         outOfAreaPrice: parseFloat(attrs.out_of_coverage_amount || attrs.out_of_area_pricing || 0),
       };
     });
 
-    console.log('Processed quotes:', quotes.length);
+    console.log('Final processed quotes:', quotes.length);
 
     return new Response(
       JSON.stringify({ 
