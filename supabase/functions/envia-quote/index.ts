@@ -89,14 +89,49 @@ serve(async (req) => {
 
     console.log('Creating quotation with payload:', JSON.stringify(quotationPayload));
 
-    const quotationResponse = await fetch(`${ENVIA_API_URL}/ship/rate/`, {
+    // Try with Bearer token first, then with just the token
+    console.log('Attempting API call with Bearer token...');
+    let quotationResponse = await fetch(`${ENVIA_API_URL}/ship/rate/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ENVIA_API_KEY}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(quotationPayload),
     });
+    
+    // If 401, try alternative auth formats
+    if (quotationResponse.status === 401) {
+      console.log('Bearer failed, trying with just token...');
+      // Consume the previous response body
+      await quotationResponse.text();
+      
+      quotationResponse = await fetch(`${ENVIA_API_URL}/ship/rate/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': ENVIA_API_KEY,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(quotationPayload),
+      });
+    }
+    
+    if (quotationResponse.status === 401) {
+      console.log('Direct token failed, trying X-Api-Key header...');
+      await quotationResponse.text();
+      
+      quotationResponse = await fetch(`${ENVIA_API_URL}/ship/rate/`, {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': ENVIA_API_KEY,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(quotationPayload),
+      });
+    }
 
     const quotationText = await quotationResponse.text();
     console.log('Quotation response status:', quotationResponse.status);
