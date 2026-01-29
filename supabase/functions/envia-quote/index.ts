@@ -33,6 +33,10 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('Using Envia API URL:', ENVIA_API_URL);
+    console.log('API Key length:', ENVIA_API_KEY.length);
+    console.log('API Key prefix:', ENVIA_API_KEY.substring(0, 10) + '...');
 
     const body: QuotationRequest = await req.json();
     console.log('Quotation request:', body);
