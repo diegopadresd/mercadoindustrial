@@ -5,7 +5,6 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
@@ -21,7 +20,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Filter, X, ChevronDown, RotateCcw } from 'lucide-react';
+import { Filter, X, RotateCcw } from 'lucide-react';
+import { products, brands, allCategories } from '@/data/products';
 
 // Mapeo de slugs URL a nombres de categorías
 const categorySlugMap: Record<string, string> = {
@@ -39,143 +39,12 @@ const categorySlugMap: Record<string, string> = {
   'filtros-prensas': 'Filtros prensas',
   'equipos-nuevos': 'Equipos Nuevos',
   'plataforma-telescopica': 'Plataforma Telescópica',
+  'compactador': 'Compactador',
+  'vehiculos': 'Vehículos',
 };
 
 const sectors = ['Industrial', 'Minería', 'Construcción', 'Alimenticio', 'Eléctrico', 'Agroindustria'];
-const categories = [
-  'Motores eléctricos', 'Racks de carga pesada', 'Compresores', 'Tanques',
-  'Quebradores Trituradores', 'Filtros prensas', 'Maquinaria pesada', 'Cribas',
-  'Bandas transportadoras', 'Válvulas', 'Refacciones', 'Bulldozer'
-];
-const brands = ['CATERPILLAR', 'MI COMPONENTS', 'FLOWSERVE', 'GENIE', 'MERCEDES-BENZ', 'KUE-KEN CRUSHER', 'SAUER SUNDSTRAND'];
 const locations = ['Hermosillo, Sonora', 'Mexicali, Baja California', 'Santa Catarina, Nuevo León', 'Tijuana, Baja California', 'Virtual'];
-
-const allProducts = [
-  {
-    id: 'retroexcavadora-caterpillar-416d',
-    title: 'Retroexcavadora año 2001 modelo 416D marca CATERPILLAR',
-    sku: 'VEHI-017-NAV',
-    brand: 'CATERPILLAR',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/VEHI-017-NAV_4_med_thumb.webp',
-    location: 'Virtual',
-    categories: ['Maquinaria pesada'],
-    isFeatured: true,
-  },
-  {
-    id: 'plataforma-genie-s125',
-    title: 'Plataforma telescópica año 2007 modelo S125 marca GENIE',
-    sku: 'VEHI-024-NAV',
-    brand: 'GENIE',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/VEHI-024-NAV_PCV_7_med_thumb.webp',
-    location: 'Virtual',
-    categories: ['Plataforma Telescópica'],
-    isFeatured: true,
-    isNew: true,
-  },
-  {
-    id: 'tensor-banda-mercedes',
-    title: 'Tensor de banda parte A 906 200 67 70 marca MERCEDES-BENZ',
-    sku: 'PMN-2902',
-    brand: 'MERCEDES-BENZ',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2902_Refacciones_5_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Refacciones'],
-    isNew: true,
-  },
-  {
-    id: 'valvula-sauer-sundstrand',
-    title: 'Válvula de placa 3000 a 5000 PSI parte 9220991 marca SAUER SUNDSTRAND',
-    sku: 'PMN-2904',
-    brand: 'SAUER SUNDSTRAND',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2904_V%C3%A1lvulas_2_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Válvulas'],
-    isNew: true,
-  },
-  {
-    id: 'excavadora-caterpillar-d6h',
-    title: 'Excavadora sobre orugas año 1986 modelo D6H marca CATERPILLAR',
-    sku: 'VEHI-018-NAV',
-    brand: 'CATERPILLAR',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/VEHI-018-NAV_21_med_thumb.webp',
-    location: 'Virtual',
-    categories: ['Bulldozer'],
-    isFeatured: true,
-  },
-  {
-    id: 'arandela-flowserve',
-    title: 'Arandela de seguridad 3" parte 690 marca FLOWSERVE',
-    sku: 'PMN-2901',
-    brand: 'FLOWSERVE',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2901_Refacciones_2_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Refacciones'],
-    isNew: true,
-  },
-  {
-    id: 'deflector-flowserve',
-    title: 'Deflector 1 7/8" parte 241-1 marca FLOWSERVE',
-    sku: 'PMN-2900',
-    brand: 'FLOWSERVE',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2900_Refacciones_1_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Refacciones'],
-    isNew: true,
-  },
-  {
-    id: 'anillo-desgaste-flowserve',
-    title: 'Anillo de desgaste 7 1/8" parte 207 marca FLOWSERVE',
-    sku: 'PMN-2899',
-    brand: 'FLOWSERVE',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2899_Refacciones_1_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Refacciones'],
-    isNew: true,
-  },
-  {
-    id: 'rodillo-retorno-24',
-    title: 'Rodillo de retorno para banda de 24" marca MI COMPONENTS',
-    sku: 'ROD-097',
-    brand: 'MI COMPONENTS',
-    price: 1657.00,
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/09/ROD-097_Rodillo_2_a_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Equipos Nuevos'],
-    isNew: true,
-  },
-  {
-    id: 'mancuerna-rodillo-triple',
-    title: 'Mancuerna de rodillo triple para banda de 30" 20° marca MI COMPONENTS',
-    sku: 'ROD-094',
-    brand: 'MI COMPONENTS',
-    price: 3337.00,
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/09/ROD-094_Rodillo_1_a_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Equipos Nuevos'],
-    isNew: true,
-  },
-  {
-    id: 'reductor-flecha-hueca',
-    title: 'REDUCTOR MI COMPONENTS FLECHA HUECA TAMAÑO 6 Relación 25:1',
-    sku: 'RD-069',
-    brand: 'MI COMPONENTS',
-    price: 70510.00,
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2023/11/SMRY6__25_4_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Construcción'],
-    isFeatured: true,
-  },
-  {
-    id: 'banda-transportadora-36',
-    title: 'Banda transportadora tipo chapulín de 36" x 100 ft de largo marca MI COMPONENTS',
-    sku: 'BT-204',
-    brand: 'MI COMPONENTS',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/07/BT-204_NUEVAS_2_13_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Bandas transportadoras'],
-    isNew: true,
-  },
-];
 
 const Catalogo = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -195,7 +64,7 @@ const Catalogo = () => {
   }, [searchParams]);
 
   // Filtrar productos basado en los filtros seleccionados
-  const filteredProducts = allProducts.filter((product) => {
+  const filteredProducts = products.filter((product) => {
     // Filtro por categoría
     if (selectedCategories.length > 0) {
       const hasCategory = product.categories.some(cat => 
@@ -289,7 +158,7 @@ const Catalogo = () => {
           </AccordionTrigger>
           <AccordionContent className="pb-4">
             <div className="space-y-3 max-h-48 overflow-y-auto">
-              {categories.map((category) => (
+              {allCategories.map((category) => (
                 <div key={category} className="flex items-center space-x-2">
                   <Checkbox 
                     id={`category-${category}`} 
