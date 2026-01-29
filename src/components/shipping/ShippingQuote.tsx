@@ -68,13 +68,23 @@ export const ShippingQuoteComponent = () => {
       }
 
       if (data.error) {
+        // Check if it's a Skydropx server issue (504, 503, timeout)
+        if (data.error.includes('504') || data.error.includes('503') || data.error.includes('Gateway') || data.error.includes('timeout')) {
+          throw new Error('El servicio de cotización está temporalmente no disponible. Por favor intenta de nuevo en unos minutos.');
+        }
         throw new Error(data.error);
       }
 
       setQuotes(data.quotes || []);
     } catch (err) {
       console.error('Error getting quotes:', err);
-      setError(err instanceof Error ? err.message : 'Error al obtener cotizaciones');
+      const errorMessage = err instanceof Error ? err.message : 'Error al obtener cotizaciones';
+      // Friendly message for server issues
+      if (errorMessage.includes('504') || errorMessage.includes('503') || errorMessage.includes('Gateway') || errorMessage.includes('non-2xx')) {
+        setError('El servicio de cotización está temporalmente no disponible. Por favor intenta de nuevo en unos minutos.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
