@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, MessageCircle, Play } from 'lucide-react';
+import { ArrowRight, MessageCircle } from 'lucide-react';
 import heroImage from '@/assets/hero-industrial-premium.jpg';
+import { HeroFeaturedProducts } from './HeroFeaturedProducts';
 
 export const HeroSection = () => {
   return (
-    <section className="relative min-h-[85vh] flex items-center overflow-hidden">
+    <section className="relative min-h-[90vh] flex items-center overflow-hidden pb-32 lg:pb-40">
       {/* Background Image with Parallax Effect */}
       <div className="absolute inset-0">
         <motion.img
@@ -106,12 +107,15 @@ export const HeroSection = () => {
                 </motion.span>
               ))}
             </div>
-          </motion.div>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* Decorative Elements */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
+        {/* Featured Products inside Hero */}
+        <HeroFeaturedProducts />
+      </div>
+    </div>
+
+    {/* Decorative Elements */}
+    <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background to-transparent" />
       
       {/* Floating Stats Card */}
       <motion.div
