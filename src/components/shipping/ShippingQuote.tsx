@@ -91,12 +91,27 @@ export const ShippingQuoteComponent = () => {
   };
 
   const carrierLogos: Record<string, string> = {
-    'Fedex': '🟣',
-    'DHL': '🟡',
-    'Estafeta': '🔴',
-    'UPS': '🟤',
-    'Redpack': '🔵',
-    '99 Minutos': '⚫',
+    'FedEx': 'https://www.envia.com/hubfs/fedex.svg',
+    'fedex': 'https://www.envia.com/hubfs/fedex.svg',
+    'DHL': 'https://www.envia.com/hubfs/dhl.svg',
+    'DHL Express': 'https://www.envia.com/hubfs/dhl.svg',
+    'dhl': 'https://www.envia.com/hubfs/dhl.svg',
+    'Estafeta': 'https://www.envia.com/hubfs/estafeta.svg',
+    'estafeta': 'https://www.envia.com/hubfs/estafeta.svg',
+    'UPS': 'https://www.envia.com/hubfs/ups.svg',
+    'ups': 'https://www.envia.com/hubfs/ups.svg',
+    'Redpack': 'https://www.envia.com/hubfs/redpack.svg',
+    'redpack': 'https://www.envia.com/hubfs/redpack.svg',
+    'Paquetexpress': 'https://www.envia.com/hubfs/paquetexpress.svg',
+    'paquetexpress': 'https://www.envia.com/hubfs/paquetexpress.svg',
+    'Almex': 'https://www.envia.com/hubfs/almex.svg',
+    'almex': 'https://www.envia.com/hubfs/almex.svg',
+    '99 Minutos': 'https://www.envia.com/hubfs/99minutos.svg',
+    'noventa9Minutos': 'https://www.envia.com/hubfs/99minutos.svg',
+    'Castores': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Castores_logo.svg/200px-Castores_logo.svg.png',
+    'castores': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Castores_logo.svg/200px-Castores_logo.svg.png',
+    'Sendex': 'https://sendex.com.mx/wp-content/uploads/2021/08/logo-sendex.png',
+    'sendex': 'https://sendex.com.mx/wp-content/uploads/2021/08/logo-sendex.png',
   };
 
   return (
@@ -279,12 +294,23 @@ export const ShippingQuoteComponent = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">
-                        {carrierLogos[quote.carrier] || '📦'}
-                      </span>
+                      <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center p-1.5 shadow-sm border border-border">
+                        {carrierLogos[quote.carrier] ? (
+                          <img 
+                            src={carrierLogos[quote.carrier]} 
+                            alt={quote.carrier}
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <Truck className={`w-6 h-6 text-muted-foreground ${carrierLogos[quote.carrier] ? 'hidden' : ''}`} />
+                      </div>
                       <div>
                         <p className="font-bold text-foreground">{quote.carrier}</p>
-                        <p className="text-sm text-muted-foreground">{quote.service}</p>
+                        <p className="text-sm text-muted-foreground capitalize">{quote.service.replace(/_/g, ' ')}</p>
                       </div>
                     </div>
                     <div className="text-right">
