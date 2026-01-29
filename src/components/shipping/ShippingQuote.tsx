@@ -52,7 +52,7 @@ export const ShippingQuoteComponent = () => {
     setHasSearched(true);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('skydropx-quote', {
+      const { data, error: fnError } = await supabase.functions.invoke('envia-quote', {
         body: {
           zipFrom: formData.zipFrom,
           zipTo: formData.zipTo,
@@ -68,8 +68,8 @@ export const ShippingQuoteComponent = () => {
       }
 
       if (data.error) {
-        // Check if it's a Skydropx server issue (504, 503, timeout)
-        if (data.error.includes('504') || data.error.includes('503') || data.error.includes('Gateway') || data.error.includes('timeout')) {
+        // Check if it's a server issue (504, 503, timeout)
+        if (data.error.includes('504') || data.error.includes('503') || data.error.includes('Gateway') || data.error.includes('timeout') || data.error.includes('no disponible')) {
           throw new Error('El servicio de cotización está temporalmente no disponible. Por favor intenta de nuevo en unos minutos.');
         }
         throw new Error(data.error);
