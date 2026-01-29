@@ -52,15 +52,34 @@ serve(async (req) => {
     }
 
     // Create quotation request to Envia API
-    // Envia.com uses a different payload structure
+    // According to docs: shipment.type should be 1 (number), not "Quote"
+    // Also requires full address structure
     const quotationPayload = {
       origin: {
-        country_code: "MX",
-        postal_code: zipFrom,
+        name: "Origen",
+        company: "Mercado Industrial",
+        email: "info@mercadoindustrial.mx",
+        phone: "5555555555",
+        street: "Calle Principal",
+        number: "123",
+        district: "Centro",
+        city: "Hermosillo",
+        state: "SO",
+        country: "MX",
+        postalCode: zipFrom,
       },
       destination: {
-        country_code: "MX",
-        postal_code: zipTo,
+        name: "Destino",
+        company: "Cliente",
+        email: "cliente@email.com",
+        phone: "5555555555",
+        street: "Calle Destino",
+        number: "456",
+        district: "Centro",
+        city: "Ciudad de México",
+        state: "DF",
+        country: "MX",
+        postalCode: zipTo,
       },
       packages: [
         {
@@ -69,7 +88,7 @@ serve(async (req) => {
           type: "box",
           weight: weight,
           insurance: 0,
-          declaredValue: 0,
+          declaredValue: 100,
           weightUnit: "KG",
           lengthUnit: "CM",
           dimensions: {
@@ -80,7 +99,7 @@ serve(async (req) => {
         },
       ],
       shipment: {
-        type: "Quote",
+        type: 1,
       },
       settings: {
         currency: "MXN",
