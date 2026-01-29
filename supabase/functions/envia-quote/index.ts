@@ -5,8 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Use sandbox for testing, production for live
-const ENVIA_API_URL = 'https://api-test.envia.com'; // Sandbox environment
+// Use production API - sandbox requires separate account/token
+const ENVIA_API_URL = 'https://api.envia.com';
 
 interface QuotationRequest {
   zipFrom: string;
