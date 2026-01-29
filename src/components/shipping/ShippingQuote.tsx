@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, MapPin, Truck, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Package, MapPin, Truck, Loader2, AlertCircle, CheckCircle, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -105,11 +105,11 @@ export const ShippingQuoteComponent = () => {
       <div className="bg-gradient-to-r from-primary to-secondary p-6">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-white/20 rounded-xl">
-            <Truck className="w-6 h-6 text-white" />
+            <Layers className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">Cotizador de Envíos</h3>
-            <p className="text-white/80 text-sm">Compara precios de las mejores paqueterías</p>
+            <h3 className="text-xl font-bold text-white">Cotizador de Fletes</h3>
+            <p className="text-white/80 text-sm">Tarimas y carga pesada industrial</p>
           </div>
         </div>
       </div>
@@ -150,20 +150,26 @@ export const ShippingQuoteComponent = () => {
           </div>
         </div>
 
-        {/* Package Dimensions */}
+        {/* Pallet/Tarima Dimensions */}
         <div className="space-y-3">
           <Label className="flex items-center gap-2">
-            <Package size={16} className="text-muted-foreground" />
-            Dimensiones del paquete
+            <Layers size={16} className="text-muted-foreground" />
+            Dimensiones de la tarima
           </Label>
+          <div className="p-3 bg-muted/50 rounded-lg mb-3">
+            <p className="text-xs text-muted-foreground">
+              💡 Este cotizador está optimizado para <strong>tarimas y carga pesada industrial</strong>. 
+              Para paquetes pequeños, contacta a un asesor.
+            </p>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground">Peso (kg)</span>
               <Input
                 type="number"
-                step="0.1"
-                min="0.1"
-                placeholder="1"
+                step="1"
+                min="50"
+                placeholder="100"
                 value={formData.weight}
                 onChange={(e) => handleInputChange('weight', e.target.value)}
                 required
@@ -173,8 +179,8 @@ export const ShippingQuoteComponent = () => {
               <span className="text-xs text-muted-foreground">Alto (cm)</span>
               <Input
                 type="number"
-                min="1"
-                placeholder="10"
+                min="10"
+                placeholder="100"
                 value={formData.height}
                 onChange={(e) => handleInputChange('height', e.target.value)}
                 required
@@ -184,8 +190,8 @@ export const ShippingQuoteComponent = () => {
               <span className="text-xs text-muted-foreground">Ancho (cm)</span>
               <Input
                 type="number"
-                min="1"
-                placeholder="10"
+                min="10"
+                placeholder="100"
                 value={formData.width}
                 onChange={(e) => handleInputChange('width', e.target.value)}
                 required
@@ -195,8 +201,8 @@ export const ShippingQuoteComponent = () => {
               <span className="text-xs text-muted-foreground">Largo (cm)</span>
               <Input
                 type="number"
-                min="1"
-                placeholder="10"
+                min="10"
+                placeholder="120"
                 value={formData.length}
                 onChange={(e) => handleInputChange('length', e.target.value)}
                 required

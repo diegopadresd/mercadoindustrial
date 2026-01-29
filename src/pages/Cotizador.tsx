@@ -43,13 +43,13 @@ const Cotizador = () => {
             >
               <span className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold text-sm px-4 py-2 rounded-full mb-4">
                 <Truck size={16} />
-                Powered by Skydropx
+                Fletes Industriales
               </span>
               <h1 className="text-4xl md:text-5xl font-display font-black text-foreground mb-4">
-                Cotiza tu envío al mejor precio
+                Cotiza tu flete de tarimas
               </h1>
               <p className="text-lg text-muted-foreground">
-                Compara tarifas de FedEx, DHL, Estafeta, UPS y más paqueterías en un solo lugar
+                Especialistas en carga pesada: tarimas, maquinaria industrial y equipos de gran tamaño
               </p>
             </motion.div>
 
