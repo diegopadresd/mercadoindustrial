@@ -39,9 +39,7 @@ export const HeroFeaturedProducts = () => {
       <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 lg:p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/20 rounded-lg">
-              <Star size={20} className="text-primary fill-primary" />
-            </div>
+            <Star size={22} className="text-primary fill-primary" />
             <span className="text-white font-bold text-base lg:text-lg">Productos Destacados</span>
           </div>
           <div className="flex gap-2">
