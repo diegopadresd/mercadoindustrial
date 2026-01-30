@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -82,6 +82,11 @@ const ProductoDetalle = () => {
   const [offerAmount, setOfferAmount] = useState('');
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
   const [questionDialogOpen, setQuestionDialogOpen] = useState(false);
+
+  // Scroll to top when page loads
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   // Get product data dynamically
   const productData = getProductById(id || '');
