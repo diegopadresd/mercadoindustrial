@@ -7,6 +7,7 @@ import { ProductsSection } from '@/components/home/ProductsSection';
 import { HowToBuySection } from '@/components/home/HowToBuySection';
 import { CTASection } from '@/components/home/CTASection';
 import { ContactSection } from '@/components/home/ContactSection';
+import { FeaturedProductsSection } from '@/components/home/FeaturedProductsSection';
 
 const Index = () => {
   return (
@@ -14,6 +15,7 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
+        <FeaturedProductsSection />
         <StatsSection />
         <CategoriesSection />
         <ProductsSection />
