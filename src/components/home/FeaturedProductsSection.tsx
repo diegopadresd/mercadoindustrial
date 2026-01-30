@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom';
 import { Star, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 
 export const FeaturedProductsSection = () => {
   const { data: products = [], isLoading } = useQuery({
@@ -47,51 +54,57 @@ export const FeaturedProductsSection = () => {
           </Link>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-            >
-              <Link
-                to={product.link || `/productos/${product.id}`}
-                className="block bg-white/5 hover:bg-white/10 rounded-2xl p-5 transition-all duration-300 group border border-white/10 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10"
-              >
-                <div className="flex gap-5">
-                  <div className="w-28 h-28 lg:w-32 lg:h-32 rounded-xl overflow-hidden bg-white/10 flex-shrink-0 ring-1 ring-white/10 group-hover:ring-primary/30 transition-all">
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white/30">
-                        <Star size={32} />
+        <div className="px-12">
+          <Carousel
+            opts={{
+              align: 'start',
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-4">
+              {products.map((product) => (
+                <CarouselItem key={product.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                  <Link
+                    to={product.link || `/productos/${product.id}`}
+                    className="block bg-white/5 hover:bg-white/10 rounded-2xl p-5 transition-all duration-300 group border border-white/10 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 h-full"
+                  >
+                    <div className="flex flex-col gap-4">
+                      <div className="w-full aspect-square rounded-xl overflow-hidden bg-white/10 ring-1 ring-white/10 group-hover:ring-primary/30 transition-all">
+                        {product.image_url ? (
+                          <img
+                            src={product.image_url}
+                            alt={product.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white/30">
+                            <Star size={48} />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <h4 className="text-white text-base lg:text-lg font-bold line-clamp-2 group-hover:text-primary transition-colors mb-1">
-                      {product.title}
-                    </h4>
-                    {product.brand && (
-                      <span className="text-white/60 text-sm font-medium">{product.brand}</span>
-                    )}
-                    {product.price && (
-                      <p className="text-primary font-black text-xl lg:text-2xl mt-2">
-                        ${product.price.toLocaleString('es-MX')}
-                        <span className="text-white/50 text-sm ml-2 font-medium">MXN</span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                      <div className="flex-1 flex flex-col">
+                        <h4 className="text-white text-base lg:text-lg font-bold line-clamp-2 group-hover:text-primary transition-colors mb-1">
+                          {product.title}
+                        </h4>
+                        {product.brand && (
+                          <span className="text-white/60 text-sm font-medium">{product.brand}</span>
+                        )}
+                        {product.price && (
+                          <p className="text-primary font-black text-xl lg:text-2xl mt-auto pt-3">
+                            ${product.price.toLocaleString('es-MX')}
+                            <span className="text-white/50 text-sm ml-2 font-medium">MXN</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-0 bg-primary/20 border-primary/30 text-white hover:bg-primary/40" />
+            <CarouselNext className="right-0 bg-primary/20 border-primary/30 text-white hover:bg-primary/40" />
+          </Carousel>
         </div>
 
         <Link 
