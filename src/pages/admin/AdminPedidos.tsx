@@ -60,7 +60,7 @@ const AdminPedidos = () => {
       }
 
       if (statusFilter && statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
+        query = query.eq('status', statusFilter as 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled');
       }
 
       const { data, error } = await query;
@@ -198,7 +198,7 @@ const AdminPedidos = () => {
                   <TableCell>
                     <Select
                       value={order.status}
-                      onValueChange={(value) => updateStatusMutation.mutate({ orderId: order.id, status: value })}
+                      onValueChange={(value) => updateStatusMutation.mutate({ orderId: order.id, status: value as 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled' })}
                     >
                       <SelectTrigger className="w-32 h-8">
                         <SelectValue />
