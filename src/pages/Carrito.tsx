@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   ShoppingCart, 
   Trash2, 
@@ -14,42 +18,89 @@ import {
   ArrowLeft,
   Package,
   CreditCard,
-  Truck
+  Truck,
+  FileText,
+  Loader2
 } from 'lucide-react';
 
-// Mock cart items - in a real app this would come from state/context
-const initialCartItems = [
-  {
-    id: 'rodillo-retorno-24',
-    title: 'Rodillo de retorno para banda de 24" marca MI COMPONENTS',
-    sku: 'ROD-097',
-    brand: 'MI COMPONENTS',
-    price: 1657.00,
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/09/ROD-097_Rodillo_2_a_med_thumb.webp',
-    quantity: 1,
-  },
-];
-
 const Carrito = () => {
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const { items, isLoading, updateQuantity, removeFromCart, subtotal, hasItemsWithoutPrice, allItemsWithoutPrice } = useCart();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
+  // Quote form state (for non-authenticated users)
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [quoteData, setQuoteData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    notes: '',
+  });
+
+  const handleQuantityChange = async (productId: string, delta: number, currentQuantity: number) => {
+    await updateQuantity(productId, currentQuantity + delta);
+  };
+
+  const handleRemove = async (productId: string) => {
+    await removeFromCart(productId);
+  };
+
+  const handleCheckout = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    
+    setIsProcessing(true);
+    // TODO: Implement Mercado Pago checkout
+    setTimeout(() => {
+      setIsProcessing(false);
+      alert('Mercado Pago integration pending - access token required');
+    }, 1000);
+  };
+
+  const handleQuoteRequest = async () => {
+    if (!user && !showQuoteForm) {
+      setShowQuoteForm(true);
+      return;
+    }
+
+    if (user) {
+      // User is logged in, use their profile data
+      setIsProcessing(true);
+      // TODO: Create quote order
+      setTimeout(() => {
+        setIsProcessing(false);
+        alert('Cotización enviada - Un vendedor se pondrá en contacto contigo');
+      }, 1000);
+    } else {
+      // Use form data
+      if (!quoteData.name || !quoteData.email) {
+        alert('Por favor completa tu nombre y correo');
+        return;
+      }
+      setIsProcessing(true);
+      // TODO: Create quote order for guest
+      setTimeout(() => {
+        setIsProcessing(false);
+        alert('Cotización enviada - Un vendedor se pondrá en contacto contigo');
+      }, 1000);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-12 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
     );
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = 0; // Free shipping or calculated
-  const total = subtotal + shipping;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,11 +116,11 @@ const Carrito = () => {
             Tu Carrito
           </h1>
           <p className="text-muted-foreground">
-            {cartItems.length} {cartItems.length === 1 ? 'producto' : 'productos'} en tu carrito
+            {items.length} {items.length === 1 ? 'producto' : 'productos'} en tu carrito
           </p>
         </motion.div>
 
-        {cartItems.length === 0 ? (
+        {items.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -93,7 +144,7 @@ const Carrito = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
-              {cartItems.map((item, index) => (
+              {items.map((item, index) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -101,7 +152,7 @@ const Carrito = () => {
                   transition={{ delay: index * 0.1 }}
                   className="bg-card rounded-2xl p-6 shadow-card flex flex-col sm:flex-row gap-6"
                 >
-                  <Link to={`/productos/${item.id}`} className="shrink-0">
+                  <Link to={`/productos/${item.productId}`} className="shrink-0">
                     <img
                       src={item.image}
                       alt={item.title}
@@ -109,7 +160,7 @@ const Carrito = () => {
                     />
                   </Link>
                   <div className="flex-1">
-                    <Link to={`/productos/${item.id}`}>
+                    <Link to={`/productos/${item.productId}`}>
                       <h3 className="font-semibold text-foreground hover:text-primary transition-colors line-clamp-2 mb-2">
                         {item.title}
                       </h3>
@@ -122,7 +173,7 @@ const Carrito = () => {
                     <div className="flex items-center justify-between flex-wrap gap-4">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => updateQuantity(item.id, -1)}
+                          onClick={() => handleQuantityChange(item.productId, -1, item.quantity)}
                           className="w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
                         >
                           <Minus size={16} />
@@ -131,18 +182,24 @@ const Carrito = () => {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.id, 1)}
+                          onClick={() => handleQuantityChange(item.productId, 1, item.quantity)}
                           className="w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
                         >
                           <Plus size={16} />
                         </button>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="text-xl font-display font-bold text-primary">
-                          ${(item.price * item.quantity).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                        </span>
+                        {item.price ? (
+                          <span className="text-xl font-display font-bold text-primary">
+                            ${(item.price * item.quantity).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                          </span>
+                        ) : (
+                          <span className="text-sm font-medium text-secondary">
+                            Precio por cotizar
+                          </span>
+                        )}
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemove(item.productId)}
                           className="text-muted-foreground hover:text-destructive transition-colors"
                         >
                           <Trash2 size={20} />
@@ -175,34 +232,153 @@ const Carrito = () => {
                 </h2>
 
                 <div className="space-y-4 mb-6">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Subtotal</span>
-                    <span>${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-                  </div>
+                  {!allItemsWithoutPrice && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Subtotal</span>
+                      <span>${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-muted-foreground">
                     <span>Envío</span>
                     <span className="text-primary">Por cotizar</span>
                   </div>
-                  <div className="border-t border-border pt-4 flex justify-between text-lg font-semibold">
-                    <span>Total</span>
-                    <span className="text-primary">
-                      ${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
+                  {hasItemsWithoutPrice && (
+                    <div className="flex items-start gap-2 p-3 bg-secondary/10 rounded-lg">
+                      <FileText size={18} className="text-secondary shrink-0 mt-0.5" />
+                      <p className="text-sm text-muted-foreground">
+                        Algunos productos requieren cotización. Un vendedor te contactará con el precio.
+                      </p>
+                    </div>
+                  )}
+                  {!allItemsWithoutPrice && (
+                    <div className="border-t border-border pt-4 flex justify-between text-lg font-semibold">
+                      <span>Total</span>
+                      <span className="text-primary">
+                        ${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                <Button className="w-full btn-gold mb-4">
-                  <CreditCard size={18} className="mr-2" />
-                  Proceder al pago
-                </Button>
+                {/* Quote Form for guests */}
+                {showQuoteForm && !user && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-4 mb-6 p-4 bg-muted rounded-xl"
+                  >
+                    <h3 className="font-semibold">Tus datos para la cotización</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="quote-name">Nombre *</Label>
+                        <Input
+                          id="quote-name"
+                          value={quoteData.name}
+                          onChange={(e) => setQuoteData({ ...quoteData, name: e.target.value })}
+                          placeholder="Tu nombre"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="quote-email">Correo *</Label>
+                        <Input
+                          id="quote-email"
+                          type="email"
+                          value={quoteData.email}
+                          onChange={(e) => setQuoteData({ ...quoteData, email: e.target.value })}
+                          placeholder="tu@email.com"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="quote-phone">Teléfono</Label>
+                        <Input
+                          id="quote-phone"
+                          type="tel"
+                          value={quoteData.phone}
+                          onChange={(e) => setQuoteData({ ...quoteData, phone: e.target.value })}
+                          placeholder="+52 123 456 7890"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="quote-company">Empresa</Label>
+                        <Input
+                          id="quote-company"
+                          value={quoteData.company}
+                          onChange={(e) => setQuoteData({ ...quoteData, company: e.target.value })}
+                          placeholder="Nombre de tu empresa"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="quote-notes">Notas</Label>
+                        <Textarea
+                          id="quote-notes"
+                          value={quoteData.notes}
+                          onChange={(e) => setQuoteData({ ...quoteData, notes: e.target.value })}
+                          placeholder="Información adicional..."
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      O <Link to="/auth" className="text-primary hover:underline">crea una cuenta</Link> para guardar tu información
+                    </p>
+                  </motion.div>
+                )}
+
+                {/* Main action button */}
+                {allItemsWithoutPrice ? (
+                  <Button 
+                    className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground mb-4"
+                    onClick={handleQuoteRequest}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileText size={18} className="mr-2" />
+                    )}
+                    Cotiza Ahora
+                  </Button>
+                ) : hasItemsWithoutPrice ? (
+                  <>
+                    <Button 
+                      className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground mb-2"
+                      onClick={handleQuoteRequest}
+                      disabled={isProcessing}
+                    >
+                      <FileText size={18} className="mr-2" />
+                      Solicitar Cotización Completa
+                    </Button>
+                    <Button 
+                      className="w-full btn-gold mb-4"
+                      onClick={handleCheckout}
+                      disabled={isProcessing}
+                    >
+                      <CreditCard size={18} className="mr-2" />
+                      Comprar productos con precio
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    className="w-full btn-gold mb-4"
+                    onClick={handleCheckout}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <CreditCard size={18} className="mr-2" />
+                    )}
+                    Proceder al pago
+                  </Button>
+                )}
 
                 <Button variant="outline" className="w-full" asChild>
                   <a
-                    href="https://wa.me/526621680047?text=Hola,%20quiero%20solicitar%20cotización%20de%20mi%20carrito"
+                    href={`https://wa.me/526621680047?text=${encodeURIComponent(`Hola, quiero información sobre mi carrito con ${items.length} productos`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Solicitar cotización por WhatsApp
+                    Contactar por WhatsApp
                   </a>
                 </Button>
 

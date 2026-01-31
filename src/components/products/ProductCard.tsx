@@ -1,16 +1,18 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, MapPin, Tag } from 'lucide-react';
+import { ShoppingCart, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   id: string;
   title: string;
   sku: string;
   brand: string;
-  price?: number;
+  price?: number | null;
   image: string;
-  location: string;
+  location?: string;
   categories: string[];
   isNew?: boolean;
   isFeatured?: boolean;
@@ -28,6 +30,38 @@ export const ProductCard = ({
   isNew,
   isFeatured,
 }: ProductCardProps) => {
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    await addToCart({
+      productId: id,
+      title,
+      sku,
+      brand,
+      price,
+      image,
+    });
+  };
+
+  const handleQuote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Add to cart for quote
+    addToCart({
+      productId: id,
+      title,
+      sku,
+      brand,
+      price: null,
+      image,
+    });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -79,32 +113,58 @@ export const ProductCard = ({
             <span className="text-muted-foreground/70">Marca</span>
             <span className="font-medium text-foreground">{brand}</span>
           </div>
-          {price && (
+          {price ? (
             <div className="flex justify-between">
               <span className="text-muted-foreground/70">Precio</span>
               <span className="font-bold text-primary text-lg">
                 ${price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
               </span>
             </div>
+          ) : (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground/70">Precio</span>
+              <span className="font-medium text-secondary">Cotizar</span>
+            </div>
           )}
         </div>
 
         {/* Actions */}
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={handleAddToCart}
+          >
             <ShoppingCart size={16} className="mr-1" />
             Agregar
           </Button>
-          <Button size="sm" className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-            Cotizar
-          </Button>
+          {!price ? (
+            <Button 
+              size="sm" 
+              className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+              onClick={handleQuote}
+            >
+              Cotizar
+            </Button>
+          ) : (
+            <Button 
+              size="sm" 
+              className="flex-1 btn-gold"
+              onClick={handleAddToCart}
+            >
+              Comprar
+            </Button>
+          )}
         </div>
 
         {/* Location */}
-        <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground">
-          <MapPin size={12} />
-          <span>{location}</span>
-        </div>
+        {location && (
+          <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground">
+            <MapPin size={12} />
+            <span>{location}</span>
+          </div>
+        )}
       </div>
     </motion.div>
   );
