@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, Phone, Mail, MapPin, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
 
 const navigation = [
@@ -30,7 +32,10 @@ export const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState('Todos los sectores');
   const [sectorDropdownOpen, setSectorDropdownOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, profile, isAdmin, signOut } = useAuth();
+  const { itemCount } = useCart();
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -134,21 +139,85 @@ export const Header = () => {
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-4">
-              <a
-                href="https://www.mercadolibre.com.mx"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden md:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Visita nuestra tienda en
-                <span className="font-semibold text-primary">Mercado Libre</span>
-              </a>
+            <div className="flex items-center gap-2 md:gap-4">
+              {/* Auth Buttons */}
+              {user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User size={18} className="text-primary" />
+                    </div>
+                    <span className="hidden md:block text-sm font-medium truncate max-w-[120px]">
+                      {profile?.full_name || user.email?.split('@')[0]}
+                    </span>
+                    <ChevronDown size={16} className={`hidden md:block transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {userMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute top-full right-0 mt-2 bg-card rounded-lg shadow-lg border border-border py-2 min-w-[180px] z-50"
+                      >
+                        <Link
+                          to="/perfil"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
+                        >
+                          <User size={16} />
+                          Mi Perfil
+                        </Link>
+                        {isAdmin && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors text-primary font-medium"
+                          >
+                            <User size={16} />
+                            Panel Admin
+                          </Link>
+                        )}
+                        <hr className="my-2 border-border" />
+                        <button
+                          onClick={() => {
+                            signOut();
+                            setUserMenuOpen(false);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors w-full text-left text-destructive"
+                        >
+                          <LogOut size={16} />
+                          Cerrar Sesión
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <div className="hidden md:flex items-center gap-2">
+                  <Link to="/auth">
+                    <Button variant="ghost" size="sm">
+                      Iniciar Sesión
+                    </Button>
+                  </Link>
+                  <Link to="/auth?tab=register">
+                    <Button size="sm">
+                      Crear Cuenta
+                    </Button>
+                  </Link>
+                </div>
+              )}
+              
               <Link to="/carrito" className="relative p-2 hover:bg-muted rounded-lg transition-colors">
                 <ShoppingCart size={24} className="text-foreground" />
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  0
-                </span>
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {itemCount > 99 ? '99+' : itemCount}
+                  </span>
+                )}
               </Link>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -226,6 +295,55 @@ export const Header = () => {
                   </li>
                 ))}
               </ul>
+              
+              {/* Mobile Auth Buttons */}
+              <div className="mt-4 pt-4 border-t border-border">
+                {user ? (
+                  <div className="space-y-2">
+                    <Link
+                      to="/perfil"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
+                    >
+                      <User size={18} />
+                      Mi Perfil
+                    </Link>
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-muted transition-colors"
+                      >
+                        <User size={18} />
+                        Panel Admin
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-muted transition-colors w-full"
+                    >
+                      <LogOut size={18} />
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        Iniciar Sesión
+                      </Button>
+                    </Link>
+                    <Link to="/auth?tab=register" onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full">
+                        Crear Cuenta
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
