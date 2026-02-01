@@ -18,6 +18,7 @@ import {
   Package,
   DollarSign,
   Users,
+  FileText,
 } from 'lucide-react';
 
 const ActivarVendedor = () => {
@@ -27,17 +28,54 @@ const ActivarVendedor = () => {
   const { toast } = useToast();
   const [isActivating, setIsActivating] = useState(false);
   const [formData, setFormData] = useState({
+    rfc: profile?.rfc || '',
     phone: profile?.phone || '',
     city: profile?.shipping_city || '',
     postal_code: profile?.shipping_postal_code || '',
   });
+  const [rfcError, setRfcError] = useState('');
+
+  // RFC validation: 12-13 alphanumeric characters
+  const validateRFC = (rfc: string): boolean => {
+    const trimmedRFC = rfc.trim().toUpperCase();
+    // Mexican RFC: 12 characters for companies, 13 for individuals
+    const rfcRegex = /^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/;
+    return rfcRegex.test(trimmedRFC);
+  };
 
   const handleActivate = async () => {
     if (!user?.id) return;
     
+    // Validate RFC
+    const trimmedRFC = formData.rfc.trim().toUpperCase();
+    if (!trimmedRFC) {
+      setRfcError('El RFC es obligatorio para activar tu cuenta de vendedor');
+      return;
+    }
+    if (!validateRFC(trimmedRFC)) {
+      setRfcError('El RFC no tiene un formato válido (12-13 caracteres alfanuméricos)');
+      return;
+    }
+    setRfcError('');
+    
     setIsActivating(true);
     try {
-      // Add vendedor role to user_roles table
+      // First, update profile with RFC (required by trigger before inserting role)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          rfc: trimmedRFC,
+          phone: formData.phone || undefined,
+          shipping_city: formData.city || undefined,
+          shipping_postal_code: formData.postal_code || undefined,
+        })
+        .eq('user_id', user.id);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // Now add vendedor role to user_roles table
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
@@ -47,22 +85,6 @@ const ActivarVendedor = () => {
 
       if (roleError && roleError.code !== '23505') { // Ignore duplicate key error
         throw roleError;
-      }
-
-      // Update profile with additional info if provided
-      if (formData.phone || formData.city || formData.postal_code) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            phone: formData.phone || undefined,
-            shipping_city: formData.city || undefined,
-            shipping_postal_code: formData.postal_code || undefined,
-          })
-          .eq('user_id', user.id);
-
-        if (profileError) {
-          console.error('Error updating profile:', profileError);
-        }
       }
 
       toast({
@@ -75,11 +97,14 @@ const ActivarVendedor = () => {
         navigate('/mi-cuenta/publicar');
       }, 1500);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error activating seller:', error);
+      const message = error?.message?.includes('RFC requerido')
+        ? 'Debes ingresar un RFC válido para activar tu cuenta de vendedor.'
+        : 'No se pudo activar tu cuenta de vendedor. Intenta de nuevo.';
       toast({
         title: 'Error',
-        description: 'No se pudo activar tu cuenta de vendedor. Intenta de nuevo.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -185,6 +210,29 @@ const ActivarVendedor = () => {
             </div>
 
             <div className="space-y-4 mb-6">
+              <div>
+                <Label htmlFor="rfc" className="flex items-center gap-1">
+                  <FileText size={14} />
+                  RFC <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="rfc"
+                  placeholder="Ej: XAXX010101000"
+                  value={formData.rfc}
+                  onChange={(e) => {
+                    setFormData({ ...formData, rfc: e.target.value.toUpperCase() });
+                    setRfcError('');
+                  }}
+                  className={rfcError ? 'border-destructive' : ''}
+                  maxLength={13}
+                />
+                {rfcError && (
+                  <p className="text-sm text-destructive mt-1">{rfcError}</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Requerido para facturación y operaciones fiscales
+                </p>
+              </div>
               <div>
                 <Label htmlFor="phone">Teléfono de contacto (opcional)</Label>
                 <Input
