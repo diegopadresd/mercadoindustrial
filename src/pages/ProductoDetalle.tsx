@@ -161,13 +161,50 @@ const ProductoDetalle = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  // Get product from static data
-  const productData = getProductById(id || '');
+  // Fetch product from database (primary source)
+  const { data: dbProduct, isLoading: dbLoading } = useProduct(id || '');
   
-  // Also fetch from database for shipping data (peso, dimensiones, cp_origen)
-  const { data: dbProduct } = useProduct(id || '');
+  // Get product from static data as fallback
+  const staticProduct = getProductById(id || '');
 
-  // If product not found, redirect to catalog
+  // Combine product data: prefer database, fallback to static
+  const productData = dbProduct ? {
+    id: dbProduct.id,
+    title: dbProduct.title,
+    sku: dbProduct.sku,
+    brand: dbProduct.brand,
+    price: dbProduct.price ?? undefined,
+    stock: dbProduct.stock ?? 1,
+    location: dbProduct.location || 'Virtual',
+    branch: dbProduct.location || 'Virtual',
+    image: dbProduct.images?.[0] || '/placeholder.svg',
+    images: dbProduct.images?.length ? dbProduct.images : ['/placeholder.svg'],
+    categories: dbProduct.categories || [],
+    tags: [],
+    description: dbProduct.description || `${dbProduct.title}\n\nDescripción general:\n• Marca: ${dbProduct.brand}\n• SKU: ${dbProduct.sku}\n• Categorías: ${(dbProduct.categories || []).join(', ')}`,
+    specs: dbProduct.specifications as Record<string, string> | undefined,
+    youtubeUrl: undefined,
+    isNew: dbProduct.is_new ?? false,
+    isFeatured: dbProduct.is_featured ?? false,
+  } : staticProduct;
+
+  // Show loading while fetching from database
+  if (dbLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="text-muted-foreground">Cargando producto...</span>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // If product not found in both sources, redirect to catalog
   if (!productData) {
     return <Navigate to="/catalogo" replace />;
   }
