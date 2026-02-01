@@ -71,18 +71,16 @@ export const HeroSection = () => {
               to="/catalogo"
               className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-secondary font-bold rounded-xl hover:bg-primary/90 transition-all duration-300 shadow-gold hover:shadow-xl hover:-translate-y-0.5"
             >
-              Explorar catálogo
+              Comprar Maquinaria
               <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <a 
-              href="https://wa.me/526621680047" 
-              target="_blank" 
-              rel="noopener noreferrer"
+            <Link 
+              to="/auth"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-300"
             >
-              <MessageCircle size={20} />
-              Hablar con un asesor
-            </a>
+              Vender Maquinaria
+              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
           </motion.div>
 
           {/* Trust Indicators */}
