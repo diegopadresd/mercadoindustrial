@@ -600,14 +600,18 @@ export type Database = {
           cp_origen: string | null
           created_at: string
           description: string | null
+          has_warranty: boolean | null
+          hours_of_use: number | null
           id: string
           images: string[]
           is_active: boolean | null
           is_auction: boolean | null
           is_featured: boolean | null
+          is_functional: boolean | null
           is_new: boolean | null
           largo_aprox_cm: number | null
           location: string | null
+          model: string | null
           original_price: number | null
           peso_aprox_kg: number | null
           price: number | null
@@ -617,6 +621,9 @@ export type Database = {
           stock: number | null
           title: string
           updated_at: string
+          warranty_conditions: string | null
+          warranty_duration: string | null
+          year: number | null
         }
         Insert: {
           alto_aprox_cm?: number | null
@@ -631,14 +638,18 @@ export type Database = {
           cp_origen?: string | null
           created_at?: string
           description?: string | null
+          has_warranty?: boolean | null
+          hours_of_use?: number | null
           id: string
           images?: string[]
           is_active?: boolean | null
           is_auction?: boolean | null
           is_featured?: boolean | null
+          is_functional?: boolean | null
           is_new?: boolean | null
           largo_aprox_cm?: number | null
           location?: string | null
+          model?: string | null
           original_price?: number | null
           peso_aprox_kg?: number | null
           price?: number | null
@@ -648,6 +659,9 @@ export type Database = {
           stock?: number | null
           title: string
           updated_at?: string
+          warranty_conditions?: string | null
+          warranty_duration?: string | null
+          year?: number | null
         }
         Update: {
           alto_aprox_cm?: number | null
@@ -662,14 +676,18 @@ export type Database = {
           cp_origen?: string | null
           created_at?: string
           description?: string | null
+          has_warranty?: boolean | null
+          hours_of_use?: number | null
           id?: string
           images?: string[]
           is_active?: boolean | null
           is_auction?: boolean | null
           is_featured?: boolean | null
+          is_functional?: boolean | null
           is_new?: boolean | null
           largo_aprox_cm?: number | null
           location?: string | null
+          model?: string | null
           original_price?: number | null
           peso_aprox_kg?: number | null
           price?: number | null
@@ -679,6 +697,9 @@ export type Database = {
           stock?: number | null
           title?: string
           updated_at?: string
+          warranty_conditions?: string | null
+          warranty_duration?: string | null
+          year?: number | null
         }
         Relationships: []
       }
