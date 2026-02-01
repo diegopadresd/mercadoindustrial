@@ -1,10 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, MapPin, Truck, Loader2, AlertCircle, CheckCircle, Layers, Lock } from 'lucide-react';
+import { Package, MapPin, Truck, Loader2, AlertCircle, CheckCircle, Layers, Lock, MessageCircle, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+
+// Shipping limits for the quote calculator
+const SHIPPING_LIMITS = {
+  maxHeight: 180,    // cm
+  maxWidth: 200,     // cm
+  maxLength: 280,    // cm
+  maxWeight: 2000,   // kg
+};
 
 interface ShippingQuote {
   id: string;
@@ -54,6 +62,26 @@ export const ShippingQuoteComponent = ({ prefilled, isReadOnly = false }: Shippi
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const zipToInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if dimensions exceed limits
+  const exceedsLimits = useMemo(() => {
+    const weight = parseFloat(formData.weight) || 0;
+    const height = parseFloat(formData.height) || 0;
+    const width = parseFloat(formData.width) || 0;
+    const length = parseFloat(formData.length) || 0;
+
+    const exceeds = {
+      weight: weight > SHIPPING_LIMITS.maxWeight,
+      height: height > SHIPPING_LIMITS.maxHeight,
+      width: width > SHIPPING_LIMITS.maxWidth,
+      length: length > SHIPPING_LIMITS.maxLength,
+    };
+
+    return {
+      ...exceeds,
+      any: exceeds.weight || exceeds.height || exceeds.width || exceeds.length,
+    };
+  }, [formData.weight, formData.height, formData.width, formData.length]);
 
   // Apply prefilled data on mount or when prefilled changes
   useEffect(() => {
@@ -220,84 +248,156 @@ export const ShippingQuoteComponent = ({ prefilled, isReadOnly = false }: Shippi
           </Label>
           <div className="p-3 bg-muted/50 rounded-lg mb-3">
             <p className="text-xs text-muted-foreground">
-              💡 Este cotizador está optimizado para <strong>tarimas y carga pesada industrial</strong>. 
-              Para paquetes pequeños, contacta a un asesor.
+              💡 Límites del cotizador: <strong>Alto {SHIPPING_LIMITS.maxHeight}cm</strong>, <strong>Ancho {SHIPPING_LIMITS.maxWidth}cm</strong>, <strong>Largo {SHIPPING_LIMITS.maxLength}cm</strong>, <strong>Peso {SHIPPING_LIMITS.maxWeight}kg</strong>. 
+              Para envíos mayores, contacta a un asesor.
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground flex items-center gap-1">
-                Peso (kg)
+                Peso (kg) <span className="text-muted-foreground/60">máx {SHIPPING_LIMITS.maxWeight}</span>
                 {isReadOnly && prefilled?.weight && <Lock size={10} />}
               </span>
               <Input
                 type="number"
                 step="1"
                 min="50"
+                max={SHIPPING_LIMITS.maxWeight}
                 placeholder="100"
                 value={formData.weight}
                 onChange={(e) => handleInputChange('weight', e.target.value)}
                 required
                 readOnly={isReadOnly && !!prefilled?.weight}
-                className={isReadOnly && prefilled?.weight ? 'bg-muted cursor-not-allowed' : ''}
+                className={`${isReadOnly && prefilled?.weight ? 'bg-muted cursor-not-allowed' : ''} ${exceedsLimits.weight ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               />
+              {exceedsLimits.weight && (
+                <span className="text-xs text-destructive">Excede el límite</span>
+              )}
             </div>
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground flex items-center gap-1">
-                Alto (cm)
+                Alto (cm) <span className="text-muted-foreground/60">máx {SHIPPING_LIMITS.maxHeight}</span>
                 {isReadOnly && prefilled?.height && <Lock size={10} />}
               </span>
               <Input
                 type="number"
                 min="10"
+                max={SHIPPING_LIMITS.maxHeight}
                 placeholder="100"
                 value={formData.height}
                 onChange={(e) => handleInputChange('height', e.target.value)}
                 required
                 readOnly={isReadOnly && !!prefilled?.height}
-                className={isReadOnly && prefilled?.height ? 'bg-muted cursor-not-allowed' : ''}
+                className={`${isReadOnly && prefilled?.height ? 'bg-muted cursor-not-allowed' : ''} ${exceedsLimits.height ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               />
+              {exceedsLimits.height && (
+                <span className="text-xs text-destructive">Excede el límite</span>
+              )}
             </div>
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground flex items-center gap-1">
-                Ancho (cm)
+                Ancho (cm) <span className="text-muted-foreground/60">máx {SHIPPING_LIMITS.maxWidth}</span>
                 {isReadOnly && prefilled?.width && <Lock size={10} />}
               </span>
               <Input
                 type="number"
                 min="10"
+                max={SHIPPING_LIMITS.maxWidth}
                 placeholder="100"
                 value={formData.width}
                 onChange={(e) => handleInputChange('width', e.target.value)}
                 required
                 readOnly={isReadOnly && !!prefilled?.width}
-                className={isReadOnly && prefilled?.width ? 'bg-muted cursor-not-allowed' : ''}
+                className={`${isReadOnly && prefilled?.width ? 'bg-muted cursor-not-allowed' : ''} ${exceedsLimits.width ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               />
+              {exceedsLimits.width && (
+                <span className="text-xs text-destructive">Excede el límite</span>
+              )}
             </div>
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground flex items-center gap-1">
-                Largo (cm)
+                Largo (cm) <span className="text-muted-foreground/60">máx {SHIPPING_LIMITS.maxLength}</span>
                 {isReadOnly && prefilled?.length && <Lock size={10} />}
               </span>
               <Input
                 type="number"
                 min="10"
+                max={SHIPPING_LIMITS.maxLength}
                 placeholder="120"
                 value={formData.length}
                 onChange={(e) => handleInputChange('length', e.target.value)}
                 required
                 readOnly={isReadOnly && !!prefilled?.length}
-                className={isReadOnly && prefilled?.length ? 'bg-muted cursor-not-allowed' : ''}
+                className={`${isReadOnly && prefilled?.length ? 'bg-muted cursor-not-allowed' : ''} ${exceedsLimits.length ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               />
+              {exceedsLimits.length && (
+                <span className="text-xs text-destructive">Excede el límite</span>
+              )}
             </div>
           </div>
         </div>
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        {/* Exceeds limits warning - Contact advisor */}
+        <AnimatePresence>
+          {exceedsLimits.any && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="p-4 bg-secondary/10 border border-secondary/30 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-secondary/20 rounded-lg">
+                    <Phone className="w-5 h-5 text-secondary" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-foreground mb-1">
+                      Envío especial requerido
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Las dimensiones o peso de tu producto exceden los límites del cotizador automático. 
+                      Contacta a un asesor para obtener una cotización personalizada.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <a 
+                        href="https://wa.me/526621234567?text=Hola,%20necesito%20cotizar%20un%20envío%20de%20carga%20pesada%20que%20excede%20los%20límites%20del%20cotizador%20automático" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#25D366] text-white rounded-lg font-medium hover:bg-[#20BD5A] transition-colors"
+                      >
+                        <MessageCircle size={16} />
+                        WhatsApp
+                      </a>
+                      <a 
+                        href="tel:+526621234567"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                      >
+                        <Phone size={16} />
+                        Llamar
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={loading || exceedsLimits.any}
+        >
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Buscando mejores tarifas...
+            </>
+          ) : exceedsLimits.any ? (
+            <>
+              <AlertCircle className="mr-2 h-4 w-4" />
+              Contacta a un asesor
             </>
           ) : (
             <>
