@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -7,9 +7,11 @@ import {
   Plus,
   Edit,
   Trash2,
-  Eye,
   ImageIcon,
-  AlertCircle
+  Upload,
+  X,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -31,16 +33,34 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { useProductImages } from '@/hooks/useProductImages';
+import { useProductAI, ProductAIResult } from '@/hooks/useProductAI';
 
 const AdminInventario = () => {
   const [search, setSearch] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [showAIConfirmDialog, setShowAIConfirmDialog] = useState(false);
+  const [aiResult, setAIResult] = useState<ProductAIResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  const { uploading, uploadImage, deleteImage } = useProductImages();
+  const { identifying, identifyProduct } = useProductAI();
 
   const [formData, setFormData] = useState({
     id: '',
@@ -55,6 +75,7 @@ const AdminInventario = () => {
     is_active: true,
     is_featured: false,
     is_new: false,
+    images: [] as string[],
   });
 
   const { data: products, isLoading } = useQuery({
@@ -90,7 +111,7 @@ const AdminInventario = () => {
         is_active: data.is_active,
         is_featured: data.is_featured,
         is_new: data.is_new,
-        images: [],
+        images: data.images,
       };
 
       if (editingProduct) {
@@ -162,8 +183,10 @@ const AdminInventario = () => {
       is_active: true,
       is_featured: false,
       is_new: false,
+      images: [],
     });
     setEditingProduct(null);
+    setAIResult(null);
   };
 
   const openEditDialog = (product: any) => {
@@ -181,6 +204,7 @@ const AdminInventario = () => {
       is_active: product.is_active ?? true,
       is_featured: product.is_featured ?? false,
       is_new: product.is_new ?? false,
+      images: product.images || [],
     });
     setShowAddDialog(true);
   };
@@ -188,6 +212,78 @@ const AdminInventario = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     saveMutation.mutate(formData);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    for (const file of Array.from(files)) {
+      const url = await uploadImage(file);
+      if (url) {
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, url],
+        }));
+      }
+    }
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveImage = async (imageUrl: string) => {
+    await deleteImage(imageUrl);
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter(img => img !== imageUrl),
+    }));
+  };
+
+  const handleAIIdentify = async () => {
+    if (formData.images.length === 0) {
+      toast({
+        title: 'Sin imagen',
+        description: 'Primero sube una imagen del producto para identificarlo',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const result = await identifyProduct(formData.images[0], products || []);
+    
+    if (result && result.identified) {
+      setAIResult(result);
+      setShowAIConfirmDialog(true);
+    } else {
+      toast({
+        title: 'No identificado',
+        description: result?.notes || 'No se pudo identificar el producto en la imagen',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const applyAIResult = () => {
+    if (!aiResult) return;
+    
+    setFormData(prev => ({
+      ...prev,
+      title: aiResult.title || prev.title,
+      sku: aiResult.sku || prev.sku,
+      brand: aiResult.brand || prev.brand,
+      price: aiResult.price?.toString() || prev.price,
+      categories: aiResult.categories?.join(', ') || prev.categories,
+      description: aiResult.description || prev.description,
+    }));
+    
+    setShowAIConfirmDialog(false);
+    toast({
+      title: 'Información aplicada',
+      description: `Producto identificado con confianza ${aiResult.confidence}`,
+    });
   };
 
   return (
@@ -216,14 +312,17 @@ const AdminInventario = () => {
           </div>
 
           {/* Add Button */}
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <Dialog open={showAddDialog} onOpenChange={(open) => {
+            setShowAddDialog(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
               <Button className="btn-gold" onClick={resetForm}>
                 <Plus size={18} className="mr-2" />
                 Agregar Producto
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingProduct ? 'Editar Producto' : 'Agregar Producto'}</DialogTitle>
                 <DialogDescription>
@@ -231,7 +330,67 @@ const AdminInventario = () => {
                 </DialogDescription>
               </DialogHeader>
               
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Image Upload Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Fotos del producto</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAIIdentify}
+                      disabled={identifying || formData.images.length === 0}
+                      className="gap-2"
+                    >
+                      {identifying ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={16} />
+                      )}
+                      {identifying ? 'Identificando...' : 'Identificador AI'}
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {/* Image previews */}
+                    {formData.images.map((img, idx) => (
+                      <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border bg-muted">
+                        <img src={img} alt={`Producto ${idx + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(img)}
+                          className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {/* Upload button */}
+                    <label className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-2 bg-muted/30">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                      {uploading ? (
+                        <Loader2 size={24} className="text-muted-foreground animate-spin" />
+                      ) : (
+                        <>
+                          <Upload size={24} className="text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground text-center px-2">Subir foto</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                </div>
+
+                {/* Form Fields */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 col-span-2">
                     <Label htmlFor="title">Título *</Label>
@@ -355,6 +514,44 @@ const AdminInventario = () => {
           </Dialog>
         </div>
       </div>
+
+      {/* AI Confirmation Dialog */}
+      <AlertDialog open={showAIConfirmDialog} onOpenChange={setShowAIConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Sparkles className="text-primary" size={20} />
+              Producto identificado
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p>El AI ha identificado el producto con los siguientes datos:</p>
+                {aiResult && (
+                  <div className="bg-muted rounded-lg p-4 space-y-2 text-sm">
+                    <p><strong>Título:</strong> {aiResult.title}</p>
+                    <p><strong>SKU:</strong> {aiResult.sku}</p>
+                    <p><strong>Marca:</strong> {aiResult.brand}</p>
+                    <p><strong>Precio sugerido:</strong> ${aiResult.price?.toLocaleString('es-MX')}</p>
+                    <p><strong>Categorías:</strong> {aiResult.categories?.join(', ')}</p>
+                    <p><strong>Confianza:</strong> <span className={`font-medium ${
+                      aiResult.confidence === 'alta' ? 'text-green-600' :
+                      aiResult.confidence === 'media' ? 'text-yellow-600' : 'text-red-600'
+                    }`}>{aiResult.confidence}</span></p>
+                    {aiResult.notes && <p className="text-muted-foreground italic">{aiResult.notes}</p>}
+                  </div>
+                )}
+                <p>¿Deseas aplicar esta información al formulario?</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={applyAIResult} className="btn-gold">
+              Aplicar información
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Products Table */}
       <div className="bg-card rounded-2xl shadow-card overflow-hidden">
