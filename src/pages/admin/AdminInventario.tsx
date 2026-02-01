@@ -97,6 +97,12 @@ const AdminInventario = () => {
     is_featured: false,
     is_new: false,
     images: [] as string[],
+    // Shipping fields
+    peso_aprox_kg: '',
+    largo_aprox_cm: '',
+    ancho_aprox_cm: '',
+    alto_aprox_cm: '',
+    cp_origen: '',
   });
 
   const { data: products, isLoading } = useQuery({
@@ -124,6 +130,20 @@ const AdminInventario = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      // Validation: if publishing (is_active=true), require shipping fields
+      if (data.is_active) {
+        const missingFields = [];
+        if (!data.peso_aprox_kg) missingFields.push('Peso aproximado');
+        if (!data.largo_aprox_cm) missingFields.push('Largo');
+        if (!data.ancho_aprox_cm) missingFields.push('Ancho');
+        if (!data.alto_aprox_cm) missingFields.push('Alto');
+        if (!data.cp_origen) missingFields.push('CP origen');
+        
+        if (missingFields.length > 0) {
+          throw new Error(`Para publicar, completa los datos de envío: ${missingFields.join(', ')}`);
+        }
+      }
+
       const productData: any = {
         id: data.id || data.sku,
         title: data.title,
@@ -138,6 +158,12 @@ const AdminInventario = () => {
         is_featured: data.is_featured,
         is_new: data.is_new,
         images: data.images,
+        // Shipping fields
+        peso_aprox_kg: data.peso_aprox_kg ? parseFloat(data.peso_aprox_kg) : null,
+        largo_aprox_cm: data.largo_aprox_cm ? parseFloat(data.largo_aprox_cm) : null,
+        ancho_aprox_cm: data.ancho_aprox_cm ? parseFloat(data.ancho_aprox_cm) : null,
+        alto_aprox_cm: data.alto_aprox_cm ? parseFloat(data.alto_aprox_cm) : null,
+        cp_origen: data.cp_origen || null,
       };
 
       // Assign seller_id for vendors
@@ -269,6 +295,11 @@ const AdminInventario = () => {
       is_featured: false,
       is_new: false,
       images: [],
+      peso_aprox_kg: '',
+      largo_aprox_cm: '',
+      ancho_aprox_cm: '',
+      alto_aprox_cm: '',
+      cp_origen: '',
     });
     setEditingProduct(null);
     setAIResult(null);
@@ -290,6 +321,11 @@ const AdminInventario = () => {
       is_featured: product.is_featured ?? false,
       is_new: product.is_new ?? false,
       images: product.images || [],
+      peso_aprox_kg: product.peso_aprox_kg?.toString() || '',
+      largo_aprox_cm: product.largo_aprox_cm?.toString() || '',
+      ancho_aprox_cm: product.ancho_aprox_cm?.toString() || '',
+      alto_aprox_cm: product.alto_aprox_cm?.toString() || '',
+      cp_origen: product.cp_origen || '',
     });
     setShowAddDialog(true);
   };
@@ -567,6 +603,75 @@ const AdminInventario = () => {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={4}
                     />
+                  </div>
+
+                  {/* Shipping Data Section */}
+                  <div className="col-span-2 border-t pt-4 mt-4">
+                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <Package size={18} className="text-primary" />
+                      Datos de envío (requeridos para publicar)
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="peso_aprox_kg">Peso (kg) *</Label>
+                        <Input
+                          id="peso_aprox_kg"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={formData.peso_aprox_kg}
+                          onChange={(e) => setFormData({ ...formData, peso_aprox_kg: e.target.value })}
+                          placeholder="Ej: 150"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="largo_aprox_cm">Largo (cm) *</Label>
+                        <Input
+                          id="largo_aprox_cm"
+                          type="number"
+                          min="0"
+                          value={formData.largo_aprox_cm}
+                          onChange={(e) => setFormData({ ...formData, largo_aprox_cm: e.target.value })}
+                          placeholder="Ej: 120"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="ancho_aprox_cm">Ancho (cm) *</Label>
+                        <Input
+                          id="ancho_aprox_cm"
+                          type="number"
+                          min="0"
+                          value={formData.ancho_aprox_cm}
+                          onChange={(e) => setFormData({ ...formData, ancho_aprox_cm: e.target.value })}
+                          placeholder="Ej: 100"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="alto_aprox_cm">Alto (cm) *</Label>
+                        <Input
+                          id="alto_aprox_cm"
+                          type="number"
+                          min="0"
+                          value={formData.alto_aprox_cm}
+                          onChange={(e) => setFormData({ ...formData, alto_aprox_cm: e.target.value })}
+                          placeholder="Ej: 80"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cp_origen">CP origen *</Label>
+                        <Input
+                          id="cp_origen"
+                          type="text"
+                          maxLength={5}
+                          value={formData.cp_origen}
+                          onChange={(e) => setFormData({ ...formData, cp_origen: e.target.value.replace(/\D/g, '') })}
+                          placeholder="Ej: 83000"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      * Estos datos son obligatorios para publicar el producto y permitir cotización de envío.
+                    </p>
                   </div>
 
                   {/* Only show publish switches for staff */}

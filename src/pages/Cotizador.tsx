@@ -1,8 +1,11 @@
+import { useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ShippingQuoteComponent } from '@/components/shipping/ShippingQuote';
 import { motion } from 'framer-motion';
-import { Truck, Shield, Clock, DollarSign } from 'lucide-react';
+import { Truck, Shield, Clock, DollarSign, Loader2, AlertCircle } from 'lucide-react';
+import { useProduct } from '@/hooks/useProducts';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const benefits = [
   {
@@ -28,6 +31,30 @@ const benefits = [
 ];
 
 const Cotizador = () => {
+  const [searchParams] = useSearchParams();
+  const productoId = searchParams.get('productoId');
+  
+  // Fetch product data if productoId is present
+  const { data: product, isLoading: loadingProduct, error: productError } = useProduct(productoId || '');
+
+  // Check if product has complete shipping data
+  const hasCompleteShippingData = product && 
+    product.peso_aprox_kg && 
+    product.largo_aprox_cm && 
+    product.ancho_aprox_cm && 
+    product.alto_aprox_cm && 
+    product.cp_origen;
+
+  // Build prefilled data object
+  const prefilledData = hasCompleteShippingData ? {
+    zipFrom: product.cp_origen || '',
+    weight: product.peso_aprox_kg || undefined,
+    height: product.alto_aprox_cm || undefined,
+    width: product.ancho_aprox_cm || undefined,
+    length: product.largo_aprox_cm || undefined,
+    productTitle: product.title,
+  } : undefined;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -53,6 +80,53 @@ const Cotizador = () => {
               </p>
             </motion.div>
 
+            {/* Loading state when fetching product */}
+            {productoId && loadingProduct && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="max-w-2xl mx-auto mb-6"
+              >
+                <div className="flex items-center justify-center gap-3 p-4 bg-muted rounded-xl">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <span className="text-muted-foreground">Cargando datos del producto…</span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Error: product not found */}
+            {productoId && !loadingProduct && productError && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="max-w-2xl mx-auto mb-6"
+              >
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    No se pudo cargar el producto para autollenar la cotización.
+                  </AlertDescription>
+                </Alert>
+              </motion.div>
+            )}
+
+            {/* Warning: product missing shipping data */}
+            {productoId && !loadingProduct && product && !hasCompleteShippingData && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="max-w-2xl mx-auto mb-6"
+              >
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Este producto no tiene datos suficientes para cotizar envío. 
+                    Puedes completar los datos manualmente.
+                  </AlertDescription>
+                </Alert>
+              </motion.div>
+            )}
+
             {/* Quote Widget */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -60,7 +134,10 @@ const Cotizador = () => {
               transition={{ delay: 0.2 }}
               className="max-w-2xl mx-auto"
             >
-              <ShippingQuoteComponent />
+              <ShippingQuoteComponent 
+                prefilled={prefilledData}
+                isReadOnly={!!hasCompleteShippingData}
+              />
             </motion.div>
           </div>
         </section>

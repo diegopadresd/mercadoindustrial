@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useParams, Link, Navigate, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -39,11 +39,13 @@ import {
   ThumbsUp,
   Play,
   Loader2,
+  Truck,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getProductById } from '@/data/products';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateOffer } from '@/hooks/useOffers';
+import { useProduct } from '@/hooks/useProducts';
 
 // Mock FAQ data
 const initialFaqs = [
@@ -79,6 +81,7 @@ const initialFaqs = [
 const ProductoDetalle = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const createOffer = useCreateOffer();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -93,13 +96,21 @@ const ProductoDetalle = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  // Get product data dynamically
+  // Get product from static data
   const productData = getProductById(id || '');
+  
+  // Also fetch from database for shipping data (peso, dimensiones, cp_origen)
+  const { data: dbProduct } = useProduct(id || '');
 
   // If product not found, redirect to catalog
   if (!productData) {
     return <Navigate to="/catalogo" replace />;
   }
+
+  // Handler to navigate to quoter with product data
+  const handleQuoteShipping = () => {
+    navigate(`/cotizador?productoId=${id}`);
+  };
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => 
@@ -361,6 +372,16 @@ const ProductoDetalle = () => {
                   </div>
                 </div>
               )}
+
+              {/* Shipping Quote Button */}
+              <Button 
+                onClick={handleQuoteShipping}
+                variant="outline" 
+                className="w-full border-primary text-primary hover:bg-primary/10"
+              >
+                <Truck className="mr-2" size={18} />
+                Cotizar envío
+              </Button>
 
               {/* Action Buttons */}
               <div className="mt-6 space-y-3">
