@@ -41,7 +41,7 @@ const quickLinks = [
   { name: 'Marcas', href: '/marcas' },
   { name: 'Blog', href: '/blog' },
   { name: 'Quiénes Somos', href: '/nosotros' },
-  { name: 'Vende con Nosotros', href: '/vende' },
+  { name: 'Vende con Nosotros', href: '/como-vender' },
 ];
 
 const helpLinks = [

@@ -55,7 +55,7 @@ const auditData = {
     { path: '/marcas', name: 'Marcas', status: 'ok' },
     { path: '/blog', name: 'Blog', status: 'ok' },
     { path: '/nosotros', name: 'Quiénes Somos', status: 'ok' },
-    { path: '/vende', name: 'Vende con Nosotros', status: 'ok' },
+    { path: '/como-vender', name: 'Vende con Nosotros', status: 'ok' },
     { path: '/recientes', name: 'Publicaciones Recientes', status: 'ok' },
     { path: '/carrito', name: 'Carrito', status: 'ok' },
     { path: '/cotizador', name: 'Cotizador de Envío', status: 'ok' },
