@@ -21,6 +21,11 @@ import Auth from "./pages/Auth";
 import Perfil from "./pages/Perfil";
 import AdminDashboard from "./pages/admin/Dashboard";
 import NotFound from "./pages/NotFound";
+import FAQ from "./pages/FAQ";
+import ComoVender from "./pages/ComoVender";
+import ComoComprar from "./pages/ComoComprar";
+import SubastasYOfertas from "./pages/SubastasYOfertas";
+import PoliticasDePago from "./pages/PoliticasDePago";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +53,11 @@ const App = () => (
               <Route path="/cotizador" element={<Cotizador />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/perfil" element={<Perfil />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/como-vender" element={<ComoVender />} />
+              <Route path="/como-comprar" element={<ComoComprar />} />
+              <Route path="/subastas-y-ofertas" element={<SubastasYOfertas />} />
+              <Route path="/politicas-de-pago" element={<PoliticasDePago />} />
               <Route path="/admin/*" element={<AdminDashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
