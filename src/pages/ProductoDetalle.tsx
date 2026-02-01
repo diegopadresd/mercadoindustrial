@@ -547,19 +547,49 @@ const ProductoDetalle = () => {
                 ) : !(productData as any).is_auction && ((productData as any).contact_for_quote || !productData.price) ? (
                   /* Product requires quote - no price */
                   <div className="space-y-4">
-                    <div className="bg-muted/50 rounded-xl p-4 text-center">
-                      <PhoneCall className="mx-auto mb-2 text-primary" size={24} />
-                      <p className="text-muted-foreground">
-                        Contacta al vendedor para obtener una cotización
-                      </p>
-                    </div>
-                    <Button 
-                      className="w-full btn-gold"
-                      onClick={handleQuoteShipping}
-                    >
-                      <MessageCircle className="mr-2" size={18} />
-                      Solicitar cotización
-                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="w-full btn-gold">
+                          <MessageCircle className="mr-2" size={18} />
+                          Contacta al vendedor para obtener una cotización
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Solicitar cotización</DialogTitle>
+                          <DialogDescription>
+                            Envía un mensaje al vendedor para solicitar una cotización de este producto.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div>
+                            <Label>Producto</Label>
+                            <p className="text-sm text-muted-foreground">{productData.title}</p>
+                            <p className="text-xs text-muted-foreground">SKU: {productData.sku}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="quote-message">Tu mensaje</Label>
+                            <Textarea 
+                              id="quote-message"
+                              placeholder="Hola, me interesa este producto. ¿Cuál es el precio y disponibilidad?"
+                              rows={4}
+                            />
+                          </div>
+                          <Button 
+                            className="w-full btn-gold"
+                            onClick={() => {
+                              toast({
+                                title: '¡Mensaje enviado!',
+                                description: 'El vendedor recibirá tu solicitud de cotización y te contactará pronto.',
+                              });
+                            }}
+                          >
+                            <Send className="mr-2" size={16} />
+                            Enviar solicitud
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     {/* Make Offer button - still available */}
                     <Button 
                       className="w-full btn-offer"
