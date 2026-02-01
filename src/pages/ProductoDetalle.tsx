@@ -38,9 +38,12 @@ import {
   Clock,
   ThumbsUp,
   Play,
+  Loader2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getProductById } from '@/data/products';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCreateOffer } from '@/hooks/useOffers';
 
 // Mock FAQ data
 const initialFaqs = [
@@ -76,6 +79,8 @@ const initialFaqs = [
 const ProductoDetalle = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const { user, profile } = useAuth();
+  const createOffer = useCreateOffer();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [faqs, setFaqs] = useState(initialFaqs);
   const [newQuestion, setNewQuestion] = useState('');
@@ -130,13 +135,28 @@ const ProductoDetalle = () => {
     });
   };
 
-  const handleSubmitOffer = () => {
+  const handleSubmitOffer = async () => {
     if (!offerAmount) return;
     
-    toast({
-      title: '¡Oferta enviada!',
-      description: `Tu oferta de $${Number(offerAmount).toLocaleString('es-MX')} ha sido enviada al vendedor.`,
+    if (!user || !profile) {
+      toast({
+        title: 'Inicia sesión',
+        description: 'Debes iniciar sesión para hacer una oferta.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    await createOffer.mutateAsync({
+      product_id: id!,
+      offer_price: Number(offerAmount),
+      original_price: productData?.price || null,
+      user_id: user.id,
+      customer_name: profile.full_name || 'Cliente',
+      customer_email: profile.email,
+      customer_phone: profile.phone || undefined,
     });
+    
     setOfferAmount('');
     setOfferDialogOpen(false);
   };
@@ -384,8 +404,19 @@ const ProductoDetalle = () => {
                               />
                             </div>
                           </div>
-                          <Button onClick={handleSubmitOffer} className="w-full btn-gold">
-                            Enviar oferta
+                          <Button 
+                            onClick={handleSubmitOffer} 
+                            className="w-full btn-gold"
+                            disabled={createOffer.isPending}
+                          >
+                            {createOffer.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Enviando...
+                              </>
+                            ) : (
+                              'Enviar oferta'
+                            )}
                           </Button>
                         </div>
                       </DialogContent>

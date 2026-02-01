@@ -31,11 +31,13 @@ import AdminPedidos from './AdminPedidos';
 import AdminFacturacion from './AdminFacturacion';
 import AdminInventario from './AdminInventario';
 import AdminPreguntas from './AdminPreguntas';
+import AdminOfertas from './AdminOfertas';
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: 'Panel de Control', path: '/admin', description: 'Vista general' },
   { icon: Users, label: 'Clientes', path: '/admin/clientes', description: 'Gestión de usuarios' },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/pedidos', description: 'Órdenes y cotizaciones' },
+  { icon: Bell, label: 'Ofertas', path: '/admin/ofertas', description: 'Negociación de precios' },
   { icon: FileText, label: 'Facturación', path: '/admin/facturacion', description: 'CFDI y documentos' },
   { icon: Package, label: 'Inventario', path: '/admin/inventario', description: 'Productos y stock' },
   { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes' },
@@ -278,6 +280,7 @@ const AdminDashboard = () => {
               <Route index element={<AdminResumen />} />
               <Route path="clientes" element={<AdminClientes />} />
               <Route path="pedidos" element={<AdminPedidos />} />
+              <Route path="ofertas" element={<AdminOfertas />} />
               <Route path="facturacion" element={<AdminFacturacion />} />
               <Route path="inventario" element={<AdminInventario />} />
               <Route path="preguntas" element={<AdminPreguntas />} />
