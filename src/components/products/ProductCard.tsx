@@ -85,7 +85,7 @@ export const ProductCard = ({
       className="product-card group"
     >
       {/* Image Container */}
-      <Link to={`/producto/${id}`} className="block relative aspect-[4/3] overflow-hidden">
+      <Link to={`/productos/${id}`} className="block relative aspect-[4/3] overflow-hidden">
         <img
           src={image}
           alt={title}
@@ -118,7 +118,7 @@ export const ProductCard = ({
 
       {/* Content */}
       <div className="p-4">
-        <Link to={`/producto/${id}`}>
+        <Link to={`/productos/${id}`}>
           <h3 className="font-semibold text-foreground line-clamp-2 mb-3 group-hover:text-primary transition-colors">
             {title}
           </h3>
@@ -178,7 +178,7 @@ export const ProductCard = ({
               size="sm" 
               className="w-full btn-gold"
             >
-              <Link to={`/producto/${id}`}>
+              <Link to={`/productos/${id}`}>
                 <Gavel size={16} className="mr-1" />
                 Ver subasta
               </Link>
