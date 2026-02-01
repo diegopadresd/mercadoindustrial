@@ -20,7 +20,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Filter, X, RotateCcw, Loader2 } from 'lucide-react';
+import { Filter, X, RotateCcw, Loader2, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { useProducts, useBrands, useCategories } from '@/hooks/useProducts';
 
 // Mapeo de slugs URL a nombres de categorías
@@ -54,6 +55,7 @@ const Catalogo = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch products from Supabase
   const { data: products = [], isLoading } = useProducts();
@@ -70,6 +72,16 @@ const Catalogo = () => {
 
   // Filtrar productos basado en los filtros seleccionados
   const filteredProducts = products.filter((product) => {
+    // Filtro por búsqueda de texto
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchesTitle = product.title.toLowerCase().includes(query);
+      const matchesSku = product.sku.toLowerCase().includes(query);
+      const matchesBrand = product.brand.toLowerCase().includes(query);
+      const matchesDescription = (product.description || '').toLowerCase().includes(query);
+      if (!matchesTitle && !matchesSku && !matchesBrand && !matchesDescription) return false;
+    }
+
     // Filtro por categoría
     if (selectedCategories.length > 0) {
       const hasCategory = (product.categories || []).some(cat => 
@@ -128,12 +140,13 @@ const Catalogo = () => {
     setSelectedCategories([]);
     setSelectedBrands([]);
     setSelectedLocations([]);
+    setSearchQuery('');
     // Limpiar parámetros de URL
     setSearchParams({});
   };
 
   const hasActiveFilters = selectedSectors.length > 0 || selectedCategories.length > 0 || 
-                           selectedBrands.length > 0 || selectedLocations.length > 0;
+                           selectedBrands.length > 0 || selectedLocations.length > 0 || searchQuery.trim() !== '';
 
   const FilterSidebar = () => (
     <div className="space-y-6">
@@ -259,6 +272,28 @@ const Catalogo = () => {
           <p className="text-muted-foreground">
             Explora más de 12,000 productos disponibles
           </p>
+          
+          {/* Search Bar */}
+          <div className="mt-6 max-w-2xl">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+              <Input
+                type="text"
+                placeholder="Buscar por nombre, SKU, marca o descripción..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 pr-4 py-6 text-base rounded-xl border-border bg-card"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          </div>
         </motion.div>
 
         <div className="flex gap-8">
