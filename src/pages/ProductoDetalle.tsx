@@ -48,6 +48,8 @@ import { getProductById } from '@/data/products';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateOffer } from '@/hooks/useOffers';
 import { useProduct } from '@/hooks/useProducts';
+import { SellerProfileCard } from '@/components/product/SellerProfileCard';
+import { SellerReviews } from '@/components/product/SellerReviews';
 
 // Mock FAQ data
 const initialFaqs = [
@@ -77,6 +79,67 @@ const initialFaqs = [
     answer: 'Realizamos envíos a toda la República Mexicana y también a Estados Unidos. El costo de envío se cotiza por separado según el destino.',
     answeredBy: 'Mercado Industrial',
     answeredDate: '2024-01-20',
+  },
+];
+
+// Mock Seller Data
+const mockSeller = {
+  id: 'mercado-industrial',
+  name: 'Mercado Industrial',
+  avatar: '/logo-mercado-industrial.webp',
+  positivePercentage: 99.5,
+  totalSales: 15420,
+  joinedDate: 'junio 2018',
+  description: 'Mercado Industrial es el marketplace líder en México para maquinaria y equipo industrial. Ofrecemos equipos de alta calidad, con garantía y envío a todo el país. Nuestro equipo de expertos está disponible para asesorarte en la selección del equipo ideal para tu negocio.',
+  ratings: [
+    { label: '¿Fue precisa la descripción?', score: 4.9 },
+    { label: '¿Fue razonable el costo del envío?', score: 4.8 },
+    { label: '¿Fue rápido el envío?', score: 4.7 },
+    { label: '¿Comunicación del vendedor?', score: 5.0 },
+  ],
+};
+
+// Mock Reviews Data
+const mockReviews = [
+  {
+    id: '1',
+    username: 'eduardo_mx',
+    reviewCount: 831,
+    timeAgo: 'Últimos 6 meses',
+    comment: 'Excelente equipo, llegó en perfectas condiciones y muy bien embalado. La calidad es exactamente como se describe.',
+    isVerified: true,
+  },
+  {
+    id: '2',
+    username: 'carlos_industrial',
+    reviewCount: 1603,
+    timeAgo: 'Mes pasado',
+    comment: 'Transacción fluida, entrega rápida, artículo como se describe, buena relación calidad-precio y bien empaquetado. Vendedor de primera clase. Muchas gracias.',
+    isVerified: true,
+  },
+  {
+    id: '3',
+    username: 'fabricio_t',
+    reviewCount: 173,
+    timeAgo: 'Mes pasado',
+    comment: 'Impresionante producto y muy bien embalado. Totalmente recomendado.',
+    isVerified: true,
+  },
+  {
+    id: '4',
+    username: 'beatriz_norte',
+    reviewCount: 807,
+    timeAgo: 'Últimos 6 meses',
+    comment: 'Impresionante vendedor y artículo. Todo perfecto.',
+    isVerified: true,
+  },
+  {
+    id: '5',
+    username: 'william_n',
+    reviewCount: 1594,
+    timeAgo: 'El año pasado',
+    comment: 'Excelente por el precio, fácilmente uno de los artículos de mejor valor que he encontrado aquí. Resiste muy bien, lo uso a diario y funciona perfecto.',
+    isVerified: true,
   },
 ];
 
@@ -612,6 +675,24 @@ const ProductoDetalle = () => {
                 )}
               </motion.div>
             ))}
+          </div>
+        </motion.section>
+
+        {/* Seller Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-16"
+        >
+          <h2 className="section-title mb-8">Información del Vendedor</h2>
+          <div className="grid lg:grid-cols-2 gap-8">
+            <SellerProfileCard seller={mockSeller} />
+            <SellerReviews 
+              productReviewCount={12}
+              totalReviewCount={13392}
+              reviews={mockReviews}
+            />
           </div>
         </motion.section>
       </main>
