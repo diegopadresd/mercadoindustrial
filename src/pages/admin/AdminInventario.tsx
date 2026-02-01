@@ -18,7 +18,8 @@ import {
   EyeOff,
   Send,
   CheckCircle,
-  Clock
+  Clock,
+  Gavel
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -103,6 +104,12 @@ const AdminInventario = () => {
     ancho_aprox_cm: '',
     alto_aprox_cm: '',
     cp_origen: '',
+    // Auction fields
+    is_auction: false,
+    auction_min_price: '',
+    auction_start: '',
+    auction_end: '',
+    contact_for_quote: false,
   });
 
   const { data: products, isLoading } = useQuery({
@@ -130,6 +137,33 @@ const AdminInventario = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      // Validation: Auction rules
+      if (data.is_auction) {
+        if (!data.auction_min_price || parseFloat(data.auction_min_price) <= 0) {
+          throw new Error('Para subastas, el precio mínimo ("Compra ya") es obligatorio');
+        }
+        if (!data.auction_start) {
+          throw new Error('La fecha de inicio de subasta es obligatoria');
+        }
+        if (!data.auction_end) {
+          throw new Error('La fecha de fin de subasta es obligatoria');
+        }
+        const start = new Date(data.auction_start);
+        const end = new Date(data.auction_end);
+        if (end <= start) {
+          throw new Error('La fecha de fin debe ser posterior a la fecha de inicio');
+        }
+        const diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        if (diffHours < 1) {
+          throw new Error('La subasta debe durar al menos 1 hora');
+        }
+      } else {
+        // Non-auction product validation
+        if (!data.price && !data.contact_for_quote) {
+          throw new Error('Debes asignar un precio o marcar "Contactar para cotización"');
+        }
+      }
+
       // Validation: if publishing (is_active=true), require shipping fields
       if (data.is_active) {
         const missingFields = [];
@@ -149,7 +183,7 @@ const AdminInventario = () => {
         title: data.title,
         sku: data.sku,
         brand: data.brand,
-        price: data.price ? parseFloat(data.price) : null,
+        price: data.is_auction ? null : (data.price ? parseFloat(data.price) : null),
         stock: parseInt(data.stock) || 1,
         location: data.location,
         description: data.description,
@@ -164,6 +198,13 @@ const AdminInventario = () => {
         ancho_aprox_cm: data.ancho_aprox_cm ? parseFloat(data.ancho_aprox_cm) : null,
         alto_aprox_cm: data.alto_aprox_cm ? parseFloat(data.alto_aprox_cm) : null,
         cp_origen: data.cp_origen || null,
+        // Auction fields
+        is_auction: data.is_auction,
+        auction_min_price: data.is_auction && data.auction_min_price ? parseFloat(data.auction_min_price) : null,
+        auction_start: data.is_auction && data.auction_start ? data.auction_start : null,
+        auction_end: data.is_auction && data.auction_end ? data.auction_end : null,
+        auction_status: data.is_auction ? 'scheduled' : 'inactive',
+        contact_for_quote: !data.is_auction && data.contact_for_quote,
       };
 
       // Assign seller_id for vendors
@@ -300,6 +341,12 @@ const AdminInventario = () => {
       ancho_aprox_cm: '',
       alto_aprox_cm: '',
       cp_origen: '',
+      // Auction fields
+      is_auction: false,
+      auction_min_price: '',
+      auction_start: '',
+      auction_end: '',
+      contact_for_quote: false,
     });
     setEditingProduct(null);
     setAIResult(null);
@@ -326,6 +373,12 @@ const AdminInventario = () => {
       ancho_aprox_cm: product.ancho_aprox_cm?.toString() || '',
       alto_aprox_cm: product.alto_aprox_cm?.toString() || '',
       cp_origen: product.cp_origen || '',
+      // Auction fields
+      is_auction: product.is_auction ?? false,
+      auction_min_price: product.auction_min_price?.toString() || '',
+      auction_start: product.auction_start ? new Date(product.auction_start).toISOString().slice(0, 16) : '',
+      auction_end: product.auction_end ? new Date(product.auction_end).toISOString().slice(0, 16) : '',
+      contact_for_quote: product.contact_for_quote ?? false,
     });
     setShowAddDialog(true);
   };
@@ -554,15 +607,105 @@ const AdminInventario = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Precio (dejar vacío para cotizar)</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    />
+                  {/* Auction Toggle */}
+                  <div className="col-span-2 border rounded-lg p-4 bg-muted/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id="is_auction"
+                          checked={formData.is_auction}
+                          onCheckedChange={(checked) => setFormData({ 
+                            ...formData, 
+                            is_auction: checked,
+                            // Clear price when enabling auction, clear auction fields when disabling
+                            price: checked ? '' : formData.price,
+                            auction_min_price: checked ? formData.auction_min_price : '',
+                            auction_start: checked ? formData.auction_start : '',
+                            auction_end: checked ? formData.auction_end : '',
+                          })}
+                        />
+                        <Label htmlFor="is_auction" className="font-semibold">
+                          🔨 Activar Subasta (Pujas)
+                        </Label>
+                      </div>
+                    </div>
+
+                    {formData.is_auction ? (
+                      /* Auction Fields */
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="auction_min_price">
+                            Precio mínimo / "Compra ya" (MXN) *
+                          </Label>
+                          <Input
+                            id="auction_min_price"
+                            type="number"
+                            step="0.01"
+                            min="1"
+                            value={formData.auction_min_price}
+                            onChange={(e) => setFormData({ ...formData, auction_min_price: e.target.value })}
+                            placeholder="Ej: 150000"
+                            required={formData.is_auction}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Este será el precio de "Compra ya" y el mínimo para validar la subasta.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="auction_start">Inicio de subasta *</Label>
+                          <Input
+                            id="auction_start"
+                            type="datetime-local"
+                            value={formData.auction_start}
+                            onChange={(e) => setFormData({ ...formData, auction_start: e.target.value })}
+                            required={formData.is_auction}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="auction_end">Fin de subasta *</Label>
+                          <Input
+                            id="auction_end"
+                            type="datetime-local"
+                            value={formData.auction_end}
+                            onChange={(e) => setFormData({ ...formData, auction_end: e.target.value })}
+                            min={formData.auction_start}
+                            required={formData.is_auction}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      /* Normal Price Fields */
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="price">Precio (MXN)</Label>
+                          <Input
+                            id="price"
+                            type="number"
+                            step="0.01"
+                            value={formData.price}
+                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            placeholder="Dejar vacío si requiere cotización"
+                            disabled={formData.contact_for_quote}
+                          />
+                        </div>
+                        <div className="flex items-end pb-2">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="contact_for_quote"
+                              checked={formData.contact_for_quote}
+                              onCheckedChange={(checked) => setFormData({ 
+                                ...formData, 
+                                contact_for_quote: checked,
+                                price: checked ? '' : formData.price 
+                              })}
+                            />
+                            <Label htmlFor="contact_for_quote" className="text-sm">
+                              Contactar para cotización
+                            </Label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">

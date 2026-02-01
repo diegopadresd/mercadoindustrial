@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, MapPin } from 'lucide-react';
+import { ShoppingCart, MapPin, Gavel, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
-import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 interface ProductCardProps {
   id: string;
@@ -16,6 +16,10 @@ interface ProductCardProps {
   categories: string[];
   isNew?: boolean;
   isFeatured?: boolean;
+  isAuction?: boolean;
+  auctionMinPrice?: number | null;
+  auctionEnd?: string | null;
+  contactForQuote?: boolean;
 }
 
 export const ProductCard = ({
@@ -29,13 +33,19 @@ export const ProductCard = ({
   categories,
   isNew,
   isFeatured,
+  isAuction,
+  auctionMinPrice,
+  auctionEnd,
+  contactForQuote,
 }: ProductCardProps) => {
   const { addToCart } = useCart();
-  const { toast } = useToast();
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Don't add auction products to cart
+    if (isAuction) return;
     
     await addToCart({
       productId: id,
@@ -62,6 +72,10 @@ export const ProductCard = ({
     });
   };
 
+  // Check if auction is active
+  const auctionEndDate = auctionEnd ? new Date(auctionEnd) : null;
+  const isAuctionActive = isAuction && auctionEndDate && auctionEndDate > new Date();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -71,7 +85,7 @@ export const ProductCard = ({
       className="product-card group"
     >
       {/* Image Container */}
-      <Link to={`/productos/${id}`} className="block relative aspect-[4/3] overflow-hidden">
+      <Link to={`/producto/${id}`} className="block relative aspect-[4/3] overflow-hidden">
         <img
           src={image}
           alt={title}
@@ -81,9 +95,15 @@ export const ProductCard = ({
         
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+          {isAuction && (
+            <Badge className="bg-primary text-primary-foreground">
+              <Gavel size={12} className="mr-1" />
+              Subasta
+            </Badge>
+          )}
           {isNew && <span className="badge-new">Nuevo</span>}
           {isFeatured && <span className="badge-featured">Destacado</span>}
-          {categories.slice(0, 2).map((cat) => (
+          {!isAuction && categories.slice(0, 2).map((cat) => (
             <span key={cat} className="badge-category">{cat}</span>
           ))}
         </div>
@@ -98,7 +118,7 @@ export const ProductCard = ({
 
       {/* Content */}
       <div className="p-4">
-        <Link to={`/productos/${id}`}>
+        <Link to={`/producto/${id}`}>
           <h3 className="font-semibold text-foreground line-clamp-2 mb-3 group-hover:text-primary transition-colors">
             {title}
           </h3>
@@ -113,48 +133,94 @@ export const ProductCard = ({
             <span className="text-muted-foreground/70">Marca</span>
             <span className="font-medium text-foreground">{brand}</span>
           </div>
-          {price ? (
+          
+          {/* Price display logic */}
+          {isAuction ? (
+            <>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground/70">Compra ya</span>
+                <span className="font-bold text-primary text-lg">
+                  ${auctionMinPrice?.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              {auctionEndDate && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Timer size={12} />
+                  <span>
+                    {isAuctionActive 
+                      ? `Termina: ${auctionEndDate.toLocaleDateString('es-MX')}`
+                      : 'Finalizada'
+                    }
+                  </span>
+                </div>
+              )}
+            </>
+          ) : contactForQuote || !price ? (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground/70">Precio</span>
+              <span className="font-medium text-secondary">Cotizar</span>
+            </div>
+          ) : (
             <div className="flex justify-between">
               <span className="text-muted-foreground/70">Precio</span>
               <span className="font-bold text-primary text-lg">
                 ${price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
               </span>
             </div>
-          ) : (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground/70">Precio</span>
-              <span className="font-medium text-secondary">Cotizar</span>
-            </div>
           )}
         </div>
 
         {/* Actions */}
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1"
-            onClick={handleAddToCart}
-          >
-            <ShoppingCart size={16} className="mr-1" />
-            Agregar
-          </Button>
-          {!price ? (
+          {isAuction ? (
             <Button 
+              asChild
               size="sm" 
-              className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-              onClick={handleQuote}
+              className="w-full btn-gold"
             >
-              Cotizar
+              <Link to={`/producto/${id}`}>
+                <Gavel size={16} className="mr-1" />
+                Ver subasta
+              </Link>
             </Button>
+          ) : contactForQuote || !price ? (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+                onClick={handleQuote}
+              >
+                <ShoppingCart size={16} className="mr-1" />
+                Agregar
+              </Button>
+              <Button 
+                size="sm" 
+                className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                onClick={handleQuote}
+              >
+                Cotizar
+              </Button>
+            </>
           ) : (
-            <Button 
-              size="sm" 
-              className="flex-1 btn-gold"
-              onClick={handleAddToCart}
-            >
-              Comprar
-            </Button>
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+                onClick={handleAddToCart}
+              >
+                <ShoppingCart size={16} className="mr-1" />
+                Agregar
+              </Button>
+              <Button 
+                size="sm" 
+                className="flex-1 btn-gold"
+                onClick={handleAddToCart}
+              >
+                Comprar
+              </Button>
+            </>
           )}
         </div>
 

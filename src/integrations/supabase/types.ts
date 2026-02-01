@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      bids: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          is_winning: boolean | null
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          is_winning?: boolean | null
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          is_winning?: boolean | null
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_items: {
         Row: {
           created_at: string
@@ -482,14 +517,20 @@ export type Database = {
         Row: {
           alto_aprox_cm: number | null
           ancho_aprox_cm: number | null
+          auction_end: string | null
+          auction_min_price: number | null
+          auction_start: string | null
+          auction_status: string | null
           brand: string
           categories: string[]
+          contact_for_quote: boolean | null
           cp_origen: string | null
           created_at: string
           description: string | null
           id: string
           images: string[]
           is_active: boolean | null
+          is_auction: boolean | null
           is_featured: boolean | null
           is_new: boolean | null
           largo_aprox_cm: number | null
@@ -507,14 +548,20 @@ export type Database = {
         Insert: {
           alto_aprox_cm?: number | null
           ancho_aprox_cm?: number | null
+          auction_end?: string | null
+          auction_min_price?: number | null
+          auction_start?: string | null
+          auction_status?: string | null
           brand: string
           categories?: string[]
+          contact_for_quote?: boolean | null
           cp_origen?: string | null
           created_at?: string
           description?: string | null
           id: string
           images?: string[]
           is_active?: boolean | null
+          is_auction?: boolean | null
           is_featured?: boolean | null
           is_new?: boolean | null
           largo_aprox_cm?: number | null
@@ -532,14 +579,20 @@ export type Database = {
         Update: {
           alto_aprox_cm?: number | null
           ancho_aprox_cm?: number | null
+          auction_end?: string | null
+          auction_min_price?: number | null
+          auction_start?: string | null
+          auction_status?: string | null
           brand?: string
           categories?: string[]
+          contact_for_quote?: boolean | null
           cp_origen?: string | null
           created_at?: string
           description?: string | null
           id?: string
           images?: string[]
           is_active?: boolean | null
+          is_auction?: boolean | null
           is_featured?: boolean | null
           is_new?: boolean | null
           largo_aprox_cm?: number | null
