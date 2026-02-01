@@ -19,7 +19,8 @@ import {
   Settings,
   Search,
   Tag,
-  UserCog
+  UserCog,
+  Link as LinkIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,7 @@ import AdminPreguntas from './AdminPreguntas';
 import AdminOfertas from './AdminOfertas';
 import AdminUsuarios from './AdminUsuarios';
 import AdminAjustes from './AdminAjustes';
+import AdminAuditoriaEnlaces from './AdminAuditoriaEnlaces';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -58,6 +60,7 @@ const allSidebarItems: SidebarItem[] = [
   { icon: Package, label: 'Inventario', path: '/admin/inventario', description: 'Productos y stock' },
   { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes', staffOnly: true },
   { icon: Settings, label: 'Ajustes', path: '/admin/ajustes', description: 'Configuración del sitio', adminOnly: true },
+  { icon: LinkIcon, label: 'Auditoría Enlaces', path: '/admin/auditoria-enlaces', description: 'Verificación de rutas', adminOnly: true },
 ];
 
 const AdminDashboard = () => {
@@ -364,6 +367,7 @@ const AdminDashboard = () => {
                 isStaff ? <AdminPreguntas /> : <AccessDenied message="Solo administradores y operadores pueden gestionar preguntas." />
               } />
               <Route path="ajustes" element={<AdminAjustes />} />
+              <Route path="auditoria-enlaces" element={<AdminAuditoriaEnlaces />} />
             </Routes>
           </div>
         </main>
