@@ -480,8 +480,11 @@ export type Database = {
       }
       products: {
         Row: {
+          alto_aprox_cm: number | null
+          ancho_aprox_cm: number | null
           brand: string
           categories: string[]
+          cp_origen: string | null
           created_at: string
           description: string | null
           id: string
@@ -489,8 +492,10 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           is_new: boolean | null
+          largo_aprox_cm: number | null
           location: string | null
           original_price: number | null
+          peso_aprox_kg: number | null
           price: number | null
           seller_id: string | null
           sku: string
@@ -500,8 +505,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          alto_aprox_cm?: number | null
+          ancho_aprox_cm?: number | null
           brand: string
           categories?: string[]
+          cp_origen?: string | null
           created_at?: string
           description?: string | null
           id: string
@@ -509,8 +517,10 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_new?: boolean | null
+          largo_aprox_cm?: number | null
           location?: string | null
           original_price?: number | null
+          peso_aprox_kg?: number | null
           price?: number | null
           seller_id?: string | null
           sku: string
@@ -520,8 +530,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          alto_aprox_cm?: number | null
+          ancho_aprox_cm?: number | null
           brand?: string
           categories?: string[]
+          cp_origen?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -529,8 +542,10 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_new?: boolean | null
+          largo_aprox_cm?: number | null
           location?: string | null
           original_price?: number | null
+          peso_aprox_kg?: number | null
           price?: number | null
           seller_id?: string | null
           sku?: string

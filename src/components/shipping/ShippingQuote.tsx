@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, MapPin, Truck, Loader2, AlertCircle, CheckCircle, Layers } from 'lucide-react';
+import { Package, MapPin, Truck, Loader2, AlertCircle, CheckCircle, Layers, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +26,21 @@ interface QuoteFormData {
   length: string;
 }
 
-export const ShippingQuoteComponent = () => {
+interface PrefilledData {
+  zipFrom?: string;
+  weight?: number;
+  height?: number;
+  width?: number;
+  length?: number;
+  productTitle?: string;
+}
+
+interface ShippingQuoteComponentProps {
+  prefilled?: PrefilledData;
+  isReadOnly?: boolean;
+}
+
+export const ShippingQuoteComponent = ({ prefilled, isReadOnly = false }: ShippingQuoteComponentProps) => {
   const [formData, setFormData] = useState<QuoteFormData>({
     zipFrom: '',
     zipTo: '',
@@ -39,6 +53,26 @@ export const ShippingQuoteComponent = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const zipToInputRef = useRef<HTMLInputElement>(null);
+
+  // Apply prefilled data on mount or when prefilled changes
+  useEffect(() => {
+    if (prefilled) {
+      setFormData(prev => ({
+        ...prev,
+        zipFrom: prefilled.zipFrom || prev.zipFrom,
+        weight: prefilled.weight?.toString() || prev.weight,
+        height: prefilled.height?.toString() || prev.height,
+        width: prefilled.width?.toString() || prev.width,
+        length: prefilled.length?.toString() || prev.length,
+      }));
+      
+      // Focus on destination zip code after prefilling
+      setTimeout(() => {
+        zipToInputRef.current?.focus();
+      }, 100);
+    }
+  }, [prefilled]);
 
   const handleInputChange = (field: keyof QuoteFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -131,12 +165,22 @@ export const ShippingQuoteComponent = () => {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {/* Product info banner when prefilled */}
+        {prefilled?.productTitle && (
+          <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+            <p className="text-sm text-primary font-medium">
+              📦 Cotizando envío para: <strong>{prefilled.productTitle}</strong>
+            </p>
+          </div>
+        )}
+
         {/* Zip Codes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="zipFrom" className="flex items-center gap-2">
               <MapPin size={16} className="text-primary" />
               Código postal origen
+              {isReadOnly && prefilled?.zipFrom && <Lock size={12} className="text-muted-foreground" />}
             </Label>
             <Input
               id="zipFrom"
@@ -146,6 +190,8 @@ export const ShippingQuoteComponent = () => {
               value={formData.zipFrom}
               onChange={(e) => handleInputChange('zipFrom', e.target.value.replace(/\D/g, ''))}
               required
+              readOnly={isReadOnly && !!prefilled?.zipFrom}
+              className={isReadOnly && prefilled?.zipFrom ? 'bg-muted cursor-not-allowed' : ''}
             />
           </div>
           <div className="space-y-2">
@@ -154,6 +200,7 @@ export const ShippingQuoteComponent = () => {
               Código postal destino
             </Label>
             <Input
+              ref={zipToInputRef}
               id="zipTo"
               type="text"
               placeholder="Ej: 64000"
@@ -179,7 +226,10 @@ export const ShippingQuoteComponent = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Peso (kg)</span>
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                Peso (kg)
+                {isReadOnly && prefilled?.weight && <Lock size={10} />}
+              </span>
               <Input
                 type="number"
                 step="1"
@@ -188,10 +238,15 @@ export const ShippingQuoteComponent = () => {
                 value={formData.weight}
                 onChange={(e) => handleInputChange('weight', e.target.value)}
                 required
+                readOnly={isReadOnly && !!prefilled?.weight}
+                className={isReadOnly && prefilled?.weight ? 'bg-muted cursor-not-allowed' : ''}
               />
             </div>
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Alto (cm)</span>
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                Alto (cm)
+                {isReadOnly && prefilled?.height && <Lock size={10} />}
+              </span>
               <Input
                 type="number"
                 min="10"
@@ -199,10 +254,15 @@ export const ShippingQuoteComponent = () => {
                 value={formData.height}
                 onChange={(e) => handleInputChange('height', e.target.value)}
                 required
+                readOnly={isReadOnly && !!prefilled?.height}
+                className={isReadOnly && prefilled?.height ? 'bg-muted cursor-not-allowed' : ''}
               />
             </div>
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Ancho (cm)</span>
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                Ancho (cm)
+                {isReadOnly && prefilled?.width && <Lock size={10} />}
+              </span>
               <Input
                 type="number"
                 min="10"
@@ -210,10 +270,15 @@ export const ShippingQuoteComponent = () => {
                 value={formData.width}
                 onChange={(e) => handleInputChange('width', e.target.value)}
                 required
+                readOnly={isReadOnly && !!prefilled?.width}
+                className={isReadOnly && prefilled?.width ? 'bg-muted cursor-not-allowed' : ''}
               />
             </div>
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Largo (cm)</span>
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                Largo (cm)
+                {isReadOnly && prefilled?.length && <Lock size={10} />}
+              </span>
               <Input
                 type="number"
                 min="10"
@@ -221,6 +286,8 @@ export const ShippingQuoteComponent = () => {
                 value={formData.length}
                 onChange={(e) => handleInputChange('length', e.target.value)}
                 required
+                readOnly={isReadOnly && !!prefilled?.length}
+                className={isReadOnly && prefilled?.length ? 'bg-muted cursor-not-allowed' : ''}
               />
             </div>
           </div>
