@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole, getRoleLabel } from '@/hooks/useUserRole';
 import { 
   LayoutDashboard, 
   Users, 
@@ -17,12 +18,14 @@ import {
   Bell,
   Settings,
   Search,
-  Sun,
-  Moon
+  Tag,
+  UserCog
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import AccessDenied from '@/components/admin/AccessDenied';
 
 // Admin sub-pages
 import AdminResumen from './AdminResumen';
@@ -32,23 +35,38 @@ import AdminFacturacion from './AdminFacturacion';
 import AdminInventario from './AdminInventario';
 import AdminPreguntas from './AdminPreguntas';
 import AdminOfertas from './AdminOfertas';
+import AdminUsuarios from './AdminUsuarios';
 
-const sidebarItems = [
+interface SidebarItem {
+  icon: React.ElementType;
+  label: string;
+  path: string;
+  description: string;
+  requiredPermission?: string;
+  adminOnly?: boolean;
+  staffOnly?: boolean;
+}
+
+const allSidebarItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: 'Panel de Control', path: '/admin', description: 'Vista general' },
-  { icon: Users, label: 'Clientes', path: '/admin/clientes', description: 'Gestión de usuarios' },
+  { icon: UserCog, label: 'Usuarios', path: '/admin/usuarios', description: 'Gestión de usuarios', adminOnly: true },
+  { icon: Users, label: 'Clientes', path: '/admin/clientes', description: 'Gestión de clientes', adminOnly: true },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/pedidos', description: 'Órdenes y cotizaciones' },
-  { icon: Bell, label: 'Ofertas', path: '/admin/ofertas', description: 'Negociación de precios' },
-  { icon: FileText, label: 'Facturación', path: '/admin/facturacion', description: 'CFDI y documentos' },
+  { icon: Tag, label: 'Ofertas', path: '/admin/ofertas', description: 'Negociación de precios' },
+  { icon: FileText, label: 'Facturación', path: '/admin/facturacion', description: 'CFDI y documentos', staffOnly: true },
   { icon: Package, label: 'Inventario', path: '/admin/inventario', description: 'Productos y stock' },
-  { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes' },
+  { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes', staffOnly: true },
 ];
 
 const AdminDashboard = () => {
-  const { user, profile, isAdmin, isLoading, signOut } = useAuth();
+  const { user, profile, isLoading: authLoading, signOut } = useAuth();
+  const { role, isAdmin, isOperador, isVendedor, isStaff, permissions, isLoading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const isLoading = authLoading || roleLoading;
 
   if (isLoading) {
     return (
@@ -61,14 +79,56 @@ const AdminDashboard = () => {
     );
   }
 
-  if (!user || !isAdmin) {
+  // Check if user is authenticated
+  if (!user) {
     navigate('/auth');
     return null;
   }
 
+  // Check if user has any admin role (admin, operador, or vendedor)
+  const hasAccess = isAdmin || isOperador || isVendedor;
+  
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center p-4">
+        <AccessDenied message="No tienes permisos para acceder al panel de administración. Contacta al administrador si crees que esto es un error." />
+      </div>
+    );
+  }
+
+  // Filter sidebar items based on role
+  const sidebarItems = allSidebarItems.filter(item => {
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.staffOnly && !isStaff) return false;
+    return true;
+  });
+
+  // Rename "Inventario" to "Mis Publicaciones" for vendors
+  const processedSidebarItems = sidebarItems.map(item => {
+    if (item.path === '/admin/inventario' && isVendedor && !isStaff) {
+      return { ...item, label: 'Mis Publicaciones', description: 'Tu catálogo' };
+    }
+    if (item.path === '/admin/ofertas' && isVendedor && !isStaff) {
+      return { ...item, label: 'Mis Ofertas', description: 'Negociaciones' };
+    }
+    if (item.path === '/admin/pedidos' && isVendedor && !isStaff) {
+      return { ...item, label: 'Mis Pedidos', description: 'Tus ventas' };
+    }
+    return item;
+  });
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const getRoleBadgeColor = () => {
+    switch (role) {
+      case 'admin': return 'bg-red-500/10 text-red-500';
+      case 'operador': return 'bg-blue-500/10 text-blue-500';
+      case 'vendedor': return 'bg-amber-500/10 text-amber-500';
+      default: return 'bg-muted text-muted-foreground';
+    }
   };
 
   return (
@@ -80,13 +140,13 @@ const AdminDashboard = () => {
         </button>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <span className="text-white font-bold text-sm">MI</span>
+            <span className="text-primary-foreground font-bold text-sm">MI</span>
           </div>
           <span className="font-display font-bold">Admin</span>
         </div>
         <button className="p-2 hover:bg-muted rounded-lg transition-colors relative">
           <Bell size={20} />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
         </button>
       </header>
 
@@ -104,7 +164,7 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between">
               <Link to="/" className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
-                  <span className="text-white font-bold">MI</span>
+                  <span className="text-primary-foreground font-bold">MI</span>
                 </div>
                 {!sidebarCollapsed && (
                   <div>
@@ -121,7 +181,7 @@ const AdminDashboard = () => {
 
           {/* Navigation */}
           <nav className="p-4 space-y-2">
-            {sidebarItems.map((item) => {
+            {processedSidebarItems.map((item) => {
               const isActive = location.pathname === item.path || 
                 (item.path !== '/admin' && location.pathname.startsWith(item.path));
               
@@ -173,13 +233,17 @@ const AdminDashboard = () => {
                     <Package size={18} className="text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium text-sm">Agregar Producto</p>
-                    <p className="text-xs text-muted-foreground">Nuevo al inventario</p>
+                    <p className="font-medium text-sm">
+                      {isVendedor ? 'Nueva Publicación' : 'Agregar Producto'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {isVendedor ? 'Crear borrador' : 'Nuevo al inventario'}
+                    </p>
                   </div>
                 </div>
                 <Link to="/admin/inventario">
                   <Button size="sm" className="w-full">
-                    Ir a Inventario
+                    Ir a {isVendedor ? 'Publicaciones' : 'Inventario'}
                   </Button>
                 </Link>
               </div>
@@ -198,8 +262,10 @@ const AdminDashboard = () => {
                     <Users size={18} className="text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate text-sm">{profile?.full_name || 'Admin'}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    <p className="font-medium truncate text-sm">{profile?.full_name || 'Usuario'}</p>
+                    <Badge variant="outline" className={cn("text-xs mt-1", getRoleBadgeColor())}>
+                      {getRoleLabel(role)}
+                    </Badge>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -208,13 +274,13 @@ const AdminDashboard = () => {
                       Ver Tienda
                     </Link>
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
+                  <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-destructive hover:text-destructive hover:bg-destructive/10">
                     <LogOut size={16} />
                   </Button>
                 </div>
               </>
             ) : (
-              <Button variant="ghost" size="icon" onClick={handleSignOut} className="w-full text-red-500 hover:text-red-600 hover:bg-red-500/10">
+              <Button variant="ghost" size="icon" onClick={handleSignOut} className="w-full text-destructive hover:text-destructive hover:bg-destructive/10">
                 <LogOut size={18} />
               </Button>
             )}
@@ -256,19 +322,23 @@ const AdminDashboard = () => {
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" className="relative">
                 <Bell size={20} />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full" />
               </Button>
-              <Button variant="ghost" size="icon">
-                <Settings size={20} />
-              </Button>
+              {isAdmin && (
+                <Button variant="ghost" size="icon">
+                  <Settings size={20} />
+                </Button>
+              )}
               <div className="w-px h-6 bg-border" />
               <div className="flex items-center gap-3 pl-3">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold text-sm">
-                  {profile?.full_name?.[0] || 'A'}
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground font-semibold text-sm">
+                  {profile?.full_name?.[0] || 'U'}
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium">{profile?.full_name || 'Admin'}</p>
-                  <p className="text-xs text-muted-foreground">Administrador</p>
+                  <p className="text-sm font-medium">{profile?.full_name || 'Usuario'}</p>
+                  <Badge variant="outline" className={cn("text-xs", getRoleBadgeColor())}>
+                    {getRoleLabel(role)}
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -278,12 +348,19 @@ const AdminDashboard = () => {
           <div className="p-6 lg:p-8">
             <Routes>
               <Route index element={<AdminResumen />} />
-              <Route path="clientes" element={<AdminClientes />} />
+              <Route path="usuarios" element={<AdminUsuarios />} />
+              <Route path="clientes" element={
+                isAdmin ? <AdminClientes /> : <AccessDenied message="Solo los administradores pueden ver la lista de clientes." />
+              } />
               <Route path="pedidos" element={<AdminPedidos />} />
               <Route path="ofertas" element={<AdminOfertas />} />
-              <Route path="facturacion" element={<AdminFacturacion />} />
+              <Route path="facturacion" element={
+                isStaff ? <AdminFacturacion /> : <AccessDenied message="Solo administradores y operadores pueden acceder a facturación." />
+              } />
               <Route path="inventario" element={<AdminInventario />} />
-              <Route path="preguntas" element={<AdminPreguntas />} />
+              <Route path="preguntas" element={
+                isStaff ? <AdminPreguntas /> : <AccessDenied message="Solo administradores y operadores pueden gestionar preguntas." />
+              } />
             </Routes>
           </div>
         </main>

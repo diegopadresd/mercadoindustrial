@@ -37,6 +37,7 @@ import { useAdminOffers, useUpdateOfferStatus } from '@/hooks/useOffers';
 import { useCreateNotification } from '@/hooks/useNotifications';
 import { useProduct } from '@/hooks/useProducts';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 const OfferProductInfo = ({ productId }: { productId: string }) => {
   const { data: product, isLoading } = useProduct(productId);
@@ -61,6 +62,7 @@ const OfferProductInfo = ({ productId }: { productId: string }) => {
 
 const AdminOfertas = () => {
   const { user } = useAuth();
+  const { isVendedor, isStaff, sellerId } = useUserRole();
   const { data: offers, isLoading } = useAdminOffers();
   const updateOfferStatus = useUpdateOfferStatus();
   const createNotification = useCreateNotification();
@@ -134,12 +136,18 @@ const AdminOfertas = () => {
     rejected: offers?.filter((o) => o.status === 'rejected').length || 0,
   };
 
+  // Header label based on role
+  const headerTitle = isVendedor && !isStaff ? 'Mis Ofertas' : 'Ofertas';
+  const headerDescription = isVendedor && !isStaff 
+    ? 'Ofertas recibidas en tus productos' 
+    : 'Gestiona las ofertas de los clientes';
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-display font-bold text-foreground">Ofertas</h1>
-        <p className="text-muted-foreground mt-1">Gestiona las ofertas de los clientes</p>
+        <h1 className="text-3xl font-display font-bold text-foreground">{headerTitle}</h1>
+        <p className="text-muted-foreground mt-1">{headerDescription}</p>
       </div>
 
       {/* Stats */}

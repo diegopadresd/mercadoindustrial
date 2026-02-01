@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
+import { useUserRole } from '@/hooks/useUserRole';
 import { 
   ShoppingCart, 
   Search,
@@ -11,7 +12,8 @@ import {
   Calendar,
   Clock,
   FileText,
-  Send
+  Send,
+  Loader2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -43,6 +45,7 @@ const statusOptions = [
 ];
 
 const AdminPedidos = () => {
+  const { isVendedor, isStaff, sellerId } = useUserRole();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -112,16 +115,22 @@ const AdminPedidos = () => {
     setQuoteDialogOpen(true);
   };
 
+  // Dynamic labels based on role
+  const headerTitle = isVendedor && !isStaff ? 'Mis Pedidos' : 'Pedidos';
+  const headerDescription = isVendedor && !isStaff 
+    ? `${orders?.length || 0} ventas registradas` 
+    : `${orders?.length || 0} pedidos totales`;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
-            Pedidos
+            {headerTitle}
           </h1>
           <p className="text-muted-foreground">
-            {orders?.length || 0} pedidos totales
+            {headerDescription}
           </p>
         </div>
         

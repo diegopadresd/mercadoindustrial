@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
+import { useUserRole, getRoleLabel } from '@/hooks/useUserRole';
 import { 
   TrendingUp, 
   DollarSign, 
@@ -20,11 +21,13 @@ import {
   FileText,
   Truck,
   Target,
-  Activity
+  Activity,
+  Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
   AreaChart,
@@ -44,6 +47,7 @@ import {
 import { Link } from 'react-router-dom';
 
 const AdminResumen = () => {
+  const { role, isVendedor, isStaff, sellerId } = useUserRole();
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
@@ -267,11 +271,19 @@ const AdminResumen = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Panel de Control
-          </h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              {isVendedor && !isStaff ? 'Mi Panel' : 'Panel de Control'}
+            </h1>
+            <Badge variant="outline" className="text-xs">
+              {getRoleLabel(role)}
+            </Badge>
+          </div>
           <p className="text-muted-foreground mt-1">
-            Bienvenido de vuelta. Aquí está el resumen de tu negocio.
+            {isVendedor && !isStaff 
+              ? 'Bienvenido. Aquí está el resumen de tus publicaciones.'
+              : 'Bienvenido de vuelta. Aquí está el resumen de tu negocio.'
+            }
           </p>
         </div>
         
