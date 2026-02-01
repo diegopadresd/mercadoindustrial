@@ -14,7 +14,6 @@ import Marcas from "./pages/Marcas";
 import Blog from "./pages/Blog";
 import BlogDetalle from "./pages/BlogDetalle";
 import Nosotros from "./pages/Nosotros";
-import Vende from "./pages/Vende";
 import Recientes from "./pages/Recientes";
 import Carrito from "./pages/Carrito";
 import Cotizador from "./pages/Cotizador";
@@ -52,7 +51,6 @@ const App = () => (
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:id" element={<BlogDetalle />} />
               <Route path="/nosotros" element={<Nosotros />} />
-              <Route path="/vende" element={<Vende />} />
               <Route path="/recientes" element={<Recientes />} />
               <Route path="/carrito" element={<Carrito />} />
               <Route path="/cotizador" element={<Cotizador />} />
