@@ -40,6 +40,8 @@ import {
   Play,
   Loader2,
   Truck,
+  BadgeCheck,
+  ShieldCheck,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getProductById } from '@/data/products';
@@ -455,6 +457,44 @@ const ProductoDetalle = () => {
                     </Button>
                   </div>
                 )}
+              </div>
+
+              {/* Compra con Confianza Section */}
+              <div className="border-t border-border pt-6">
+                <h3 className="font-display font-bold text-lg mb-4">Compra con confianza</h3>
+                <div className="space-y-4">
+                  {/* Programa de vendedor sobresaliente */}
+                  <div className="flex gap-3">
+                    <div className="shrink-0 w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                      <BadgeCheck size={20} className="text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Programa de vendedor Sobresaliente</p>
+                      <p className="text-sm text-muted-foreground">
+                        Vendedor confiable, envío rápido y devoluciones fáciles.{' '}
+                        <Link to="/como-comprar" className="text-foreground underline hover:text-primary">
+                          Más información
+                        </Link>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Devolución de tu dinero */}
+                  <div className="flex gap-3">
+                    <div className="shrink-0 w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                      <ShieldCheck size={20} className="text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Devolución de tu dinero de Mercado Industrial</p>
+                      <p className="text-sm text-muted-foreground">
+                        Recibe el artículo que pediste o te devolvemos tu dinero.{' '}
+                        <Link to="/politicas-de-pago" className="text-foreground underline hover:text-primary">
+                          Más información
+                        </Link>
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
