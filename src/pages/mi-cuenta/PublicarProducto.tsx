@@ -50,6 +50,14 @@ const PublicarProducto = () => {
     ancho_aprox_cm: '',
     alto_aprox_cm: '',
     cp_origen: '',
+    // Product details (required)
+    model: '',
+    year: '',
+    hours_of_use: '',
+    is_functional: true,
+    has_warranty: false,
+    warranty_duration: '',
+    warranty_conditions: '',
     // Flags
     is_active: false,
     is_featured: false,
@@ -88,6 +96,13 @@ const PublicarProducto = () => {
             ancho_aprox_cm: data.ancho_aprox_cm?.toString() || '',
             alto_aprox_cm: data.alto_aprox_cm?.toString() || '',
             cp_origen: data.cp_origen || '',
+            model: (data as any).model || '',
+            year: (data as any).year?.toString() || '',
+            hours_of_use: (data as any).hours_of_use?.toString() || '',
+            is_functional: (data as any).is_functional ?? true,
+            has_warranty: (data as any).has_warranty || false,
+            warranty_duration: (data as any).warranty_duration || '',
+            warranty_conditions: (data as any).warranty_conditions || '',
             is_active: data.is_active || false,
             is_featured: data.is_featured || false,
             is_new: data.is_new || false,
@@ -100,8 +115,10 @@ const PublicarProducto = () => {
   }, [editProductId, user?.id, navigate, toast]);
 
   const canPublish = () => {
-    return formData.peso_aprox_kg && formData.largo_aprox_cm && formData.ancho_aprox_cm && 
+    const hasShippingData = formData.peso_aprox_kg && formData.largo_aprox_cm && formData.ancho_aprox_cm && 
            formData.alto_aprox_cm && formData.cp_origen;
+    const hasProductDetails = formData.model && formData.year && formData.hours_of_use;
+    return hasShippingData && hasProductDetails;
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,8 +162,17 @@ const PublicarProducto = () => {
 
     if (publish && !canPublish()) {
       toast({ 
-        title: 'Datos de envío incompletos', 
-        description: 'Para publicar necesitas peso, dimensiones y código postal de origen',
+        title: 'Datos incompletos', 
+        description: 'Para publicar necesitas: peso, dimensiones, CP origen, modelo, año y horas de uso',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (publish && formData.has_warranty && (!formData.warranty_duration || !formData.warranty_conditions)) {
+      toast({ 
+        title: 'Garantía incompleta', 
+        description: 'Si ofreces garantía, debes especificar la duración y condiciones',
         variant: 'destructive'
       });
       return;
@@ -170,6 +196,13 @@ const PublicarProducto = () => {
         ancho_aprox_cm: formData.ancho_aprox_cm ? parseFloat(formData.ancho_aprox_cm) : null,
         alto_aprox_cm: formData.alto_aprox_cm ? parseFloat(formData.alto_aprox_cm) : null,
         cp_origen: formData.cp_origen,
+        model: formData.model || null,
+        year: formData.year ? parseInt(formData.year) : null,
+        hours_of_use: formData.hours_of_use ? parseInt(formData.hours_of_use) : null,
+        is_functional: formData.is_functional,
+        has_warranty: formData.has_warranty,
+        warranty_duration: formData.has_warranty ? formData.warranty_duration : null,
+        warranty_conditions: formData.has_warranty ? formData.warranty_conditions : null,
         is_active: publish ? true : formData.is_active,
         is_featured: formData.is_featured,
         is_new: formData.is_new,
@@ -352,6 +385,120 @@ const PublicarProducto = () => {
                   </div>
                 </motion.div>
 
+                {/* Equipment Details - Required */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 }}
+                  className="bg-card rounded-xl border border-border p-6"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-semibold">Detalles del equipo</h2>
+                    {(!formData.model || !formData.year || !formData.hours_of_use) && (
+                      <span className="text-sm text-amber-600 dark:text-amber-500 flex items-center gap-1">
+                        <AlertTriangle size={14} />
+                        Requeridos para publicar
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="model">Modelo *</Label>
+                        <Input
+                          id="model"
+                          value={formData.model}
+                          onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                          placeholder="Ej: XJ-500"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="year">Año *</Label>
+                        <Input
+                          id="year"
+                          type="number"
+                          min="1900"
+                          max={new Date().getFullYear()}
+                          value={formData.year}
+                          onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                          placeholder="Ej: 2020"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="hours_of_use">Horas de uso *</Label>
+                        <Input
+                          id="hours_of_use"
+                          type="number"
+                          min="0"
+                          value={formData.hours_of_use}
+                          onChange={(e) => setFormData({ ...formData, hours_of_use: e.target.value })}
+                          placeholder="Ej: 1500"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div>
+                          <Label htmlFor="is_functional" className="text-base font-medium">¿El equipo funciona?</Label>
+                          <p className="text-sm text-muted-foreground">Indica si el equipo está en funcionamiento</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm ${!formData.is_functional ? 'font-semibold text-destructive' : 'text-muted-foreground'}`}>No</span>
+                          <Switch
+                            id="is_functional"
+                            checked={formData.is_functional}
+                            onCheckedChange={(checked) => setFormData({ ...formData, is_functional: checked })}
+                          />
+                          <span className={`text-sm ${formData.is_functional ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>Sí</span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-muted/50 rounded-lg space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label htmlFor="has_warranty" className="text-base font-medium">¿Ofrece garantía?</Label>
+                            <p className="text-sm text-muted-foreground">Garantía proporcionada por el vendedor</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm ${!formData.has_warranty ? 'font-semibold' : 'text-muted-foreground'}`}>No</span>
+                            <Switch
+                              id="has_warranty"
+                              checked={formData.has_warranty}
+                              onCheckedChange={(checked) => setFormData({ ...formData, has_warranty: checked, warranty_duration: '', warranty_conditions: '' })}
+                            />
+                            <span className={`text-sm ${formData.has_warranty ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>Sí</span>
+                          </div>
+                        </div>
+
+                        {formData.has_warranty && (
+                          <div className="space-y-3 pt-2 border-t border-border">
+                            <div>
+                              <Label htmlFor="warranty_duration">Duración de la garantía *</Label>
+                              <Input
+                                id="warranty_duration"
+                                value={formData.warranty_duration}
+                                onChange={(e) => setFormData({ ...formData, warranty_duration: e.target.value })}
+                                placeholder="Ej: 6 meses, 1 año"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="warranty_conditions">Condiciones de la garantía *</Label>
+                              <Textarea
+                                id="warranty_conditions"
+                                value={formData.warranty_conditions}
+                                onChange={(e) => setFormData({ ...formData, warranty_conditions: e.target.value })}
+                                placeholder="Especifique las condiciones de la garantía..."
+                                rows={3}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
                 {/* Shipping Info */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -362,7 +509,7 @@ const PublicarProducto = () => {
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="font-semibold">Datos de envío</h2>
                     {!canPublish() && (
-                      <span className="text-sm text-yellow-600 flex items-center gap-1">
+                      <span className="text-sm text-amber-600 dark:text-amber-500 flex items-center gap-1">
                         <AlertTriangle size={14} />
                         Requeridos para publicar
                       </span>
@@ -500,7 +647,12 @@ const PublicarProducto = () => {
                   </Button>
                   {!canPublish() && (
                     <p className="text-xs text-muted-foreground text-center">
-                      Completa los datos de envío para poder publicar
+                      Completa los datos de envío y detalles del equipo para poder publicar
+                    </p>
+                  )}
+                  {formData.has_warranty && (!formData.warranty_duration || !formData.warranty_conditions) && (
+                    <p className="text-xs text-amber-600 dark:text-amber-500 text-center">
+                      Si ofreces garantía, especifica duración y condiciones
                     </p>
                   )}
                 </motion.div>
