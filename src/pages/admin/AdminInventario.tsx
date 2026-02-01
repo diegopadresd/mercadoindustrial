@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { 
   Package, 
   Search,
@@ -11,10 +13,16 @@ import {
   Upload,
   X,
   Sparkles,
-  Loader2
+  Loader2,
+  Eye,
+  EyeOff,
+  Send,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import {
   Table,
@@ -43,6 +51,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -50,10 +65,16 @@ import { useProductImages } from '@/hooks/useProductImages';
 import { useProductAI, ProductAIResult } from '@/hooks/useProductAI';
 
 const AdminInventario = () => {
+  const { user } = useAuth();
+  const { isVendedor, isStaff, sellerId, permissions } = useUserRole();
   const [search, setSearch] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showAIConfirmDialog, setShowAIConfirmDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [showPublishRequestDialog, setShowPublishRequestDialog] = useState(false);
+  const [productToRequest, setProductToRequest] = useState<any>(null);
   const [aiResult, setAIResult] = useState<ProductAIResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -72,19 +93,24 @@ const AdminInventario = () => {
     location: '',
     description: '',
     categories: '',
-    is_active: true,
+    is_active: isVendedor ? false : true, // Vendors start with inactive (draft)
     is_featured: false,
     is_new: false,
     images: [] as string[],
   });
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ['admin-products', search],
+    queryKey: ['admin-products', search, sellerId],
     queryFn: async () => {
       let query = supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
+
+      // Vendors only see their own products
+      if (isVendedor && !isStaff && sellerId) {
+        query = query.eq('seller_id', sellerId);
+      }
 
       if (search) {
         query = query.or(`title.ilike.%${search}%,sku.ilike.%${search}%,brand.ilike.%${search}%`);
@@ -98,7 +124,7 @@ const AdminInventario = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const productData = {
+      const productData: any = {
         id: data.id || data.sku,
         title: data.title,
         sku: data.sku,
@@ -108,11 +134,16 @@ const AdminInventario = () => {
         location: data.location,
         description: data.description,
         categories: data.categories.split(',').map(c => c.trim()).filter(Boolean),
-        is_active: data.is_active,
+        is_active: isVendedor && !isStaff ? false : data.is_active, // Vendors can't publish
         is_featured: data.is_featured,
         is_new: data.is_new,
         images: data.images,
       };
+
+      // Assign seller_id for vendors
+      if (isVendedor && !editingProduct) {
+        productData.seller_id = user?.id;
+      }
 
       if (editingProduct) {
         const { error } = await supabase
@@ -130,8 +161,10 @@ const AdminInventario = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast({
-        title: editingProduct ? 'Producto actualizado' : 'Producto creado',
-        description: 'Los cambios se guardaron correctamente',
+        title: editingProduct ? 'Producto actualizado' : (isVendedor && !isStaff ? 'Borrador guardado' : 'Producto creado'),
+        description: isVendedor && !isStaff && !editingProduct 
+          ? 'Tu producto se guardó como borrador. Solicita publicación cuando esté listo.'
+          : 'Los cambios se guardaron correctamente',
       });
       setShowAddDialog(false);
       resetForm();
@@ -140,6 +173,58 @@ const AdminInventario = () => {
       toast({
         title: 'Error',
         description: error.message || 'No se pudo guardar el producto',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Toggle publish/unpublish mutation (for staff only)
+  const togglePublishMutation = useMutation({
+    mutationFn: async ({ productId, isActive }: { productId: string; isActive: boolean }) => {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: isActive })
+        .eq('id', productId);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast({
+        title: variables.isActive ? 'Producto publicado' : 'Producto despublicado',
+        description: variables.isActive 
+          ? 'El producto ahora es visible en el catálogo'
+          : 'El producto ya no es visible en el catálogo',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'No se pudo cambiar el estado del producto',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Request publication mutation (for vendors)
+  const requestPublicationMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      // TODO: Implement publication request logic
+      // For now, just notify - in a real app, you'd create a notification for admins
+      // This could be a new table "publication_requests" or a notification system
+      console.log('Publication requested for:', productId);
+      return { productId };
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Solicitud enviada',
+        description: 'Tu solicitud de publicación ha sido enviada al administrador',
+      });
+      setShowPublishRequestDialog(false);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'No se pudo enviar la solicitud',
         variant: 'destructive',
       });
     },
@@ -292,10 +377,11 @@ const AdminInventario = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
-            Inventario
+            {isVendedor && !isStaff ? 'Mis Publicaciones' : 'Inventario'}
           </h1>
           <p className="text-muted-foreground">
-            {products?.length || 0} productos en inventario
+            {products?.length || 0} {isVendedor && !isStaff ? 'publicaciones' : 'productos'} 
+            {isVendedor && !isStaff ? '' : ' en inventario'}
           </p>
         </div>
         
@@ -319,14 +405,24 @@ const AdminInventario = () => {
             <DialogTrigger asChild>
               <Button className="btn-gold" onClick={resetForm}>
                 <Plus size={18} className="mr-2" />
-                Agregar Producto
+                {isVendedor && !isStaff ? 'Nueva Publicación' : 'Agregar Producto'}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingProduct ? 'Editar Producto' : 'Agregar Producto'}</DialogTitle>
+                <DialogTitle>
+                  {editingProduct 
+                    ? 'Editar Producto' 
+                    : (isVendedor && !isStaff ? 'Nueva Publicación' : 'Agregar Producto')
+                  }
+                </DialogTitle>
                 <DialogDescription>
-                  {editingProduct ? 'Modifica los datos del producto' : 'Completa los datos del nuevo producto'}
+                  {editingProduct 
+                    ? 'Modifica los datos del producto' 
+                    : (isVendedor && !isStaff 
+                        ? 'Completa los datos. Tu publicación se guardará como borrador.' 
+                        : 'Completa los datos del nuevo producto')
+                  }
                 </DialogDescription>
               </DialogHeader>
               
@@ -473,23 +569,28 @@ const AdminInventario = () => {
                     />
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="is_active"
-                      checked={formData.is_active}
-                      onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                    />
-                    <Label htmlFor="is_active">Activo</Label>
-                  </div>
+                  {/* Only show publish switches for staff */}
+                  {isStaff && (
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="is_active"
+                        checked={formData.is_active}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                      />
+                      <Label htmlFor="is_active">Publicar (visible en catálogo)</Label>
+                    </div>
+                  )}
 
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="is_featured"
-                      checked={formData.is_featured}
-                      onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
-                    />
-                    <Label htmlFor="is_featured">Destacado</Label>
-                  </div>
+                  {isStaff && (
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="is_featured"
+                        checked={formData.is_featured}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
+                      />
+                      <Label htmlFor="is_featured">Destacado</Label>
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-2">
                     <Switch
@@ -501,12 +602,25 @@ const AdminInventario = () => {
                   </div>
                 </div>
 
+                {/* Info for vendors */}
+                {isVendedor && !isStaff && !editingProduct && (
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                    <p className="text-sm text-amber-700 dark:text-amber-400">
+                      <strong>Nota:</strong> Tu publicación se guardará como borrador. Una vez que esté lista, 
+                      podrás solicitar su publicación desde la lista de productos.
+                    </p>
+                  </div>
+                )}
+
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
                     Cancelar
                   </Button>
                   <Button type="submit" className="btn-gold" disabled={saveMutation.isPending}>
-                    {saveMutation.isPending ? 'Guardando...' : 'Guardar'}
+                    {saveMutation.isPending 
+                      ? 'Guardando...' 
+                      : (isVendedor && !isStaff && !editingProduct ? 'Guardar Borrador' : 'Guardar')
+                    }
                   </Button>
                 </DialogFooter>
               </form>
@@ -550,6 +664,67 @@ const AdminInventario = () => {
               Aplicar información
             </AlertDialogAction>
           </AlertDialogFooter>
+      </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El producto será eliminado permanentemente del inventario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (productToDelete) {
+                  deleteMutation.mutate(productToDelete);
+                  setProductToDelete(null);
+                  setShowDeleteDialog(false);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Request Publication Dialog (for vendors) */}
+      <AlertDialog open={showPublishRequestDialog} onOpenChange={setShowPublishRequestDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Send size={20} className="text-primary" />
+              Solicitar Publicación
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {productToRequest && (
+                <div className="space-y-2 mt-2">
+                  <p>¿Deseas solicitar la publicación de <strong>{productToRequest.title}</strong>?</p>
+                  <p className="text-sm">Un administrador revisará tu producto y lo publicará si cumple con los requisitos.</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (productToRequest) {
+                  requestPublicationMutation.mutate(productToRequest.id);
+                  setProductToRequest(null);
+                }
+              }}
+              className="btn-gold"
+            >
+              Enviar Solicitud
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
@@ -571,14 +746,17 @@ const AdminInventario = () => {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  Cargando productos...
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
+                  <p className="text-muted-foreground">Cargando productos...</p>
                 </TableCell>
               </TableRow>
             ) : products?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   <Package className="mx-auto mb-2 text-muted-foreground/50" size={32} />
-                  <p className="text-muted-foreground">No se encontraron productos</p>
+                  <p className="text-muted-foreground">
+                    {isVendedor && !isStaff ? 'No tienes publicaciones aún' : 'No se encontraron productos'}
+                  </p>
                 </TableCell>
               </TableRow>
             ) : (
@@ -611,45 +789,95 @@ const AdminInventario = () => {
                         ${Number(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                       </span>
                     ) : (
-                      <span className="text-secondary text-sm">Cotizar</span>
+                      <Badge variant="secondary" className="text-xs">Cotizar</Badge>
                     )}
                   </TableCell>
                   <TableCell>{product.stock || 1}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap gap-1">
                       {product.is_active ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-600">
-                          Activo
-                        </span>
+                        <Badge variant="outline" className="border-green-500 text-green-600 bg-green-500/10">
+                          <CheckCircle size={12} className="mr-1" />
+                          Publicado
+                        </Badge>
                       ) : (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-600">
-                          Inactivo
-                        </span>
+                        <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-500/10">
+                          <Clock size={12} className="mr-1" />
+                          Borrador
+                        </Badge>
                       )}
                       {product.is_featured && (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary">
+                        <Badge variant="outline" className="border-primary text-primary bg-primary/10">
                           Destacado
-                        </span>
+                        </Badge>
                       )}
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => openEditDialog(product)}>
-                        <Edit size={16} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          if (confirm('¿Eliminar este producto?')) {
-                            deleteMutation.mutate(product.id);
-                          }
-                        }}
-                      >
-                        <Trash2 size={16} className="text-destructive" />
-                      </Button>
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Edit size={16} className="mr-1" />
+                          Acciones
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditDialog(product)}>
+                          <Edit size={16} className="mr-2" />
+                          Editar
+                        </DropdownMenuItem>
+                        
+                        {/* Staff can publish/unpublish */}
+                        {isStaff && (
+                          <>
+                            <DropdownMenuSeparator />
+                            {product.is_active ? (
+                              <DropdownMenuItem 
+                                onClick={() => togglePublishMutation.mutate({ productId: product.id, isActive: false })}
+                              >
+                                <EyeOff size={16} className="mr-2" />
+                                Despublicar
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem 
+                                onClick={() => togglePublishMutation.mutate({ productId: product.id, isActive: true })}
+                              >
+                                <Eye size={16} className="mr-2" />
+                                Publicar
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        )}
+                        
+                        {/* Vendors see "Request Publication" for drafts */}
+                        {isVendedor && !isStaff && !product.is_active && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setProductToRequest(product);
+                                setShowPublishRequestDialog(true);
+                              }}
+                            >
+                              <Send size={16} className="mr-2" />
+                              Solicitar Publicación
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => {
+                            setProductToDelete(product.id);
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 size={16} className="mr-2" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))

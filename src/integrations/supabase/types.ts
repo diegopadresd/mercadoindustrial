@@ -97,6 +97,45 @@ export type Database = {
         }
         Relationships: []
       }
+      invitations: {
+        Row: {
+          accepted_at: string | null
+          company_id: string | null
+          created_at: string
+          email: string
+          expires_at: string | null
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          token: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          company_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          company_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string | null
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           created_at: string
@@ -453,6 +492,7 @@ export type Database = {
           location: string | null
           original_price: number | null
           price: number | null
+          seller_id: string | null
           sku: string
           specifications: Json | null
           stock: number | null
@@ -472,6 +512,7 @@ export type Database = {
           location?: string | null
           original_price?: number | null
           price?: number | null
+          seller_id?: string | null
           sku: string
           specifications?: Json | null
           stock?: number | null
@@ -491,6 +532,7 @@ export type Database = {
           location?: string | null
           original_price?: number | null
           price?: number | null
+          seller_id?: string | null
           sku?: string
           specifications?: Json | null
           stock?: number | null
@@ -501,6 +543,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          company_id: string | null
           created_at: string
           email: string
           fiscal_document_url: string | null
@@ -513,10 +556,12 @@ export type Database = {
           shipping_country: string | null
           shipping_postal_code: string | null
           shipping_state: string | null
+          status: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           email: string
           fiscal_document_url?: string | null
@@ -529,10 +574,12 @@ export type Database = {
           shipping_country?: string | null
           shipping_postal_code?: string | null
           shipping_state?: string | null
+          status?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           email?: string
           fiscal_document_url?: string | null
@@ -545,6 +592,7 @@ export type Database = {
           shipping_country?: string | null
           shipping_postal_code?: string | null
           shipping_state?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string
         }
