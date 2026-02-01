@@ -8,14 +8,15 @@ import {
   Eye,
   Package,
   Truck,
-  Check,
-  X,
   Calendar,
-  Clock
+  Clock,
+  FileText,
+  Send
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { QuoteResponseDialog } from '@/components/admin/QuoteResponseDialog';
 import {
   Table,
   TableBody,
@@ -44,11 +45,14 @@ const statusOptions = [
 const AdminPedidos = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: orders, isLoading } = useQuery({
-    queryKey: ['admin-orders-list', search, statusFilter],
+    queryKey: ['admin-orders-list', search, statusFilter, typeFilter],
     queryFn: async () => {
       let query = supabase
         .from('orders')
@@ -61,6 +65,10 @@ const AdminPedidos = () => {
 
       if (statusFilter && statusFilter !== 'all') {
         query = query.eq('status', statusFilter as 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled');
+      }
+
+      if (typeFilter && typeFilter !== 'all') {
+        query = query.eq('order_type', typeFilter as 'purchase' | 'quote');
       }
 
       const { data, error } = await query;
@@ -99,6 +107,11 @@ const AdminPedidos = () => {
     return <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>{config.label}</span>;
   };
 
+  const handleOpenQuoteDialog = (order: any) => {
+    setSelectedOrder(order);
+    setQuoteDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -113,6 +126,18 @@ const AdminPedidos = () => {
         </div>
         
         <div className="flex flex-col md:flex-row gap-4">
+          {/* Type Filter */}
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-full md:w-36">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="purchase">Compras</SelectItem>
+              <SelectItem value="quote">Cotizaciones</SelectItem>
+            </SelectContent>
+          </Select>
+
           {/* Status Filter */}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full md:w-40">
@@ -191,9 +216,13 @@ const AdminPedidos = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span className="font-semibold">
-                      ${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                    </span>
+                    {order.order_type === 'quote' && Number(order.total) === 0 ? (
+                      <span className="text-muted-foreground text-sm italic">Por cotizar</span>
+                    ) : (
+                      <span className="font-semibold">
+                        ${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Select
@@ -225,10 +254,33 @@ const AdminPedidos = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      <Eye size={16} className="mr-1" />
-                      Ver
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      {order.order_type === 'quote' && Number(order.total) === 0 && (
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          className="bg-secondary hover:bg-secondary/90"
+                          onClick={() => handleOpenQuoteDialog(order)}
+                        >
+                          <Send size={14} className="mr-1" />
+                          Cotizar
+                        </Button>
+                      )}
+                      {order.order_type === 'quote' && Number(order.total) > 0 && order.status === 'pending' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleOpenQuoteDialog(order)}
+                        >
+                          <FileText size={14} className="mr-1" />
+                          Editar
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="sm">
+                        <Eye size={16} className="mr-1" />
+                        Ver
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -236,6 +288,16 @@ const AdminPedidos = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Quote Response Dialog */}
+      <QuoteResponseDialog 
+        open={quoteDialogOpen}
+        onOpenChange={setQuoteDialogOpen}
+        order={selectedOrder}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['admin-orders-list'] });
+        }}
+      />
     </div>
   );
 };

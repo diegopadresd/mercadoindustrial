@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
 
 const navigation = [
@@ -210,6 +211,9 @@ export const Header = () => {
                   </Link>
                 </div>
               )}
+              
+              {/* Notifications */}
+              <NotificationBell />
               
               <Link to="/carrito" className="relative p-2 hover:bg-muted rounded-lg transition-colors">
                 <ShoppingCart size={24} className="text-foreground" />

@@ -4,40 +4,29 @@ import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { QuoteOptionsDialog } from '@/components/cart/QuoteOptionsDialog';
 import { 
   ShoppingCart, 
   Trash2, 
   Plus, 
   Minus, 
-  ArrowRight, 
   ArrowLeft,
   Package,
   CreditCard,
   Truck,
   FileText,
-  Loader2
+  Loader2,
+  MessageCircle
 } from 'lucide-react';
 
 const Carrito = () => {
   const { items, isLoading, updateQuantity, removeFromCart, subtotal, hasItemsWithoutPrice, allItemsWithoutPrice } = useCart();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // Quote form state (for non-authenticated users)
-  const [showQuoteForm, setShowQuoteForm] = useState(false);
-  const [quoteData, setQuoteData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    notes: '',
-  });
+  const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
 
   const handleQuantityChange = async (productId: string, delta: number, currentQuantity: number) => {
     await updateQuantity(productId, currentQuantity + delta);
@@ -61,33 +50,8 @@ const Carrito = () => {
     }, 1000);
   };
 
-  const handleQuoteRequest = async () => {
-    if (!user && !showQuoteForm) {
-      setShowQuoteForm(true);
-      return;
-    }
-
-    if (user) {
-      // User is logged in, use their profile data
-      setIsProcessing(true);
-      // TODO: Create quote order
-      setTimeout(() => {
-        setIsProcessing(false);
-        alert('Cotización enviada - Un vendedor se pondrá en contacto contigo');
-      }, 1000);
-    } else {
-      // Use form data
-      if (!quoteData.name || !quoteData.email) {
-        alert('Por favor completa tu nombre y correo');
-        return;
-      }
-      setIsProcessing(true);
-      // TODO: Create quote order for guest
-      setTimeout(() => {
-        setIsProcessing(false);
-        alert('Cotización enviada - Un vendedor se pondrá en contacto contigo');
-      }, 1000);
-    }
+  const handleQuoteRequest = () => {
+    setQuoteDialogOpen(true);
   };
 
   if (isLoading) {
@@ -260,69 +224,7 @@ const Carrito = () => {
                   )}
                 </div>
 
-                {/* Quote Form for guests */}
-                {showQuoteForm && !user && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="space-y-4 mb-6 p-4 bg-muted rounded-xl"
-                  >
-                    <h3 className="font-semibold">Tus datos para la cotización</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="quote-name">Nombre *</Label>
-                        <Input
-                          id="quote-name"
-                          value={quoteData.name}
-                          onChange={(e) => setQuoteData({ ...quoteData, name: e.target.value })}
-                          placeholder="Tu nombre"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="quote-email">Correo *</Label>
-                        <Input
-                          id="quote-email"
-                          type="email"
-                          value={quoteData.email}
-                          onChange={(e) => setQuoteData({ ...quoteData, email: e.target.value })}
-                          placeholder="tu@email.com"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="quote-phone">Teléfono</Label>
-                        <Input
-                          id="quote-phone"
-                          type="tel"
-                          value={quoteData.phone}
-                          onChange={(e) => setQuoteData({ ...quoteData, phone: e.target.value })}
-                          placeholder="+52 123 456 7890"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="quote-company">Empresa</Label>
-                        <Input
-                          id="quote-company"
-                          value={quoteData.company}
-                          onChange={(e) => setQuoteData({ ...quoteData, company: e.target.value })}
-                          placeholder="Nombre de tu empresa"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="quote-notes">Notas</Label>
-                        <Textarea
-                          id="quote-notes"
-                          value={quoteData.notes}
-                          onChange={(e) => setQuoteData({ ...quoteData, notes: e.target.value })}
-                          placeholder="Información adicional..."
-                          rows={3}
-                        />
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      O <Link to="/auth" className="text-primary hover:underline">crea una cuenta</Link> para guardar tu información
-                    </p>
-                  </motion.div>
-                )}
+                {/* Removed old quote form - using dialog now */}
 
                 {/* Main action button */}
                 {allItemsWithoutPrice ? (
@@ -372,16 +274,6 @@ const Carrito = () => {
                   </Button>
                 )}
 
-                <Button variant="outline" className="w-full" asChild>
-                  <a
-                    href={`https://wa.me/526621680047?text=${encodeURIComponent(`Hola, quiero información sobre mi carrito con ${items.length} productos`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Contactar por WhatsApp
-                  </a>
-                </Button>
-
                 {/* Trust badges */}
                 <div className="mt-8 pt-6 border-t border-border space-y-3">
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -400,6 +292,13 @@ const Carrito = () => {
       </main>
 
       <Footer />
+
+      {/* Quote Options Dialog */}
+      <QuoteOptionsDialog 
+        open={quoteDialogOpen} 
+        onOpenChange={setQuoteDialogOpen}
+        items={items}
+      />
     </div>
   );
 };
