@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut, Package, ShoppingBag, MessageSquare, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
 
@@ -36,6 +37,7 @@ export const Header = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
   const { user, profile, isAdmin, signOut } = useAuth();
+  const { isVendedor } = useUserRole();
   const { itemCount } = useCart();
 
   return (
@@ -162,8 +164,52 @@ export const Header = () => {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute top-full right-0 mt-2 bg-card rounded-lg shadow-lg border border-border py-2 min-w-[180px] z-50"
+                        className="absolute top-full right-0 mt-2 bg-card rounded-lg shadow-lg border border-border py-2 min-w-[200px] z-50"
                       >
+                        <Link
+                          to="/mi-cuenta"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors font-medium"
+                        >
+                          <User size={16} />
+                          Mi Cuenta
+                        </Link>
+                        <hr className="my-1 border-border" />
+                        {isVendedor && (
+                          <Link
+                            to="/mi-cuenta/mis-publicaciones"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
+                          >
+                            <Package size={16} />
+                            Mis Publicaciones
+                          </Link>
+                        )}
+                        <Link
+                          to="/mi-cuenta/mis-compras"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
+                        >
+                          <ShoppingBag size={16} />
+                          Mis Compras
+                        </Link>
+                        <Link
+                          to="/mi-cuenta/chats"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
+                        >
+                          <MessageSquare size={16} />
+                          Chats
+                        </Link>
+                        <Link
+                          to={isVendedor ? "/mi-cuenta/publicar" : "/mi-cuenta/vender"}
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors text-primary"
+                        >
+                          <Store size={16} />
+                          {isVendedor ? 'Publicar Producto' : 'Vender'}
+                        </Link>
+                        <hr className="my-1 border-border" />
                         <Link
                           to="/perfil"
                           onClick={() => setUserMenuOpen(false)}
@@ -182,7 +228,7 @@ export const Header = () => {
                             Panel Admin
                           </Link>
                         )}
-                        <hr className="my-2 border-border" />
+                        <hr className="my-1 border-border" />
                         <button
                           onClick={() => {
                             signOut();
@@ -304,6 +350,48 @@ export const Header = () => {
               <div className="mt-4 pt-4 border-t border-border">
                 {user ? (
                   <div className="space-y-2">
+                    <Link
+                      to="/mi-cuenta"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium bg-primary/5 hover:bg-muted transition-colors"
+                    >
+                      <User size={18} />
+                      Mi Cuenta
+                    </Link>
+                    {isVendedor && (
+                      <Link
+                        to="/mi-cuenta/mis-publicaciones"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
+                      >
+                        <Package size={18} />
+                        Mis Publicaciones
+                      </Link>
+                    )}
+                    <Link
+                      to="/mi-cuenta/mis-compras"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
+                    >
+                      <ShoppingBag size={18} />
+                      Mis Compras
+                    </Link>
+                    <Link
+                      to="/mi-cuenta/chats"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
+                    >
+                      <MessageSquare size={18} />
+                      Chats
+                    </Link>
+                    <Link
+                      to={isVendedor ? "/mi-cuenta/publicar" : "/mi-cuenta/vender"}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-muted transition-colors"
+                    >
+                      <Store size={18} />
+                      {isVendedor ? 'Publicar Producto' : 'Vender'}
+                    </Link>
                     <Link
                       to="/perfil"
                       onClick={() => setMobileMenuOpen(false)}

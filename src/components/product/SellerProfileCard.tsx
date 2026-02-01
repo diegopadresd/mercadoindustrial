@@ -7,9 +7,11 @@ import {
   Heart, 
   Store,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Loader2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useConversations } from '@/hooks/useConversations';
 
 interface SellerRating {
   label: string;
@@ -27,10 +29,13 @@ interface SellerProfileCardProps {
     description: string;
     ratings: SellerRating[];
   };
+  productId?: string;
+  sellerId?: string;
 }
 
-export const SellerProfileCard = ({ seller }: SellerProfileCardProps) => {
+export const SellerProfileCard = ({ seller, productId, sellerId }: SellerProfileCardProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const { startConversation, isCreating } = useConversations();
   
   const truncatedDescription = seller.description.length > 150 
     ? seller.description.slice(0, 150) + '...' 
@@ -99,8 +104,17 @@ export const SellerProfileCard = ({ seller }: SellerProfileCardProps) => {
             Visitar tienda
           </Link>
         </Button>
-        <Button variant="outline" className="w-full">
-          <MessageCircle size={18} className="mr-2" />
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={() => productId && sellerId && startConversation(productId, sellerId)}
+          disabled={isCreating || !productId || !sellerId}
+        >
+          {isCreating ? (
+            <Loader2 size={18} className="mr-2 animate-spin" />
+          ) : (
+            <MessageCircle size={18} className="mr-2" />
+          )}
           Contactar
         </Button>
         <Button variant="ghost" className="w-full text-primary hover:text-primary hover:bg-primary/10">
