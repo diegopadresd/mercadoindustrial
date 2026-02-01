@@ -3,9 +3,10 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ShippingQuoteComponent } from '@/components/shipping/ShippingQuote';
 import { motion } from 'framer-motion';
-import { Truck, Shield, Clock, DollarSign, Loader2, AlertCircle } from 'lucide-react';
+import { Truck, Shield, Clock, DollarSign, Loader2, AlertCircle, MessageCircle, Phone, Headphones } from 'lucide-react';
 import { useProduct } from '@/hooks/useProducts';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent } from '@/components/ui/card';
 
 const benefits = [
   {
@@ -29,6 +30,66 @@ const benefits = [
     description: 'Monitorea tu paquete desde la recolección hasta la entrega',
   },
 ];
+
+// WhatsApp message for oversized shipments
+const WHATSAPP_NUMBER = '526621680047';
+const WHATSAPP_MESSAGE = encodeURIComponent(
+  'Hola, necesito cotizar un envío de carga pesada que excede los límites del cotizador automático en la página web de Mercado Industrial. ¿Me pueden ayudar con una cotización personalizada?'
+);
+
+const AdvisorWidget = () => (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: 0.3 }}
+  >
+    <Card className="sticky top-28 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+      <CardContent className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 bg-primary/10 rounded-xl">
+            <Headphones className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-bold text-foreground">¿Envío especial?</h3>
+            <p className="text-xs text-muted-foreground">Carga sobredimensionada</p>
+          </div>
+        </div>
+        
+        <p className="text-sm text-muted-foreground mb-4">
+          Si tu envío excede los límites del cotizador automático 
+          <span className="font-medium text-foreground"> (más de 180cm alto, 200cm ancho, 280cm largo o 2000kg)</span>, 
+          contacta a un asesor para una cotización personalizada.
+        </p>
+
+        <div className="space-y-3">
+          <a 
+            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`}
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-[#25D366] text-white rounded-xl font-semibold hover:bg-[#20BD5A] transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <MessageCircle size={20} />
+            Cotizar por WhatsApp
+          </a>
+          
+          <a 
+            href="tel:+526621680047"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-muted text-foreground rounded-xl font-medium hover:bg-muted/80 transition-all"
+          >
+            <Phone size={18} />
+            662-168-0047
+          </a>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground text-center">
+            💬 Respuesta en menos de 30 minutos en horario laboral
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  </motion.div>
+);
 
 const Cotizador = () => {
   const [searchParams] = useSearchParams();
@@ -85,7 +146,7 @@ const Cotizador = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="max-w-2xl mx-auto mb-6"
+                className="max-w-4xl mx-auto mb-6"
               >
                 <div className="flex items-center justify-center gap-3 p-4 bg-muted rounded-xl">
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -99,7 +160,7 @@ const Cotizador = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="max-w-2xl mx-auto mb-6"
+                className="max-w-4xl mx-auto mb-6"
               >
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
@@ -115,7 +176,7 @@ const Cotizador = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="max-w-2xl mx-auto mb-6"
+                className="max-w-4xl mx-auto mb-6"
               >
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
@@ -127,18 +188,30 @@ const Cotizador = () => {
               </motion.div>
             )}
 
-            {/* Quote Widget */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="max-w-2xl mx-auto"
-            >
-              <ShippingQuoteComponent 
-                prefilled={prefilledData}
-                isReadOnly={!!hasCompleteShippingData}
-              />
-            </motion.div>
+            {/* Quote Widget + Advisor Sidebar */}
+            <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="lg:col-span-2"
+              >
+                <ShippingQuoteComponent 
+                  prefilled={prefilledData}
+                  isReadOnly={!!hasCompleteShippingData}
+                />
+              </motion.div>
+
+              {/* Advisor Widget - Desktop only visible as sidebar, mobile shows after form */}
+              <div className="hidden lg:block">
+                <AdvisorWidget />
+              </div>
+            </div>
+
+            {/* Advisor Widget - Mobile version (below form) */}
+            <div className="lg:hidden max-w-2xl mx-auto mt-6">
+              <AdvisorWidget />
+            </div>
           </div>
         </section>
 
