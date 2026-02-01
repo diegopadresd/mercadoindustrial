@@ -1,10 +1,50 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, MessageCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import heroImage from '@/assets/hero-industrial-premium.jpg';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+
+const sellingSchemes = [
+  {
+    title: 'Compra directa',
+    items: [
+      'Se realiza inspección.',
+      'Se determina un valor y se realiza la oferta de compra.',
+      'Negociación y cierre.',
+    ],
+  },
+  {
+    title: 'Consignación presencial',
+    items: [
+      'Promoción de venta.',
+      'Apertura de contrato de resguardo y comisión.',
+      'Almacenamiento en la sucursal más cercana.',
+    ],
+  },
+  {
+    title: 'Consignación virtual',
+    items: [
+      'Apertura de contrato y comisión.',
+      'Promoción asertiva por parte de nuestro equipo de ventas.',
+      'Publicación en nuestro sitio web con más de 15000 visitas mensuales de potenciales clientes.',
+    ],
+  },
+];
 
 export const HeroSection = () => {
+  const [showSellingScheme, setShowSellingScheme] = useState(false);
+
   return (
+    <>
     <section className="relative min-h-[85vh] flex items-center overflow-hidden">
       {/* Background Image with Parallax Effect */}
       <div className="absolute inset-0">
@@ -74,13 +114,13 @@ export const HeroSection = () => {
               Comprar Maquinaria
               <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link 
-              to="/auth"
+            <button 
+              onClick={() => setShowSellingScheme(true)}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-300"
             >
               Vender Maquinaria
               <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
+            </button>
           </motion.div>
 
           {/* Trust Indicators */}
@@ -139,5 +179,45 @@ export const HeroSection = () => {
         </div>
       </motion.div>
     </section>
+
+    {/* Selling Scheme Dialog */}
+    <Dialog open={showSellingScheme} onOpenChange={setShowSellingScheme}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl md:text-3xl font-display font-bold text-center">
+            Conoce nuestro esquema de venta
+          </DialogTitle>
+          <DialogDescription className="text-center">
+            Elige la opción que mejor se adapte a tus necesidades
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-6">
+          {sellingSchemes.map((scheme, index) => (
+            <Card key={index} className="h-full">
+              <CardContent className="p-6">
+                <h3 className="font-bold text-lg text-foreground mb-4">{scheme.title}</h3>
+                <ul className="space-y-3">
+                  {scheme.items.map((item, itemIndex) => (
+                    <li key={itemIndex} className="flex gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="flex justify-center">
+          <Button asChild size="lg" className="gap-2">
+            <Link to="/como-vender" onClick={() => setShowSellingScheme(false)}>
+              Quiero vender mi maquinaria
+              <ArrowRight size={18} />
+            </Link>
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
