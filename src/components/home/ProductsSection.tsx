@@ -1,76 +1,40 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Star, MapPin, Tag } from 'lucide-react';
+import { ArrowRight, Star, MapPin, Tag, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const tabs = ['Destacados', 'Recientes', 'Más vistos'];
 
-const products = [
-  {
-    id: 'retroexcavadora-caterpillar-416d',
-    title: 'Retroexcavadora 416D CATERPILLAR',
-    year: '2001',
-    sku: 'VEHI-017-NAV',
-    brand: 'CATERPILLAR',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/VEHI-017-NAV_4_med_thumb.webp',
-    location: 'Hermosillo, Sonora',
-    isFeatured: true,
-  },
-  {
-    id: 'excavadora-caterpillar-d6h',
-    title: 'Excavadora sobre orugas D6H',
-    year: '1986',
-    sku: 'VEHI-018-NAV',
-    brand: 'CATERPILLAR',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/VEHI-018-NAV_21_med_thumb.webp',
-    location: 'Monterrey, NL',
-    isFeatured: true,
-  },
-  {
-    id: 'plataforma-genie-s125',
-    title: 'Plataforma telescópica S125',
-    year: '2007',
-    sku: 'VEHI-024-NAV',
-    brand: 'GENIE',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/VEHI-024-NAV_PCV_7_med_thumb.webp',
-    location: 'CDMX',
-    isFeatured: true,
-    isNew: true,
-  },
-  {
-    id: 'valvula-sauer-sundstrand',
-    title: 'Válvula de placa 3000-5000 PSI',
-    year: '',
-    sku: 'PMN-2904',
-    brand: 'SAUER SUNDSTRAND',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2904_V%C3%A1lvulas_2_med_thumb.webp',
-    location: 'Hermosillo, Sonora',
-    isNew: true,
-  },
-  {
-    id: 'tensor-banda-mercedes',
-    title: 'Tensor de banda A 906 200 67 70',
-    year: '',
-    sku: 'PMN-2902',
-    brand: 'MERCEDES-BENZ',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2902_Refacciones_5_med_thumb.webp',
-    location: 'Hermosillo, Sonora',
-    isNew: true,
-  },
-  {
-    id: 'arandela-flowserve',
-    title: 'Arandela de seguridad 3"',
-    year: '',
-    sku: 'PMN-2901',
-    brand: 'FLOWSERVE',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2901_Refacciones_2_med_thumb.webp',
-    location: 'Hermosillo, Sonora',
-    isNew: true,
-  },
-];
-
 export const ProductsSection = () => {
   const [activeTab, setActiveTab] = useState('Destacados');
+
+  // Fetch real products from database
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['home-inventory-products', activeTab],
+    queryFn: async () => {
+      let query = supabase
+        .from('products')
+        .select('id, title, sku, brand, images, location, is_featured, is_new, created_at')
+        .eq('is_active', true)
+        .limit(6);
+      
+      // Apply different ordering based on tab
+      if (activeTab === 'Destacados') {
+        query = query.eq('is_featured', true).order('created_at', { ascending: false });
+      } else if (activeTab === 'Recientes') {
+        query = query.order('created_at', { ascending: false });
+      } else {
+        // "Más vistos" - for now just show featured or recent
+        query = query.order('updated_at', { ascending: false });
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
 
   return (
     <section className="py-24 bg-muted/50">
@@ -109,82 +73,108 @@ export const ProductsSection = () => {
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && products.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground">No hay productos disponibles en este momento.</p>
+          </div>
+        )}
+
         {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          <AnimatePresence mode="wait">
-            {products.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Link
-                  to={`/producto/${product.id}`}
-                  className="group block bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+        {!isLoading && products.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <AnimatePresence mode="wait">
+              {products.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.05 }}
                 >
-                  {/* Image */}
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    
-                    {/* Badges */}
-                    <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                      {product.isFeatured && (
-                        <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-xs font-bold px-2.5 py-1 rounded-full">
-                          <Star size={12} fill="currentColor" />
-                          Destacado
-                        </span>
+                  <Link
+                    to={`/productos/${product.id}`}
+                    className="group block bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  >
+                    {/* Image */}
+                    <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <Tag size={48} />
+                        </div>
                       )}
-                      {product.isNew && (
-                        <span className="bg-emerald-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                          Nuevo
-                        </span>
+                      
+                      {/* Badges */}
+                      <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                        {product.is_featured && (
+                          <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-xs font-bold px-2.5 py-1 rounded-full">
+                            <Star size={12} fill="currentColor" />
+                            Destacado
+                          </span>
+                        )}
+                        {product.is_new && (
+                          <span className="bg-emerald-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                            Nuevo
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Brand Badge */}
+                      {product.brand && (
+                        <div className="absolute top-4 right-4">
+                          <span className="bg-white/90 backdrop-blur-sm text-secondary text-xs font-bold px-3 py-1.5 rounded-full">
+                            {product.brand}
+                          </span>
+                        </div>
                       )}
                     </div>
 
-                    {/* Brand Badge */}
-                    <div className="absolute top-4 right-4">
-                      <span className="bg-white/90 backdrop-blur-sm text-secondary text-xs font-bold px-3 py-1.5 rounded-full">
-                        {product.brand}
-                      </span>
-                    </div>
-                  </div>
+                    {/* Content */}
+                    <div className="p-5">
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <h3 className="font-display font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                          {product.title}
+                        </h3>
+                      </div>
 
-                  {/* Content */}
-                  <div className="p-5">
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <h3 className="font-display font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                        {product.title}
-                      </h3>
-                    </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">
+                          <Tag size={14} />
+                          {product.sku}
+                        </span>
+                        {product.location && (
+                          <span className="inline-flex items-center gap-1">
+                            <MapPin size={14} />
+                            {product.location}
+                          </span>
+                        )}
+                      </div>
 
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="inline-flex items-center gap-1">
-                        <Tag size={14} />
-                        {product.sku}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin size={14} />
-                        {product.location}
-                      </span>
+                      {/* CTA */}
+                      <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                        <span className="text-primary font-semibold text-sm">Ver detalles</span>
+                        <ArrowRight size={18} className="text-primary group-hover:translate-x-1 transition-transform" />
+                      </div>
                     </div>
-
-                    {/* CTA */}
-                    <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-                      <span className="text-primary font-semibold text-sm">Solicitar cotización</span>
-                      <ArrowRight size={18} className="text-primary group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
 
         {/* View All Button */}
         <motion.div
