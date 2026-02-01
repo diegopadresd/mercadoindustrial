@@ -36,6 +36,7 @@ import AdminInventario from './AdminInventario';
 import AdminPreguntas from './AdminPreguntas';
 import AdminOfertas from './AdminOfertas';
 import AdminUsuarios from './AdminUsuarios';
+import AdminAjustes from './AdminAjustes';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -56,6 +57,7 @@ const allSidebarItems: SidebarItem[] = [
   { icon: FileText, label: 'Facturación', path: '/admin/facturacion', description: 'CFDI y documentos', staffOnly: true },
   { icon: Package, label: 'Inventario', path: '/admin/inventario', description: 'Productos y stock' },
   { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes', staffOnly: true },
+  { icon: Settings, label: 'Ajustes', path: '/admin/ajustes', description: 'Configuración del sitio', adminOnly: true },
 ];
 
 const AdminDashboard = () => {
@@ -361,6 +363,7 @@ const AdminDashboard = () => {
               <Route path="preguntas" element={
                 isStaff ? <AdminPreguntas /> : <AccessDenied message="Solo administradores y operadores pueden gestionar preguntas." />
               } />
+              <Route path="ajustes" element={<AdminAjustes />} />
             </Routes>
           </div>
         </main>
