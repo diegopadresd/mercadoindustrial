@@ -6,7 +6,6 @@ import { useUserRole, getRoleLabel, AppRole } from '@/hooks/useUserRole';
 import { 
   Users, 
   Search,
-  Plus,
   Mail,
   Shield,
   Ban,
@@ -15,7 +14,10 @@ import {
   MoreHorizontal,
   Loader2,
   UserPlus,
-  X
+  X,
+  Trash2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -76,25 +78,24 @@ interface UserWithRole {
   role: AppRole;
 }
 
-interface Invitation {
-  id: string;
-  email: string;
-  role: AppRole;
-  status: string;
-  created_at: string;
-  expires_at: string;
-}
-
 const AdminUsuarios = () => {
   const { user } = useAuth();
   const { isAdmin, permissions, isLoading: roleLoading } = useUserRole();
   const [search, setSearch] = useState('');
-  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
-  const [inviteData, setInviteData] = useState({ email: '', role: 'vendedor' as AppRole });
   const [newRole, setNewRole] = useState<AppRole>('vendedor');
+  const [createFormData, setCreateFormData] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: '',
+    role: 'vendedor' as AppRole,
+  });
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -102,7 +103,6 @@ const AdminUsuarios = () => {
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ['admin-users', search],
     queryFn: async () => {
-      // First get all profiles
       let profilesQuery = supabase
         .from('profiles')
         .select('*')
@@ -115,7 +115,6 @@ const AdminUsuarios = () => {
       const { data: profiles, error: profilesError } = await profilesQuery;
       if (profilesError) throw profilesError;
 
-      // Get roles for all users
       const userIds = profiles?.map(p => p.user_id) || [];
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
@@ -124,7 +123,6 @@ const AdminUsuarios = () => {
 
       if (rolesError) throw rolesError;
 
-      // Merge data
       return profiles?.map(profile => {
         const userRole = roles?.find(r => r.user_id === profile.user_id);
         return {
@@ -136,68 +134,54 @@ const AdminUsuarios = () => {
     enabled: isAdmin,
   });
 
-  // Fetch invitations
-  const { data: invitations, isLoading: invitationsLoading } = useQuery({
-    queryKey: ['admin-invitations'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('invitations')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as Invitation[];
-    },
-    enabled: isAdmin,
-  });
-
-  // Create invitation mutation
-  const inviteMutation = useMutation({
-    mutationFn: async (data: { email: string; role: AppRole }) => {
-      const { error } = await supabase
-        .from('invitations')
-        .insert({
+  // Create user mutation (using edge function)
+  const createUserMutation = useMutation({
+    mutationFn: async (data: typeof createFormData) => {
+      const { data: result, error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          action: 'create',
           email: data.email,
+          password: data.password,
+          full_name: data.full_name,
+          phone: data.phone || null,
           role: data.role,
-          invited_by: user?.id,
-        });
+        },
+      });
       if (error) throw error;
+      if (result?.error) throw new Error(result.error);
+      return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-invitations'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast({
-        title: 'Invitación enviada',
-        description: `Se ha enviado una invitación a ${inviteData.email}`,
+        title: 'Usuario creado',
+        description: `Se ha creado la cuenta para ${createFormData.email}`,
       });
-      setShowInviteDialog(false);
-      setInviteData({ email: '', role: 'vendedor' });
+      setShowCreateDialog(false);
+      setCreateFormData({ email: '', password: '', full_name: '', phone: '', role: 'vendedor' });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'No se pudo enviar la invitación',
+        description: error.message || 'No se pudo crear el usuario',
         variant: 'destructive',
       });
     },
   });
 
-  // Change role mutation
+  // Change role mutation (using edge function)
   const changeRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: AppRole }) => {
-      // First delete existing role
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
-
-      // Insert new role
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({
+      const { data: result, error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          action: 'update_role',
           user_id: userId,
-          role: newRole,
-        });
+          new_role: newRole,
+        },
+      });
       if (error) throw error;
+      if (result?.error) throw new Error(result.error);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -217,20 +201,27 @@ const AdminUsuarios = () => {
     },
   });
 
-  // Deactivate user mutation
-  const deactivateMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ status: 'inactive' })
-        .eq('user_id', userId);
+  // Update status mutation (using edge function)
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ userId, status }: { userId: string; status: string }) => {
+      const { data: result, error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          action: 'update_status',
+          user_id: userId,
+          status,
+        },
+      });
       if (error) throw error;
+      if (result?.error) throw new Error(result.error);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast({
-        title: 'Usuario desactivado',
-        description: 'El acceso del usuario ha sido desactivado',
+        title: variables.status === 'active' ? 'Usuario reactivado' : 'Usuario desactivado',
+        description: variables.status === 'active' 
+          ? 'El acceso del usuario ha sido restaurado'
+          : 'El acceso del usuario ha sido desactivado',
       });
       setShowDeactivateDialog(false);
       setSelectedUser(null);
@@ -238,73 +229,62 @@ const AdminUsuarios = () => {
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'No se pudo desactivar el usuario',
+        description: error.message || 'No se pudo actualizar el estado',
         variant: 'destructive',
       });
     },
   });
 
-  // Reactivate user mutation
-  const reactivateMutation = useMutation({
+  // Delete user mutation (using edge function)
+  const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ status: 'active' })
-        .eq('user_id', userId);
+      const { data: result, error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          action: 'delete',
+          user_id: userId,
+        },
+      });
       if (error) throw error;
+      if (result?.error) throw new Error(result.error);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast({
-        title: 'Usuario reactivado',
-        description: 'El acceso del usuario ha sido restaurado',
+        title: 'Usuario eliminado',
+        description: 'La cuenta ha sido eliminada permanentemente',
       });
+      setShowDeleteDialog(false);
+      setSelectedUser(null);
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'No se pudo reactivar el usuario',
+        description: error.message || 'No se pudo eliminar el usuario',
         variant: 'destructive',
       });
     },
   });
 
-  // Delete invitation mutation
-  const deleteInvitationMutation = useMutation({
-    mutationFn: async (invitationId: string) => {
-      const { error } = await supabase
-        .from('invitations')
-        .delete()
-        .eq('id', invitationId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-invitations'] });
-      toast({
-        title: 'Invitación eliminada',
-        description: 'La invitación ha sido eliminada',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'No se pudo eliminar la invitación',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const handleInviteSubmit = (e: React.FormEvent) => {
+  const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteData.email) {
+    if (!createFormData.email || !createFormData.password || !createFormData.full_name) {
       toast({
         title: 'Error',
-        description: 'El correo electrónico es requerido',
+        description: 'Por favor completa todos los campos requeridos',
         variant: 'destructive',
       });
       return;
     }
-    inviteMutation.mutate(inviteData);
+    if (createFormData.password.length < 6) {
+      toast({
+        title: 'Error',
+        description: 'La contraseña debe tener al menos 6 caracteres',
+        variant: 'destructive',
+      });
+      return;
+    }
+    createUserMutation.mutate(createFormData);
   };
 
   const handleChangeRole = () => {
@@ -314,7 +294,16 @@ const AdminUsuarios = () => {
 
   const handleDeactivate = () => {
     if (!selectedUser) return;
-    deactivateMutation.mutate(selectedUser.user_id);
+    updateStatusMutation.mutate({ userId: selectedUser.user_id, status: 'inactive' });
+  };
+
+  const handleReactivate = (userId: string) => {
+    updateStatusMutation.mutate({ userId, status: 'active' });
+  };
+
+  const handleDelete = () => {
+    if (!selectedUser) return;
+    deleteUserMutation.mutate(selectedUser.user_id);
   };
 
   const getRoleBadgeVariant = (role: AppRole) => {
@@ -328,9 +317,9 @@ const AdminUsuarios = () => {
 
   const getStatusBadge = (status: string | null) => {
     if (status === 'inactive') {
-      return <Badge variant="outline" className="text-red-500 border-red-500">Inactivo</Badge>;
+      return <Badge variant="outline" className="border-destructive text-destructive">Inactivo</Badge>;
     }
-    return <Badge variant="outline" className="text-green-500 border-green-500">Activo</Badge>;
+    return <Badge variant="outline" className="border-green-600 text-green-600">Activo</Badge>;
   };
 
   if (roleLoading) {
@@ -369,44 +358,12 @@ const AdminUsuarios = () => {
             />
           </div>
 
-          <Button className="btn-gold" onClick={() => setShowInviteDialog(true)}>
+          <Button className="btn-gold" onClick={() => setShowCreateDialog(true)}>
             <UserPlus size={18} className="mr-2" />
-            Invitar Usuario
+            Crear Usuario
           </Button>
         </div>
       </div>
-
-      {/* Pending Invitations */}
-      {invitations && invitations.filter(i => i.status === 'pending').length > 0 && (
-        <div className="bg-card rounded-xl border border-border/50 p-6">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <Mail size={18} className="text-primary" />
-            Invitaciones Pendientes
-          </h3>
-          <div className="space-y-3">
-            {invitations.filter(i => i.status === 'pending').map((invitation) => (
-              <div key={invitation.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Clock size={16} className="text-yellow-500" />
-                  <div>
-                    <p className="font-medium">{invitation.email}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Rol: {getRoleLabel(invitation.role)} • Expira: {new Date(invitation.expires_at).toLocaleDateString('es-MX')}
-                    </p>
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => deleteInvitationMutation.mutate(invitation.id)}
-                >
-                  <X size={16} />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Users Table */}
       <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
@@ -478,14 +435,13 @@ const AdminUsuarios = () => {
                           <DropdownMenuSeparator />
                           {userData.status === 'inactive' ? (
                             <DropdownMenuItem
-                              onClick={() => reactivateMutation.mutate(userData.user_id)}
+                              onClick={() => handleReactivate(userData.user_id)}
                             >
-                              <CheckCircle size={16} className="mr-2 text-green-500" />
+                              <CheckCircle size={16} className="mr-2 text-green-600" />
                               Reactivar Acceso
                             </DropdownMenuItem>
                           ) : (
                             <DropdownMenuItem
-                              className="text-red-500"
                               onClick={() => {
                                 setSelectedUser(userData);
                                 setShowDeactivateDialog(true);
@@ -495,6 +451,18 @@ const AdminUsuarios = () => {
                               Desactivar Acceso
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => {
+                              setSelectedUser(userData);
+                              setShowDeleteDialog(true);
+                            }}
+                            disabled={userData.user_id === user?.id}
+                          >
+                            <Trash2 size={16} className="mr-2" />
+                            Eliminar Cuenta
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -506,32 +474,78 @@ const AdminUsuarios = () => {
         )}
       </div>
 
-      {/* Invite Dialog */}
-      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-        <DialogContent>
+      {/* Create User Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Invitar Usuario</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus size={20} className="text-primary" />
+              Crear Nuevo Usuario
+            </DialogTitle>
             <DialogDescription>
-              Envía una invitación para agregar un nuevo usuario al sistema.
+              Crea una cuenta con correo y contraseña para un nuevo colaborador.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleInviteSubmit} className="space-y-4">
+          <form onSubmit={handleCreateSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Nombre Completo *</Label>
+              <Input
+                id="full_name"
+                value={createFormData.full_name}
+                onChange={(e) => setCreateFormData({ ...createFormData, full_name: e.target.value })}
+                placeholder="Juan Pérez"
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Correo Electrónico *</Label>
               <Input
                 id="email"
                 type="email"
-                value={inviteData.email}
-                onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
+                value={createFormData.email}
+                onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
                 placeholder="correo@ejemplo.com"
                 required
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="password">Contraseña *</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={createFormData.password}
+                  onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                  minLength={6}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Teléfono (opcional)</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={createFormData.phone}
+                onChange={(e) => setCreateFormData({ ...createFormData, phone: e.target.value })}
+                placeholder="+52 55 1234 5678"
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="role">Rol</Label>
               <Select
-                value={inviteData.role}
-                onValueChange={(value) => setInviteData({ ...inviteData, role: value as AppRole })}
+                value={createFormData.role}
+                onValueChange={(value) => setCreateFormData({ ...createFormData, role: value as AppRole })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -542,14 +556,19 @@ const AdminUsuarios = () => {
                   <SelectItem value="admin">Administrador</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                {createFormData.role === 'admin' && 'Acceso completo al sistema'}
+                {createFormData.role === 'operador' && 'Gestiona productos, pedidos y facturas'}
+                {createFormData.role === 'vendedor' && 'Solo puede gestionar sus propias publicaciones'}
+              </p>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowInviteDialog(false)}>
+              <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={inviteMutation.isPending}>
-                {inviteMutation.isPending && <Loader2 size={16} className="mr-2 animate-spin" />}
-                Enviar Invitación
+              <Button type="submit" className="btn-gold" disabled={createUserMutation.isPending}>
+                {createUserMutation.isPending && <Loader2 size={16} className="mr-2 animate-spin" />}
+                Crear Usuario
               </Button>
             </DialogFooter>
           </form>
@@ -608,7 +627,30 @@ const AdminUsuarios = () => {
               onClick={handleDeactivate}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
+              {updateStatusMutation.isPending && <Loader2 size={16} className="mr-2 animate-spin" />}
               Desactivar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">¿Eliminar cuenta permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. La cuenta de <strong>{selectedUser?.full_name}</strong> ({selectedUser?.email}) será eliminada permanentemente junto con todos sus datos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteUserMutation.isPending && <Loader2 size={16} className="mr-2 animate-spin" />}
+              Eliminar Permanentemente
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
