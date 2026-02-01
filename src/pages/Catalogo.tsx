@@ -363,6 +363,10 @@ const Catalogo = () => {
                       categories={product.categories || []}
                       isNew={product.is_new || false}
                       isFeatured={product.is_featured || false}
+                      isAuction={(product as any).is_auction || false}
+                      auctionMinPrice={(product as any).auction_min_price}
+                      auctionEnd={(product as any).auction_end}
+                      contactForQuote={(product as any).contact_for_quote || false}
                     />
                   ))}
                 </div>

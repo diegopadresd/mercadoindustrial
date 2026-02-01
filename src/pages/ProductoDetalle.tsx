@@ -42,6 +42,7 @@ import {
   Truck,
   BadgeCheck,
   ShieldCheck,
+  PhoneCall,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getProductById } from '@/data/products';
@@ -50,6 +51,8 @@ import { useCreateOffer } from '@/hooks/useOffers';
 import { useProduct } from '@/hooks/useProducts';
 import { SellerProfileCard } from '@/components/product/SellerProfileCard';
 import { SellerReviews } from '@/components/product/SellerReviews';
+import { AuctionSection } from '@/components/product/AuctionSection';
+import { MakeOfferModal } from '@/components/product/MakeOfferModal';
 
 // Mock FAQ data
 const initialFaqs = [
@@ -186,6 +189,14 @@ const ProductoDetalle = () => {
     youtubeUrl: undefined,
     isNew: dbProduct.is_new ?? false,
     isFeatured: dbProduct.is_featured ?? false,
+    // Auction fields
+    seller_id: (dbProduct as any).seller_id ?? null,
+    is_auction: (dbProduct as any).is_auction ?? false,
+    auction_min_price: (dbProduct as any).auction_min_price ?? null,
+    auction_start: (dbProduct as any).auction_start ?? null,
+    auction_end: (dbProduct as any).auction_end ?? null,
+    auction_status: (dbProduct as any).auction_status ?? 'inactive',
+    contact_for_quote: (dbProduct as any).contact_for_quote ?? false,
   } : staticProduct;
 
   // Show loading while fetching from database
@@ -485,9 +496,25 @@ const ProductoDetalle = () => {
                 Cotizar envío
               </Button>
 
-              {/* Action Buttons */}
+              {/* Auction Section (if product is in auction) */}
+              {(productData as any).is_auction && (
+                <AuctionSection 
+                  product={{
+                    id: productData.id,
+                    seller_id: (productData as any).seller_id,
+                    is_auction: (productData as any).is_auction,
+                    auction_min_price: (productData as any).auction_min_price,
+                    auction_start: (productData as any).auction_start,
+                    auction_end: (productData as any).auction_end,
+                    auction_status: (productData as any).auction_status,
+                  }}
+                />
+              )}
+
+              {/* Action Buttons - Different based on product type */}
               <div className="mt-6 space-y-3">
-                {productData.price ? (
+                {/* Normal product with price (not auction) */}
+                {!(productData as any).is_auction && productData.price && !(productData as any).contact_for_quote ? (
                   <>
                     <div className="flex gap-3">
                       <Button className="flex-1 btn-gold">
@@ -498,54 +525,62 @@ const ProductoDetalle = () => {
                         Comprar ahora
                       </Button>
                     </div>
-                    <Dialog open={offerDialogOpen} onOpenChange={setOfferDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button className="w-full btn-offer">
-                          <DollarSign size={18} className="mr-2" />
-                          Hacer una oferta
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Hacer una oferta</DialogTitle>
-                          <DialogDescription>
-                            Envía tu mejor oferta al vendedor. Recibirás una respuesta pronto.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 pt-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="offer">Tu oferta (MXN)</Label>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                              <Input
-                                id="offer"
-                                type="number"
-                                value={offerAmount}
-                                onChange={(e) => setOfferAmount(e.target.value)}
-                                placeholder="0.00"
-                                className="pl-8"
-                              />
-                            </div>
-                          </div>
-                          <Button 
-                            onClick={handleSubmitOffer} 
-                            className="w-full btn-gold"
-                            disabled={createOffer.isPending}
-                          >
-                            {createOffer.isPending ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Enviando...
-                              </>
-                            ) : (
-                              'Enviar oferta'
-                            )}
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    {/* Make Offer button - for logged in users */}
+                    <Button 
+                      className="w-full btn-offer"
+                      onClick={() => setOfferDialogOpen(true)}
+                    >
+                      <DollarSign size={18} className="mr-2" />
+                      Hacer una oferta
+                    </Button>
+                    <MakeOfferModal
+                      open={offerDialogOpen}
+                      onOpenChange={setOfferDialogOpen}
+                      product={{
+                        id: productData.id,
+                        title: productData.title,
+                        price: productData.price,
+                        seller_id: (productData as any).seller_id,
+                      }}
+                    />
                   </>
-                ) : (
+                ) : !(productData as any).is_auction && ((productData as any).contact_for_quote || !productData.price) ? (
+                  /* Product requires quote - no price */
+                  <div className="space-y-4">
+                    <div className="bg-muted/50 rounded-xl p-4 text-center">
+                      <PhoneCall className="mx-auto mb-2 text-primary" size={24} />
+                      <p className="text-muted-foreground">
+                        Contacta al vendedor para obtener una cotización
+                      </p>
+                    </div>
+                    <Button 
+                      className="w-full btn-gold"
+                      onClick={handleQuoteShipping}
+                    >
+                      <MessageCircle className="mr-2" size={18} />
+                      Solicitar cotización
+                    </Button>
+                    {/* Make Offer button - still available */}
+                    <Button 
+                      className="w-full btn-offer"
+                      onClick={() => setOfferDialogOpen(true)}
+                    >
+                      <DollarSign size={18} className="mr-2" />
+                      Hacer una oferta
+                    </Button>
+                    <MakeOfferModal
+                      open={offerDialogOpen}
+                      onOpenChange={setOfferDialogOpen}
+                      product={{
+                        id: productData.id,
+                        title: productData.title,
+                        price: productData.price,
+                        seller_id: (productData as any).seller_id,
+                      }}
+                    />
+                  </div>
+                ) : !(productData as any).is_auction ? (
+                  /* Fallback for normal products */
                   <div className="flex gap-3">
                     <Button className="flex-1">
                       <ShoppingCart className="mr-2" size={18} />
@@ -556,6 +591,29 @@ const ProductoDetalle = () => {
                       Cotizar ahora
                     </Button>
                   </div>
+                ) : null}
+
+                {/* For auction products - show make offer below auction section */}
+                {(productData as any).is_auction && (
+                  <>
+                    <Button 
+                      className="w-full btn-offer"
+                      onClick={() => setOfferDialogOpen(true)}
+                    >
+                      <DollarSign size={18} className="mr-2" />
+                      Hacer una oferta directa
+                    </Button>
+                    <MakeOfferModal
+                      open={offerDialogOpen}
+                      onOpenChange={setOfferDialogOpen}
+                      product={{
+                        id: productData.id,
+                        title: productData.title,
+                        price: (productData as any).auction_min_price,
+                        seller_id: (productData as any).seller_id,
+                      }}
+                    />
+                  </>
                 )}
               </div>
 
