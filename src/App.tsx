@@ -34,6 +34,7 @@ import Soporte from "./pages/Soporte";
 import MiCuenta from "./pages/MiCuenta";
 import MisPublicaciones from "./pages/mi-cuenta/MisPublicaciones";
 import MisCompras from "./pages/mi-cuenta/MisCompras";
+import MisOfertas from "./pages/mi-cuenta/MisOfertas";
 import Chats from "./pages/mi-cuenta/Chats";
 import ActivarVendedor from "./pages/mi-cuenta/ActivarVendedor";
 import PublicarProducto from "./pages/mi-cuenta/PublicarProducto";
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/mi-cuenta" element={<MiCuenta />} />
               <Route path="/mi-cuenta/mis-publicaciones" element={<MisPublicaciones />} />
               <Route path="/mi-cuenta/mis-compras" element={<MisCompras />} />
+              <Route path="/mi-cuenta/mis-ofertas" element={<MisOfertas />} />
               <Route path="/mi-cuenta/chats" element={<Chats />} />
               <Route path="/mi-cuenta/vender" element={<ActivarVendedor />} />
               <Route path="/mi-cuenta/publicar" element={<PublicarProducto />} />

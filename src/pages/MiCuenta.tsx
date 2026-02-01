@@ -13,6 +13,7 @@ import {
   User,
   Loader2,
   ChevronRight,
+  HandCoins,
 } from 'lucide-react';
 
 const MiCuenta = () => {
@@ -48,6 +49,13 @@ const MiCuenta = () => {
       href: '/mi-cuenta/mis-compras', 
       icon: ShoppingBag,
       description: 'Historial de compras y cotizaciones',
+      show: true
+    },
+    { 
+      name: 'Mis Ofertas', 
+      href: '/mi-cuenta/mis-ofertas', 
+      icon: HandCoins,
+      description: 'Ofertas enviadas y recibidas',
       show: true
     },
     { 
