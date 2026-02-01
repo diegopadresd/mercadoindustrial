@@ -44,6 +44,14 @@ const quickLinks = [
   { name: 'Vende con Nosotros', href: '/vende' },
 ];
 
+const helpLinks = [
+  { name: 'Preguntas frecuentes', href: '/faq' },
+  { name: 'Cómo vender con nosotros', href: '/como-vender' },
+  { name: 'Cómo comprar con nosotros', href: '/como-comprar' },
+  { name: 'Subastas y ofertas', href: '/subastas-y-ofertas' },
+  { name: 'Políticas de pago', href: '/politicas-de-pago' },
+];
+
 const sectors = [
   { name: 'Industrial', href: '/catalogo?sector=industrial' },
   { name: 'Minería', href: '/catalogo?sector=mineria' },
@@ -94,7 +102,7 @@ export const Footer = forwardRef<HTMLElement>((_, ref) => {
 
       {/* Main Footer */}
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           {/* Brand */}
           <div>
             <div className="flex items-center mb-4">
@@ -138,6 +146,20 @@ export const Footer = forwardRef<HTMLElement>((_, ref) => {
                 <li key={sector.name}>
                   <Link to={sector.href} className="footer-link text-secondary-foreground/70 hover:text-primary">
                     {sector.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Help Links */}
+          <div>
+            <h4 className="font-display font-bold text-lg text-secondary-foreground mb-4">Ayuda</h4>
+            <ul className="space-y-3">
+              {helpLinks.map((link) => (
+                <li key={link.name}>
+                  <Link to={link.href} className="footer-link text-secondary-foreground/70 hover:text-primary">
+                    {link.name}
                   </Link>
                 </li>
               ))}
