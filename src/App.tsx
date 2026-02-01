@@ -30,6 +30,13 @@ import Privacidad from "./pages/Privacidad";
 import Terminos from "./pages/Terminos";
 import Contacto from "./pages/Contacto";
 import Soporte from "./pages/Soporte";
+// Mi Cuenta pages
+import MiCuenta from "./pages/MiCuenta";
+import MisPublicaciones from "./pages/mi-cuenta/MisPublicaciones";
+import MisCompras from "./pages/mi-cuenta/MisCompras";
+import Chats from "./pages/mi-cuenta/Chats";
+import ActivarVendedor from "./pages/mi-cuenta/ActivarVendedor";
+import PublicarProducto from "./pages/mi-cuenta/PublicarProducto";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +63,13 @@ const App = () => (
               <Route path="/cotizador" element={<Cotizador />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/perfil" element={<Perfil />} />
+              {/* Mi Cuenta Routes */}
+              <Route path="/mi-cuenta" element={<MiCuenta />} />
+              <Route path="/mi-cuenta/mis-publicaciones" element={<MisPublicaciones />} />
+              <Route path="/mi-cuenta/mis-compras" element={<MisCompras />} />
+              <Route path="/mi-cuenta/chats" element={<Chats />} />
+              <Route path="/mi-cuenta/vender" element={<ActivarVendedor />} />
+              <Route path="/mi-cuenta/publicar" element={<PublicarProducto />} />
               {/* Help & Info Pages */}
               <Route path="/faq" element={<FAQ />} />
               <Route path="/como-vender" element={<ComoVender />} />

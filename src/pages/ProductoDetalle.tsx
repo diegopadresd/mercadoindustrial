@@ -812,7 +812,11 @@ const ProductoDetalle = () => {
         >
           <h2 className="section-title mb-8">Información del Vendedor</h2>
           <div className="grid lg:grid-cols-2 gap-8">
-            <SellerProfileCard seller={mockSeller} />
+            <SellerProfileCard 
+              seller={mockSeller} 
+              productId={productData.id}
+              sellerId={(productData as any).seller_id}
+            />
             <SellerReviews 
               productReviewCount={12}
               totalReviewCount={13392}
