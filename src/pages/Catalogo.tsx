@@ -20,8 +20,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Filter, X, RotateCcw } from 'lucide-react';
-import { products, brands, allCategories } from '@/data/products';
+import { Filter, X, RotateCcw, Loader2 } from 'lucide-react';
+import { useProducts, useBrands, useCategories } from '@/hooks/useProducts';
 
 // Mapeo de slugs URL a nombres de categorías
 const categorySlugMap: Record<string, string> = {
@@ -55,6 +55,11 @@ const Catalogo = () => {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
 
+  // Fetch products from Supabase
+  const { data: products = [], isLoading } = useProducts();
+  const { data: brands = [] } = useBrands();
+  const { data: allCategories = [] } = useCategories();
+
   // Leer categoría de la URL al cargar
   useEffect(() => {
     const categorySlug = searchParams.get('categoria');
@@ -67,7 +72,7 @@ const Catalogo = () => {
   const filteredProducts = products.filter((product) => {
     // Filtro por categoría
     if (selectedCategories.length > 0) {
-      const hasCategory = product.categories.some(cat => 
+      const hasCategory = (product.categories || []).some(cat => 
         selectedCategories.some(selected => 
           cat.toLowerCase().includes(selected.toLowerCase()) || 
           selected.toLowerCase().includes(cat.toLowerCase())
@@ -84,12 +89,30 @@ const Catalogo = () => {
     // Filtro por ubicación
     if (selectedLocations.length > 0) {
       const hasLocation = selectedLocations.some(loc => 
-        product.location.includes(loc) || loc.includes('Virtual') && product.location === 'Virtual'
+        (product.location || '').includes(loc) || loc.includes('Virtual') && product.location === 'Virtual'
       );
       if (!hasLocation) return false;
     }
 
     return true;
+  });
+
+  // Sort products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch (sortBy) {
+      case 'recientes':
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      case 'destacados':
+        return (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0);
+      case 'precio-asc':
+        return (a.price || 0) - (b.price || 0);
+      case 'precio-desc':
+        return (b.price || 0) - (a.price || 0);
+      case 'nombre':
+        return a.title.localeCompare(b.title);
+      default:
+        return 0;
+    }
   });
 
   const toggleFilter = (value: string, list: string[], setList: (v: string[]) => void) => {
@@ -267,7 +290,7 @@ const Catalogo = () => {
 
               {/* Results Count */}
               <p className="text-sm text-muted-foreground hidden lg:block">
-                Mostrando {filteredProducts.length} productos
+                Mostrando {sortedProducts.length} productos
               </p>
 
               {/* Sort */}
@@ -317,25 +340,58 @@ const Catalogo = () => {
               </div>
             )}
 
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} {...product} />
-              ))}
-            </div>
-
-            {/* Pagination Placeholder */}
-            <div className="flex justify-center mt-12">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" disabled>Anterior</Button>
-                <Button variant="default" className="btn-gold">1</Button>
-                <Button variant="outline">2</Button>
-                <Button variant="outline">3</Button>
-                <span className="text-muted-foreground px-2">...</span>
-                <Button variant="outline">50</Button>
-                <Button variant="outline">Siguiente</Button>
+            {/* Loading State */}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Cargando productos...</span>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Products Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {sortedProducts.map((product) => (
+                    <ProductCard 
+                      key={product.id} 
+                      id={product.id}
+                      title={product.title}
+                      sku={product.sku}
+                      brand={product.brand}
+                      price={product.price}
+                      image={product.images?.[0] || '/placeholder.svg'}
+                      location={product.location || undefined}
+                      categories={product.categories || []}
+                      isNew={product.is_new || false}
+                      isFeatured={product.is_featured || false}
+                    />
+                  ))}
+                </div>
+
+                {sortedProducts.length === 0 && (
+                  <div className="text-center py-20">
+                    <p className="text-muted-foreground text-lg">No se encontraron productos con los filtros seleccionados.</p>
+                    <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                      Limpiar filtros
+                    </Button>
+                  </div>
+                )}
+
+                {/* Pagination Placeholder */}
+                {sortedProducts.length > 0 && (
+                  <div className="flex justify-center mt-12">
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" disabled>Anterior</Button>
+                      <Button variant="default" className="btn-gold">1</Button>
+                      <Button variant="outline">2</Button>
+                      <Button variant="outline">3</Button>
+                      <span className="text-muted-foreground px-2">...</span>
+                      <Button variant="outline">50</Button>
+                      <Button variant="outline">Siguiente</Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -368,7 +424,7 @@ const Catalogo = () => {
                   className="btn-gold w-full"
                   onClick={() => setMobileFiltersOpen(false)}
                 >
-                  Ver {filteredProducts.length} resultados
+                  Ver {sortedProducts.length} resultados
                 </Button>
               </div>
             </motion.div>
