@@ -60,19 +60,42 @@ const ActivarVendedor = () => {
     
     setIsActivating(true);
     try {
-      // First, update profile with RFC (required by trigger before inserting role)
-      const { error: profileError } = await supabase
+      // Check if profile exists
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .update({
-          rfc: trimmedRFC,
-          phone: formData.phone || undefined,
-          shipping_city: formData.city || undefined,
-          shipping_postal_code: formData.postal_code || undefined,
-        })
-        .eq('user_id', user.id);
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (profileError) {
-        throw profileError;
+      // Upsert profile with RFC (required by trigger before inserting role)
+      if (existingProfile) {
+        // Update existing profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            rfc: trimmedRFC,
+            phone: formData.phone || null,
+            shipping_city: formData.city || null,
+            shipping_postal_code: formData.postal_code || null,
+          })
+          .eq('user_id', user.id);
+
+        if (profileError) throw profileError;
+      } else {
+        // Create new profile with RFC
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            email: user.email || '',
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
+            rfc: trimmedRFC,
+            phone: formData.phone || null,
+            shipping_city: formData.city || null,
+            shipping_postal_code: formData.postal_code || null,
+          });
+
+        if (profileError) throw profileError;
       }
 
       // Now add vendedor role to user_roles table
