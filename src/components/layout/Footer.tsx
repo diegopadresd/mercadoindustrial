@@ -7,31 +7,31 @@ const locations = [
     city: 'Hermosillo, Sonora, México',
     address: 'Héctor Acedo Valenzuela N° 2, Sector Industrial Presa, 83293',
     hours: 'Lun-Vie: 8am - 6pm | Sáb: 8am - 1pm',
-    mapUrl: 'https://maps.app.goo.gl/Ht7eYihAnxDLbTnJ6',
+    mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+Hermosillo/@29.0572594,-110.9295005,17z/data=!3m1!4b1!4m6!3m5!1s0x86ce85b40f79ef99:0xee634bca8042b1c4!8m2!3d29.0572547!4d-110.9269256!16s%2Fg%2F1tz965kx',
   },
   {
     city: 'Mexicali, Baja California, México',
     address: 'Carretera San Felipe Km 13, 21700',
     hours: 'Lun-Vie: 8am - 6pm | Sáb: 8am - 1pm',
-    mapUrl: 'https://maps.app.goo.gl/Eu9W5dMo7NqDnbi58',
+    mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+Mexicali/@32.4908859,-115.3954778,17z/data=!3m1!4b1!4m6!3m5!1s0x80d79d9164f19ec5:0x21036e9e58c04bc2!8m2!3d32.4908814!4d-115.3929029!16s%2Fg%2F11q3_fsvvf',
   },
   {
     city: 'Santa Catarina, Nuevo León, México',
     address: 'Blvd. Luis Donaldo Colosio, Parque Industrial, C.P. 66384',
     hours: 'Lun-Vie: 8am - 6pm | Sáb: 8am - 1pm',
-    mapUrl: 'https://maps.app.goo.gl/3ACKGVUZy3dcbxRX7',
+    mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+Santa+Catarina/@25.7212736,-100.5028245,17z/data=!3m1!4b1!4m6!3m5!1s0x866299dbe0ce3615:0xf17d2e79426c8a1d!8m2!3d25.7212688!4d-100.4979536!16s%2Fg%2F11vjhrw6f8',
   },
   {
     city: 'Tijuana, Baja California, México',
     address: 'Calle And. Vecinal 17521, Río Tijuana 3a. Etapa, 22124',
     hours: 'Lun-Vie: 8am - 6pm | Sáb: 8am - 1pm',
-    mapUrl: 'https://maps.app.goo.gl/gntE4DAErYDLKayq8',
+    mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+%7C+Maquinaria+%7C+Equipos+Mineros/@32.4415176,-116.9032863,17z/data=!3m1!4b1!4m6!3m5!1s0x80d9393730e1ad99:0x7be3e8a5fbf32297!8m2!3d32.4415131!4d-116.9007114!16s%2Fg%2F11rs0ng1lx',
   },
   {
     city: 'Nogales, Arizona, USA',
     address: '1481 N Industrial Park Dr, Nogales, AZ 85621',
     hours: 'Lun-Vie: 8am - 5pm',
-    mapUrl: 'https://maps.app.goo.gl/LuWMyXKqjhjeoUe6A',
+    mapUrl: 'https://www.google.com/maps/place/1481+N+Industrial+Park+Dr+%234,+Nogales,+AZ+85621,+EE.+UU./@31.3598945,-110.9523053,17z/data=!3m1!4b1!4m6!3m5!1s0x86d6adab30a3ec1d:0x4596a00e3c7e8ee4!8m2!3d31.3598945!4d-110.9497304!16s%2Fg%2F11qz9hx6rw',
   },
 ];
 
