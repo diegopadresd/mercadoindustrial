@@ -4,6 +4,7 @@ import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut, 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -305,141 +306,138 @@ export const Header = () => {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden border-b border-border bg-background"
-          >
-            <div className="container mx-auto px-4 py-4">
-              {/* Mobile Search */}
-              <div className="search-bar mb-4">
-                <Input
-                  type="text"
-                  placeholder="Buscar producto o marca..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 border-0 rounded-l-xl focus-visible:ring-0"
-                />
-                <Button className="bg-secondary hover:bg-secondary/90 text-white rounded-none rounded-r-xl px-4">
-                  <Search size={20} />
-                </Button>
-              </div>
-              <ul className="space-y-1">
-                {navigation.map((item) => (
-                  <li key={item.name}>
+      {/* Mobile Menu - Sheet lateral derecho */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0 overflow-y-auto">
+          <SheetHeader className="p-4 border-b border-border">
+            <SheetTitle className="text-left">Menú</SheetTitle>
+          </SheetHeader>
+          
+          <div className="p-4">
+            {/* Mobile Search */}
+            <div className="search-bar mb-4">
+              <Input
+                type="text"
+                placeholder="Buscar producto o marca..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 border-0 rounded-l-xl focus-visible:ring-0"
+              />
+              <Button className="bg-secondary hover:bg-secondary/90 text-white rounded-none rounded-r-xl px-4">
+                <Search size={20} />
+              </Button>
+            </div>
+            <ul className="space-y-1">
+              {navigation.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    to={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === item.href
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'text-secondary hover:bg-secondary hover:text-secondary-foreground'
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            
+            {/* Mobile Auth Buttons */}
+            <div className="mt-4 pt-4 border-t border-border">
+              {user ? (
+                <div className="space-y-2">
+                  <Link
+                    to="/mi-cuenta"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium bg-primary/5 hover:bg-muted transition-colors"
+                  >
+                    <User size={18} />
+                    Mi Cuenta
+                  </Link>
+                  {isVendedor && (
                     <Link
-                      to={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                        location.pathname === item.href
-                          ? 'bg-secondary text-secondary-foreground'
-                          : 'text-secondary hover:bg-secondary hover:text-secondary-foreground'
-                      }`}
-                    >
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              
-              {/* Mobile Auth Buttons */}
-              <div className="mt-4 pt-4 border-t border-border">
-                {user ? (
-                  <div className="space-y-2">
-                    <Link
-                      to="/mi-cuenta"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium bg-primary/5 hover:bg-muted transition-colors"
-                    >
-                      <User size={18} />
-                      Mi Cuenta
-                    </Link>
-                    {isVendedor && (
-                      <Link
-                        to="/mi-cuenta/mis-publicaciones"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
-                      >
-                        <Package size={18} />
-                        Mis Publicaciones
-                      </Link>
-                    )}
-                    <Link
-                      to="/mi-cuenta/mis-compras"
+                      to="/mi-cuenta/mis-publicaciones"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
                     >
-                      <ShoppingBag size={18} />
-                      Mis Compras
+                      <Package size={18} />
+                      Mis Publicaciones
                     </Link>
+                  )}
+                  <Link
+                    to="/mi-cuenta/mis-compras"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
+                  >
+                    <ShoppingBag size={18} />
+                    Mis Compras
+                  </Link>
+                  <Link
+                    to="/mi-cuenta/chats"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
+                  >
+                    <MessageSquare size={18} />
+                    Chats
+                  </Link>
+                  <Link
+                    to={isVendedor ? "/mi-cuenta/publicar" : "/mi-cuenta/vender"}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-muted transition-colors"
+                  >
+                    <Store size={18} />
+                    {isVendedor ? 'Publicar Producto' : 'Vender'}
+                  </Link>
+                  <Link
+                    to="/perfil"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
+                  >
+                    <User size={18} />
+                    Mi Perfil
+                  </Link>
+                  {isAdmin && (
                     <Link
-                      to="/mi-cuenta/chats"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
-                    >
-                      <MessageSquare size={18} />
-                      Chats
-                    </Link>
-                    <Link
-                      to={isVendedor ? "/mi-cuenta/publicar" : "/mi-cuenta/vender"}
+                      to="/admin"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-muted transition-colors"
                     >
-                      <Store size={18} />
-                      {isVendedor ? 'Publicar Producto' : 'Vender'}
-                    </Link>
-                    <Link
-                      to="/perfil"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
-                    >
                       <User size={18} />
-                      Mi Perfil
+                      Panel Admin
                     </Link>
-                    {isAdmin && (
-                      <Link
-                        to="/admin"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-muted transition-colors"
-                      >
-                        <User size={18} />
-                        Panel Admin
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => {
-                        signOut();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-muted transition-colors w-full"
-                    >
-                      <LogOut size={18} />
-                      Cerrar Sesión
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="outline" className="w-full">
-                        Iniciar Sesión
-                      </Button>
-                    </Link>
-                    <Link to="/auth?tab=register" onClick={() => setMobileMenuOpen(false)}>
-                      <Button className="w-full">
-                        Crear Cuenta
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      signOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-muted transition-colors w-full"
+                  >
+                    <LogOut size={18} />
+                    Cerrar Sesión
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      Iniciar Sesión
+                    </Button>
+                  </Link>
+                  <Link to="/auth?tab=register" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full">
+                      Crear Cuenta
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 };
