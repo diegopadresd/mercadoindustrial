@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import {
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 const steps = [
   {
@@ -57,6 +59,23 @@ const benefits = [
 ];
 
 const ComoVender = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isVendedor, isStaff, isLoading } = useUserRole();
+
+  const handleQuieroVender = () => {
+    if (!user) {
+      // No está logueado, ir a auth
+      navigate('/auth');
+    } else if (isVendedor || isStaff) {
+      // Ya es vendedor o staff, ir a publicar producto
+      navigate('/mi-cuenta/publicar-producto');
+    } else {
+      // Está logueado pero no es vendedor, ir a activar
+      navigate('/mi-cuenta/activar-vendedor');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -72,11 +91,14 @@ const ComoVender = () => {
               <p className="text-lg text-secondary-foreground/70 mb-8">
                 Únete a la plataforma líder en maquinaria y equipo industrial. Vende tu inventario de forma fácil, segura y con alcance nacional.
               </p>
-              <Button asChild size="lg" className="gap-2">
-                <Link to="/auth">
-                  Quiero vender
-                  <ArrowRight size={18} />
-                </Link>
+              <Button 
+                size="lg" 
+                className="gap-2" 
+                onClick={handleQuieroVender}
+                disabled={isLoading}
+              >
+                Quiero vender
+                <ArrowRight size={18} />
               </Button>
             </div>
           </div>
@@ -143,14 +165,20 @@ const ComoVender = () => {
                 ¿Listo para empezar?
               </h2>
               <p className="text-muted-foreground mb-8">
-                Crea tu cuenta hoy y comienza a vender tu maquinaria y equipo industrial a compradores de todo el país.
+                {user 
+                  ? 'Comienza a vender tu maquinaria y equipo industrial a compradores de todo el país.'
+                  : 'Crea tu cuenta hoy y comienza a vender tu maquinaria y equipo industrial a compradores de todo el país.'
+                }
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild size="lg" className="gap-2">
-                  <Link to="/auth">
-                    Crear cuenta
-                    <ArrowRight size={18} />
-                  </Link>
+                <Button 
+                  size="lg" 
+                  className="gap-2" 
+                  onClick={handleQuieroVender}
+                  disabled={isLoading}
+                >
+                  {user ? (isVendedor || isStaff ? 'Publicar producto' : 'Activar cuenta vendedor') : 'Crear cuenta'}
+                  <ArrowRight size={18} />
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link to="/faq">Ver preguntas frecuentes</Link>
