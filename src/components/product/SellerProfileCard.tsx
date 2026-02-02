@@ -56,9 +56,9 @@ export const SellerProfileCard = ({ seller, productId, sellerId }: SellerProfile
 
       {/* Seller Header */}
       <div className="flex items-start gap-4 mb-4">
-        <div className="shrink-0 w-16 h-16 bg-muted rounded-full flex items-center justify-center overflow-hidden">
+        <div className="shrink-0 w-16 h-16 bg-white rounded-full flex items-center justify-center overflow-hidden border border-border p-1">
           {seller.avatar ? (
-            <img src={seller.avatar} alt={seller.name} className="w-full h-full object-cover" />
+            <img src={seller.avatar} alt={seller.name} className="w-full h-full object-contain" />
           ) : (
             <Store size={28} className="text-muted-foreground" />
           )}
