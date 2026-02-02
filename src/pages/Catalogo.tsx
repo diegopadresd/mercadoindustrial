@@ -47,7 +47,10 @@ const categorySlugMap: Record<string, string> = {
 const sectors = ['Industrial', 'Minería', 'Construcción', 'Alimenticio', 'Eléctrico', 'Agroindustria'];
 const locations = ['Hermosillo, Sonora', 'Mexicali, Baja California', 'Santa Catarina, Nuevo León', 'Tijuana, Baja California', 'Virtual'];
 
+const PRODUCTS_PER_PAGE = 12;
+
 const Catalogo = () => {
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [sortBy, setSortBy] = useState('sin-ordenar');
@@ -126,6 +129,18 @@ const Catalogo = () => {
         return 0;
     }
   });
+
+  // Pagination
+  const totalPages = Math.ceil(sortedProducts.length / PRODUCTS_PER_PAGE);
+  const paginatedProducts = sortedProducts.slice(
+    (currentPage - 1) * PRODUCTS_PER_PAGE,
+    currentPage * PRODUCTS_PER_PAGE
+  );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedSectors, selectedCategories, selectedBrands, selectedLocations, searchQuery, sortBy]);
 
   const toggleFilter = (value: string, list: string[], setList: (v: string[]) => void) => {
     if (list.includes(value)) {
@@ -325,7 +340,7 @@ const Catalogo = () => {
 
               {/* Results Count */}
               <p className="text-sm text-muted-foreground hidden lg:block">
-                Mostrando {sortedProducts.length} productos
+                Mostrando {paginatedProducts.length} de {sortedProducts.length} productos
               </p>
 
               {/* Sort */}
@@ -385,7 +400,7 @@ const Catalogo = () => {
               <>
                 {/* Products Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {sortedProducts.map((product) => (
+                  {paginatedProducts.map((product) => (
                     <ProductCard 
                       key={product.id} 
                       id={product.id}
@@ -415,17 +430,48 @@ const Catalogo = () => {
                   </div>
                 )}
 
-                {/* Pagination Placeholder */}
-                {sortedProducts.length > 0 && (
+                {/* Real Pagination */}
+                {totalPages > 1 && (
                   <div className="flex justify-center mt-12">
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" disabled>Anterior</Button>
-                      <Button variant="default" className="btn-gold">1</Button>
-                      <Button variant="outline">2</Button>
-                      <Button variant="outline">3</Button>
-                      <span className="text-muted-foreground px-2">...</span>
-                      <Button variant="outline">50</Button>
-                      <Button variant="outline">Siguiente</Button>
+                      <Button 
+                        variant="outline" 
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      >
+                        Anterior
+                      </Button>
+                      
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            className={currentPage === pageNum ? "btn-gold" : ""}
+                            onClick={() => setCurrentPage(pageNum)}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                      
+                      <Button 
+                        variant="outline"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      >
+                        Siguiente
+                      </Button>
                     </div>
                   </div>
                 )}
