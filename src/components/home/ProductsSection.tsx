@@ -10,14 +10,15 @@ const tabs = ['Destacados', 'Recientes', 'Más vistos'];
 export const ProductsSection = () => {
   const [activeTab, setActiveTab] = useState('Destacados');
 
-  // Fetch real products from database
+  // Fetch real products from database - ONLY official Mercado Industrial products (seller_id IS NULL)
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['home-inventory-products', activeTab],
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('id, title, sku, brand, images, location, is_featured, is_new, created_at')
+        .select('id, title, sku, brand, images, location, is_featured, is_new, created_at, seller_id')
         .eq('is_active', true)
+        .is('seller_id', null) // Only official Mercado Industrial products
         .limit(6);
       
       // Apply different ordering based on tab

@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, MapPin, Gavel, Timer } from 'lucide-react';
+import { ShoppingCart, MapPin, Gavel, Timer, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { Badge } from '@/components/ui/badge';
 
-interface ProductCardProps {
+export interface ProductCardProps {
   id: string;
   title: string;
   sku: string;
@@ -20,6 +20,7 @@ interface ProductCardProps {
   auctionMinPrice?: number | null;
   auctionEnd?: string | null;
   contactForQuote?: boolean;
+  isExternal?: boolean; // Product from external seller
 }
 
 export const ProductCard = ({
@@ -37,6 +38,7 @@ export const ProductCard = ({
   auctionMinPrice,
   auctionEnd,
   contactForQuote,
+  isExternal,
 }: ProductCardProps) => {
   const { addToCart } = useCart();
 
@@ -95,6 +97,12 @@ export const ProductCard = ({
         
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+          {isExternal && (
+            <Badge className="bg-amber-500 text-white">
+              <Store size={12} className="mr-1" />
+              Externo
+            </Badge>
+          )}
           {isAuction && (
             <Badge className="bg-primary text-primary-foreground">
               <Gavel size={12} className="mr-1" />
@@ -103,7 +111,7 @@ export const ProductCard = ({
           )}
           {isNew && <span className="badge-new">Nuevo</span>}
           {isFeatured && <span className="badge-featured">Destacado</span>}
-          {!isAuction && categories.slice(0, 2).map((cat) => (
+          {!isAuction && !isExternal && categories.slice(0, 2).map((cat) => (
             <span key={cat} className="badge-category">{cat}</span>
           ))}
         </div>
