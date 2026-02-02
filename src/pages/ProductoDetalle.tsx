@@ -43,6 +43,7 @@ import {
   BadgeCheck,
   ShieldCheck,
   PhoneCall,
+  Award,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getProductById } from '@/data/products';
@@ -651,6 +652,24 @@ const ProductoDetalle = () => {
               <div className="border-t border-border pt-6">
                 <h3 className="font-display font-bold text-lg mb-4">Compra con confianza</h3>
                 <div className="space-y-4">
+                  {/* Publicación Oficial de Mercado Industrial - solo cuando seller_id es null */}
+                  {!(productData as any).seller_id && (
+                    <div className="flex gap-3 bg-primary/5 rounded-xl p-3 border border-primary/20">
+                      <div className="shrink-0 w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                        <Award size={20} className="text-primary-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground flex items-center gap-2">
+                          Publicación Oficial de Mercado Industrial
+                          <Badge className="bg-primary text-primary-foreground text-xs">Certificada</Badge>
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Este producto es publicado directamente por Mercado Industrial, garantizando autenticidad, calidad y soporte directo.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Programa de vendedor sobresaliente */}
                   <div className="flex gap-3">
                     <div className="shrink-0 w-10 h-10 bg-muted rounded-full flex items-center justify-center">
