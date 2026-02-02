@@ -69,10 +69,10 @@ const ComoVender = () => {
       navigate('/auth');
     } else if (isVendedor || isStaff) {
       // Ya es vendedor o staff, ir a publicar producto
-      navigate('/mi-cuenta/publicar-producto');
+      navigate('/mi-cuenta/publicar');
     } else {
       // Está logueado pero no es vendedor, ir a activar
-      navigate('/mi-cuenta/activar-vendedor');
+      navigate('/mi-cuenta/vender');
     }
   };
 
