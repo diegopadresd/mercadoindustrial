@@ -20,58 +20,29 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Filter, X, RotateCcw, Loader2, Search } from 'lucide-react';
+import { Filter, X, RotateCcw, Loader2, Search, Store, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useProducts, useBrands, useCategories } from '@/hooks/useProducts';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Mapeo de slugs URL a nombres de categorías
-const categorySlugMap: Record<string, string> = {
-  'maquinaria-pesada': 'Maquinaria pesada',
-  'quebradores': 'Quebradores Trituradores',
-  'motores-electricos': 'Motores eléctricos',
-  'cribas': 'Cribas',
-  'compresores': 'Compresores',
-  'tanques': 'Tanques',
-  'bandas-transportadoras': 'Bandas transportadoras',
-  'valvulas': 'Válvulas',
-  'refacciones': 'Refacciones',
-  'bulldozer': 'Bulldozer',
-  'racks': 'Racks de carga pesada',
-  'filtros-prensas': 'Filtros prensas',
-  'equipos-nuevos': 'Equipos Nuevos',
-  'plataforma-telescopica': 'Plataforma Telescópica',
-  'compactador': 'Compactador',
-  'vehiculos': 'Vehículos',
-};
-
-const sectors = ['Industrial', 'Minería', 'Construcción', 'Alimenticio', 'Eléctrico', 'Agroindustria'];
 const locations = ['Hermosillo, Sonora', 'Mexicali, Baja California', 'Santa Catarina, Nuevo León', 'Tijuana, Baja California', 'Virtual'];
 
 const PRODUCTS_PER_PAGE = 12;
 
-const Catalogo = () => {
+const VentaExterna = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [sortBy, setSortBy] = useState('sin-ordenar');
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch ONLY official Mercado Industrial products from Supabase (seller_id IS NULL)
-  const { data: products = [], isLoading } = useProducts({ officialOnly: true });
+  // Fetch ONLY external seller products from Supabase
+  const { data: products = [], isLoading } = useProducts({ externalOnly: true });
   const { data: brands = [] } = useBrands();
   const { data: allCategories = [] } = useCategories();
-
-  // Leer categoría de la URL al cargar
-  useEffect(() => {
-    const categorySlug = searchParams.get('categoria');
-    if (categorySlug && categorySlugMap[categorySlug]) {
-      setSelectedCategories([categorySlugMap[categorySlug]]);
-    }
-  }, [searchParams]);
 
   // Filtrar productos basado en los filtros seleccionados
   const filteredProducts = products.filter((product) => {
@@ -140,7 +111,7 @@ const Catalogo = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedSectors, selectedCategories, selectedBrands, selectedLocations, searchQuery, sortBy]);
+  }, [selectedCategories, selectedBrands, selectedLocations, searchQuery, sortBy]);
 
   const toggleFilter = (value: string, list: string[], setList: (v: string[]) => void) => {
     if (list.includes(value)) {
@@ -151,16 +122,14 @@ const Catalogo = () => {
   };
 
   const clearFilters = () => {
-    setSelectedSectors([]);
     setSelectedCategories([]);
     setSelectedBrands([]);
     setSelectedLocations([]);
     setSearchQuery('');
-    // Limpiar parámetros de URL
     setSearchParams({});
   };
 
-  const hasActiveFilters = selectedSectors.length > 0 || selectedCategories.length > 0 || 
+  const hasActiveFilters = selectedCategories.length > 0 || 
                            selectedBrands.length > 0 || selectedLocations.length > 0 || searchQuery.trim() !== '';
 
   const FilterSidebar = () => (
@@ -180,29 +149,7 @@ const Catalogo = () => {
         )}
       </div>
 
-      <Accordion type="multiple" defaultValue={['sector', 'categoria', 'marca', 'sucursal']} className="space-y-2">
-        <AccordionItem value="sector" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Sector</span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            <div className="space-y-3">
-              {sectors.map((sector) => (
-                <div key={sector} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`sector-${sector}`} 
-                    checked={selectedSectors.includes(sector)}
-                    onCheckedChange={() => toggleFilter(sector, selectedSectors, setSelectedSectors)}
-                  />
-                  <Label htmlFor={`sector-${sector}`} className="font-normal cursor-pointer text-sm">
-                    {sector}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
+      <Accordion type="multiple" defaultValue={['categoria', 'marca', 'sucursal']} className="space-y-2">
         <AccordionItem value="categoria" className="border rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-3">
             <span className="font-semibold">Categoría</span>
@@ -249,7 +196,7 @@ const Catalogo = () => {
 
         <AccordionItem value="sucursal" className="border rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Sucursal</span>
+            <span className="font-semibold">Ubicación</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4">
             <div className="space-y-3">
@@ -283,10 +230,21 @@ const Catalogo = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="section-title text-4xl mb-2">Catálogo</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <Store className="h-8 w-8 text-primary" />
+            <h1 className="section-title text-4xl">Venta Externa</h1>
+          </div>
           <p className="text-muted-foreground">
-            Explora más de 12,000 productos disponibles
+            Productos publicados por vendedores externos verificados
           </p>
+          
+          {/* Info Alert */}
+          <Alert className="mt-4 border-amber-500/50 bg-amber-500/10">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="text-amber-700 dark:text-amber-400">
+              Estos productos son publicados por vendedores externos. Mercado Industrial actúa como intermediario para facilitar la compra-venta.
+            </AlertDescription>
+          </Alert>
           
           {/* Search Bar */}
           <div className="mt-6 max-w-2xl">
@@ -333,7 +291,7 @@ const Catalogo = () => {
                 Filtros
                 {hasActiveFilters && (
                   <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {selectedSectors.length + selectedCategories.length + selectedBrands.length + selectedLocations.length}
+                    {selectedCategories.length + selectedBrands.length + selectedLocations.length}
                   </span>
                 )}
               </Button>
@@ -362,7 +320,7 @@ const Catalogo = () => {
             {/* Active Filters */}
             {hasActiveFilters && (
               <div className="flex flex-wrap gap-2 mb-6">
-                {[...selectedSectors, ...selectedCategories, ...selectedBrands, ...selectedLocations].map((filter) => (
+                {[...selectedCategories, ...selectedBrands, ...selectedLocations].map((filter) => (
                   <span 
                     key={filter} 
                     className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
@@ -370,7 +328,6 @@ const Catalogo = () => {
                     {filter}
                     <button 
                       onClick={() => {
-                        setSelectedSectors(s => s.filter(v => v !== filter));
                         setSelectedCategories(s => s.filter(v => v !== filter));
                         setSelectedBrands(s => s.filter(v => v !== filter));
                         setSelectedLocations(s => s.filter(v => v !== filter));
@@ -417,15 +374,18 @@ const Catalogo = () => {
                       auctionMinPrice={(product as any).auction_min_price}
                       auctionEnd={(product as any).auction_end}
                       contactForQuote={(product as any).contact_for_quote || false}
+                      isExternal={true}
                     />
                   ))}
                 </div>
 
                 {sortedProducts.length === 0 && (
                   <div className="text-center py-20">
-                    <p className="text-muted-foreground text-lg">No se encontraron productos con los filtros seleccionados.</p>
-                    <Button variant="outline" className="mt-4" onClick={clearFilters}>
-                      Limpiar filtros
+                    <Store className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+                    <p className="text-muted-foreground text-lg">No hay productos de vendedores externos disponibles.</p>
+                    <p className="text-muted-foreground text-sm mt-2">¿Quieres vender tu equipo? Activa tu cuenta de vendedor.</p>
+                    <Button variant="outline" className="mt-4" asChild>
+                      <a href="/mi-cuenta/vender">Quiero vender</a>
                     </Button>
                   </div>
                 )}
@@ -436,39 +396,42 @@ const Catalogo = () => {
                     <div className="flex items-center gap-2">
                       <Button 
                         variant="outline" 
-                        disabled={currentPage === 1}
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
                       >
                         Anterior
                       </Button>
                       
-                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={currentPage === pageNum ? "default" : "outline"}
-                            className={currentPage === pageNum ? "btn-gold" : ""}
-                            onClick={() => setCurrentPage(pageNum)}
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
-                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className="w-10"
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+
                       <Button 
-                        variant="outline"
-                        disabled={currentPage === totalPages}
+                        variant="outline" 
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
                       >
                         Siguiente
                       </Button>
@@ -480,46 +443,26 @@ const Catalogo = () => {
           </div>
         </div>
 
-        {/* Mobile Filters Modal */}
+        {/* Mobile Filters Sheet */}
         {mobileFiltersOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
-            <div 
-              className="absolute inset-0 bg-foreground/50"
-              onClick={() => setMobileFiltersOpen(false)}
-            />
-            <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-background p-6 overflow-y-auto"
-            >
+            <div className="absolute inset-0 bg-black/50" onClick={() => setMobileFiltersOpen(false)} />
+            <div className="absolute right-0 top-0 h-full w-80 bg-background p-6 shadow-xl overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-display font-bold text-xl">Filtros</h3>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setMobileFiltersOpen(false)}
-                >
-                  <X size={24} />
+                <h3 className="font-display font-bold text-lg">Filtros</h3>
+                <Button variant="ghost" size="icon" onClick={() => setMobileFiltersOpen(false)}>
+                  <X size={20} />
                 </Button>
               </div>
               <FilterSidebar />
-              <div className="mt-6 pt-6 border-t">
-                <Button 
-                  className="btn-gold w-full"
-                  onClick={() => setMobileFiltersOpen(false)}
-                >
-                  Ver {sortedProducts.length} resultados
-                </Button>
-              </div>
-            </motion.div>
+            </div>
           </div>
         )}
       </main>
-      
+
       <Footer />
     </div>
   );
 };
 
-export default Catalogo;
+export default VentaExterna;

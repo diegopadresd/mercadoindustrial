@@ -38,6 +38,7 @@ import MisOfertas from "./pages/mi-cuenta/MisOfertas";
 import Chats from "./pages/mi-cuenta/Chats";
 import ActivarVendedor from "./pages/mi-cuenta/ActivarVendedor";
 import PublicarProducto from "./pages/mi-cuenta/PublicarProducto";
+import VentaExterna from "./pages/VentaExterna";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/catalogo" element={<Catalogo />} />
+              <Route path="/venta-externa" element={<VentaExterna />} />
               <Route path="/productos/:id" element={<ProductoDetalle />} />
               <Route path="/marcas" element={<Marcas />} />
               <Route path="/blog" element={<Blog />} />

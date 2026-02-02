@@ -10,6 +10,8 @@ export const useProducts = (options?: {
   featured?: boolean;
   limit?: number;
   search?: string;
+  officialOnly?: boolean; // seller_id IS NULL (Mercado Industrial)
+  externalOnly?: boolean; // seller_id IS NOT NULL (Vendedores externos)
 }) => {
   return useQuery({
     queryKey: ['products', options],
@@ -18,6 +20,15 @@ export const useProducts = (options?: {
         .from('products')
         .select('*')
         .eq('is_active', true);
+
+      // Filter by seller type
+      if (options?.officialOnly) {
+        query = query.is('seller_id', null);
+      }
+      
+      if (options?.externalOnly) {
+        query = query.not('seller_id', 'is', null);
+      }
 
       if (options?.category) {
         query = query.contains('categories', [options.category]);

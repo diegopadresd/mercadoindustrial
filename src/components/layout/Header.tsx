@@ -14,6 +14,7 @@ import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
 const navigation = [
   { name: 'Inicio', href: '/' },
   { name: 'Catálogo', href: '/catalogo' },
+  { name: 'Venta Externa', href: '/venta-externa' },
   { name: 'Marcas', href: '/marcas' },
   { name: 'Blog', href: '/blog' },
   { name: 'Quiénes Somos', href: '/nosotros' },
