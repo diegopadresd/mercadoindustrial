@@ -7,22 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Search, ArrowRight } from 'lucide-react';
 
 const brands = [
-  { name: 'CATERPILLAR', products: 245, logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c5/Caterpillar_logo.svg/1280px-Caterpillar_logo.svg.png' },
+  { name: 'CATERPILLAR', products: 245, logo: 'https://images.seeklogo.com/logo-png/6/1/caterpillar-logo-png_seeklogo-65652.png' },
   { name: 'MI COMPONENTS', products: 312, logo: '/logo-mercado-industrial.webp' },
-  { name: 'FLOWSERVE', products: 89, logo: 'https://www.flowserve.com/themes/custom/flowserve/images/flowserve-logo.svg' },
-  { name: 'GENIE', products: 67, logo: 'https://www.genielift.com/content/dam/genie/images/genie-logo.svg' },
-  { name: 'KUE-KEN CRUSHER', products: 34, logo: null },
-  { name: 'TEREX PEGSON', products: 28, logo: null },
-  { name: 'SAUER SUNDSTRAND', products: 56, logo: null },
-  { name: 'MERCEDES-BENZ', products: 23, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/1024px-Mercedes-Logo.svg.png' },
-  { name: 'ALLIS-CHALMERS', products: 41, logo: null },
-  { name: 'KOMATSU', products: 78, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Komatsu_company_logos.svg/1280px-Komatsu_company_logos.svg.png' },
-  { name: 'JOHN DEERE', products: 52, logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2b/John_Deere_logo.svg/1280px-John_Deere_logo.svg.png' },
-  { name: 'WEG', products: 134, logo: null },
-  { name: 'SIEMENS', products: 98, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Siemens-logo.svg/1280px-Siemens-logo.svg.png' },
-  { name: 'ABB', products: 67, logo: null },
-  { name: 'LINCOLN ELECTRIC', products: 45, logo: null },
-  { name: 'BOBCAT', products: 38, logo: null },
+  { name: 'FLOWSERVE', products: 89, logo: 'https://images.seeklogo.com/logo-png/52/1/flowserve-logo-png_seeklogo-523533.png' },
+  { name: 'GENIE', products: 67, logo: 'https://images.seeklogo.com/logo-png/52/2/genie-logo-png_seeklogo-528892.png' },
+  { name: 'KUE-KEN CRUSHER', products: 34, logo: 'https://images.seeklogo.com/logo-png/52/1/terex-logo-png_seeklogo-524176.png' },
+  { name: 'TEREX PEGSON', products: 28, logo: 'https://images.seeklogo.com/logo-png/52/1/terex-logo-png_seeklogo-524176.png' },
+  { name: 'SAUER SUNDSTRAND', products: 56, logo: 'https://images.seeklogo.com/logo-png/52/1/danfoss-logo-png_seeklogo-520299.png' },
+  { name: 'MERCEDES-BENZ', products: 23, logo: 'https://images.seeklogo.com/logo-png/6/1/mercedes-benz-logo-png_seeklogo-67627.png' },
+  { name: 'ALLIS-CHALMERS', products: 41, logo: 'https://images.seeklogo.com/logo-png/52/1/agco-logo-png_seeklogo-523199.png' },
+  { name: 'KOMATSU', products: 78, logo: 'https://images.seeklogo.com/logo-png/6/1/komatsu-logo-png_seeklogo-67196.png' },
+  { name: 'JOHN DEERE', products: 52, logo: 'https://images.seeklogo.com/logo-png/6/1/john-deere-logo-png_seeklogo-67166.png' },
+  { name: 'WEG', products: 134, logo: 'https://images.seeklogo.com/logo-png/52/1/weg-logo-png_seeklogo-524304.png' },
+  { name: 'SIEMENS', products: 98, logo: 'https://images.seeklogo.com/logo-png/6/1/siemens-logo-png_seeklogo-69054.png' },
+  { name: 'ABB', products: 67, logo: 'https://images.seeklogo.com/logo-png/6/1/abb-logo-png_seeklogo-64316.png' },
+  { name: 'LINCOLN ELECTRIC', products: 45, logo: 'https://images.seeklogo.com/logo-png/52/1/lincoln-electric-logo-png_seeklogo-521780.png' },
+  { name: 'BOBCAT', products: 38, logo: 'https://images.seeklogo.com/logo-png/52/1/bobcat-logo-png_seeklogo-519713.png' },
 ];
 
 const Marcas = () => {
