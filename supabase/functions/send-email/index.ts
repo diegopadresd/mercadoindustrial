@@ -28,7 +28,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Change this to your verified domain in Resend
-    const fromEmail = "Mercado Industrial <noreply@mercadoindustrial.mx>";
+    const fromEmail = "Mercado Industrial <noreply@alcance.co>";
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
