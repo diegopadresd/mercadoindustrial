@@ -20,6 +20,7 @@ import {
   Search,
   Tag,
   UserCog,
+  Ticket,
   Link as LinkIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ import AdminOfertas from './AdminOfertas';
 import AdminUsuarios from './AdminUsuarios';
 import AdminAjustes from './AdminAjustes';
 import AdminAuditoriaEnlaces from './AdminAuditoriaEnlaces';
+import AdminSoporte from './AdminSoporte';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -60,6 +62,7 @@ const allSidebarItems: SidebarItem[] = [
   { icon: FileText, label: 'Facturación', path: '/admin/facturacion', description: 'CFDI y documentos', staffOnly: true },
   { icon: Package, label: 'Inventario', path: '/admin/inventario', description: 'Productos y stock' },
   { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes', staffOnly: true },
+  { icon: Ticket, label: 'Soporte', path: '/admin/soporte', description: 'Tickets de contacto', staffOnly: true },
   { icon: Settings, label: 'Ajustes', path: '/admin/ajustes', description: 'Configuración del sitio', adminOnly: true },
   { icon: LinkIcon, label: 'Auditoría Enlaces', path: '/admin/auditoria-enlaces', description: 'Verificación de rutas', adminOnly: true },
 ];
@@ -381,6 +384,9 @@ const AdminDashboard = () => {
               <Route path="inventario" element={<AdminInventario />} />
               <Route path="preguntas" element={
                 isStaff ? <AdminPreguntas /> : <AccessDenied message="Solo administradores y operadores pueden gestionar preguntas." />
+              } />
+              <Route path="soporte" element={
+                isStaff ? <AdminSoporte /> : <AccessDenied message="Solo administradores y operadores pueden gestionar tickets de soporte." />
               } />
               <Route path="ajustes" element={<AdminAjustes />} />
               <Route path="auditoria-enlaces" element={<AdminAuditoriaEnlaces />} />
