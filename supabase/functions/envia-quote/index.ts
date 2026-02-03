@@ -196,7 +196,7 @@ serve(async (req) => {
           service: rate.service || rate.serviceName || rate.serviceDescription || 'Standard',
           price: parseFloat(rate.totalPrice || rate.total_price || rate.amount || rate.price || 0),
           currency: rate.currency || 'MXN',
-          deliveryDays: rate.deliveryDays || rate.delivery_days || rate.transitDays || rate.deliveryDate?.deliveryRangeMin || 'N/A',
+          deliveryDays: rate.deliveryEstimate || rate.deliveryDays || rate.delivery_days || rate.transitDays || rate.deliveryDate?.deliveryRangeMin || 'N/A',
           outOfArea: rate.outOfArea || rate.out_of_area || false,
           outOfAreaPrice: parseFloat(rate.outOfAreaPrice || rate.out_of_area_price || 0),
           hasPickup: rate.hasPickup ?? true,

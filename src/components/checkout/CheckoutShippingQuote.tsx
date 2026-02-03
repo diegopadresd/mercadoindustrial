@@ -242,7 +242,7 @@ export const CheckoutShippingQuote = ({
                       ${quote.price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {quote.deliveryDays} días
+                      {String(quote.deliveryDays).includes('día') ? quote.deliveryDays : `${quote.deliveryDays} días`}
                     </p>
                   </div>
                 </div>
