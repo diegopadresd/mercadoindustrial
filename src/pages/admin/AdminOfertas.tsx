@@ -152,7 +152,7 @@ const AdminOfertas = () => {
               ? `Tu oferta de $${offer.offer_price.toLocaleString('es-MX')} ha sido aceptada. ¡Procede al checkout!`
               : `Tu oferta de $${offer.offer_price.toLocaleString('es-MX')} ha sido rechazada. ${adminNotes || 'Puedes intentar con otra oferta.'}`,
           type: actionType === 'accept' ? 'offer_accepted' : 'offer_rejected',
-          action_url: actionType === 'accept' ? `/checkout/oferta/${selectedOffer}` : undefined,
+          action_url: actionType === 'accept' ? `/checkout/contraoferta/${selectedOffer}` : undefined,
           related_offer_id: selectedOffer,
         });
       }
