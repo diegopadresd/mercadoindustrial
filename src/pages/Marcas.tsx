@@ -7,22 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Search, ArrowRight } from 'lucide-react';
 
 const brands = [
-  { name: 'CATERPILLAR', products: 245, logo: '/logo-mercado-industrial.webp', initials: 'CAT' },
-  { name: 'MI COMPONENTS', products: 312, logo: '/logo-mercado-industrial.webp', initials: 'MI' },
-  { name: 'FLOWSERVE', products: 89, logo: '/logo-mercado-industrial.webp', initials: 'FS' },
-  { name: 'GENIE', products: 67, logo: '/logo-mercado-industrial.webp', initials: 'GN' },
-  { name: 'KUE-KEN CRUSHER', products: 34, logo: '/logo-mercado-industrial.webp', initials: 'KK' },
-  { name: 'TEREX PEGSON', products: 28, logo: '/logo-mercado-industrial.webp', initials: 'TX' },
-  { name: 'SAUER SUNDSTRAND', products: 56, logo: '/logo-mercado-industrial.webp', initials: 'SS' },
-  { name: 'MERCEDES-BENZ', products: 23, logo: '/logo-mercado-industrial.webp', initials: 'MB' },
-  { name: 'ALLIS-CHALMERS', products: 41, logo: '/logo-mercado-industrial.webp', initials: 'AC' },
-  { name: 'KOMATSU', products: 78, logo: '/logo-mercado-industrial.webp', initials: 'KO' },
-  { name: 'JOHN DEERE', products: 52, logo: '/logo-mercado-industrial.webp', initials: 'JD' },
-  { name: 'WEG', products: 134, logo: '/logo-mercado-industrial.webp', initials: 'WEG' },
-  { name: 'SIEMENS', products: 98, logo: '/logo-mercado-industrial.webp', initials: 'SI' },
-  { name: 'ABB', products: 67, logo: '/logo-mercado-industrial.webp', initials: 'ABB' },
-  { name: 'LINCOLN ELECTRIC', products: 45, logo: '/logo-mercado-industrial.webp', initials: 'LE' },
-  { name: 'BOBCAT', products: 38, logo: '/logo-mercado-industrial.webp', initials: 'BC' },
+  { name: 'CATERPILLAR', products: 245, logo: 'https://companieslogo.com/img/orig/CAT-7f4e98e0.png' },
+  { name: 'MI COMPONENTS', products: 312, logo: '/logo-mercado-industrial.webp' },
+  { name: 'FLOWSERVE', products: 89, logo: 'https://companieslogo.com/img/orig/FLS-2660e282.png' },
+  { name: 'GENIE', products: 67, logo: 'https://companieslogo.com/img/orig/TEX-f3acbfe4.png' },
+  { name: 'KUE-KEN CRUSHER', products: 34, logo: 'https://companieslogo.com/img/orig/SAND.ST-0d1a3eeb.png' },
+  { name: 'TEREX PEGSON', products: 28, logo: 'https://companieslogo.com/img/orig/TEX-f3acbfe4.png' },
+  { name: 'SAUER SUNDSTRAND', products: 56, logo: 'https://companieslogo.com/img/orig/DAN.CO-d5b6bde6.png' },
+  { name: 'MERCEDES-BENZ', products: 23, logo: 'https://companieslogo.com/img/orig/MBG.DE-70392cac.png' },
+  { name: 'ALLIS-CHALMERS', products: 41, logo: 'https://companieslogo.com/img/orig/AGCO-a09c6c4c.png' },
+  { name: 'KOMATSU', products: 78, logo: 'https://companieslogo.com/img/orig/6301.T-2e8bbbb2.png' },
+  { name: 'JOHN DEERE', products: 52, logo: 'https://companieslogo.com/img/orig/DE-1a13b4f2.png' },
+  { name: 'WEG', products: 134, logo: 'https://companieslogo.com/img/orig/WEGE3.SA-4db65413.png' },
+  { name: 'SIEMENS', products: 98, logo: 'https://companieslogo.com/img/orig/SIE.DE-c3bca711.png' },
+  { name: 'ABB', products: 67, logo: 'https://companieslogo.com/img/orig/ABB-f1d11de6.png' },
+  { name: 'LINCOLN ELECTRIC', products: 45, logo: 'https://companieslogo.com/img/orig/LECO-d21d8b55.png' },
+  { name: 'BOBCAT', products: 38, logo: 'https://companieslogo.com/img/orig/DOOSAN_BG.PA-7f22c890.png' },
 ];
 
 const Marcas = () => {
@@ -84,9 +84,16 @@ const Marcas = () => {
                 className="group block bg-card rounded-2xl p-6 shadow-card hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/30"
               >
                 <div className="aspect-[3/2] flex items-center justify-center mb-4 bg-gradient-to-br from-muted/50 to-muted rounded-xl p-4">
-                  <span className="text-3xl font-display font-bold text-primary/70 group-hover:text-primary transition-colors tracking-wider">
-                    {brand.initials}
-                  </span>
+                  <img
+                    src={brand.logo}
+                    alt={brand.name}
+                    className="max-h-16 w-auto object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.parentElement!.innerHTML = `<span class="text-2xl font-bold text-primary/70">${brand.name.split(' ')[0]}</span>`;
+                    }}
+                  />
                 </div>
                 <div className="text-center">
                   <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors mb-1">
