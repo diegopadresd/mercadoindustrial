@@ -6,15 +6,30 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, CheckCircle2, Package, DollarSign, CreditCard, ArrowLeft } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Loader2, CheckCircle2, Package, DollarSign, CreditCard, ArrowLeft, Building2, Copy } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+
+// SPEI account details
+const SPEI_ACCOUNT = {
+  bank: 'BBVA México',
+  clabe: '012180001234567890',
+  accountNumber: '0123456789',
+  beneficiary: 'Mercado Industrial SA de CV',
+  rfc: 'MIN210101ABC',
+};
 
 const CheckoutContraoferta = () => {
   const { offerId } = useParams<{ offerId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'spei'>('spei');
+  const [showPaymentStep, setShowPaymentStep] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [createdOrder, setCreatedOrder] = useState<any>(null);
 
   const { data: offer, isLoading: offerLoading } = useQuery({
     queryKey: ['counter-offer', offerId],
@@ -51,34 +66,31 @@ const CheckoutContraoferta = () => {
   // Verify user owns this offer
   useEffect(() => {
     if (offer && user && offer.user_id !== user.id) {
-      toast.error('No tienes acceso a esta contraoferta');
+      toast.error('No tienes acceso a esta oferta');
       navigate('/');
     }
   }, [offer, user, navigate]);
 
   const counterOfferPrice = (offer as any)?.counter_offer_price;
-  // For accepted offers (without counter), use the original offer price
   const finalPrice = counterOfferPrice || offer?.offer_price;
   const isCounterOffer = offer?.status === 'counter_offer';
 
-  const handleAcceptAndPay = async () => {
-    console.log('handleAcceptAndPay called', { offer, finalPrice, product });
-    
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    toast.success('Copiado al portapapeles');
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleProceedToPayment = async () => {
     if (!offer || !finalPrice || !product) {
-      console.error('Missing data:', { offer: !!offer, finalPrice, product: !!product });
-      toast.error('Error: Datos incompletos para procesar el pago');
+      toast.error('Error: Datos incompletos');
       return;
     }
 
     setIsProcessing(true);
     try {
-      // Update offer status to paid/completed
-      await supabase
-        .from('offers')
-        .update({ status: 'paid' })
-        .eq('id', offerId);
-
-      // Create an order with the agreed price
+      // Create order first
       const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       
       const { data: order, error: orderError } = await supabase
@@ -117,16 +129,62 @@ const CheckoutContraoferta = () => {
           total_price: finalPrice,
         });
 
-      toast.success(isCounterOffer ? '¡Contraoferta aceptada! Redirigiendo al pago...' : '¡Oferta confirmada! Redirigiendo al pago...');
-      
-      // Redirect to cart/checkout with the order
-      navigate(`/carrito?order=${order.id}`);
+      // Update offer status
+      await supabase
+        .from('offers')
+        .update({ status: 'paid' })
+        .eq('id', offerId);
+
+      setCreatedOrder(order);
+      setShowPaymentStep(true);
+      toast.success('Pedido creado. Selecciona tu método de pago.');
     } catch (error) {
-      console.error('Error processing payment:', error);
-      toast.error('Error al procesar el pago');
+      console.error('Error creating order:', error);
+      toast.error('Error al crear el pedido');
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleMercadoPagoPayment = async () => {
+    if (!createdOrder || !product) return;
+
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('mercadopago-create-preference', {
+        body: {
+          items: [{
+            id: product.id,
+            title: product.title,
+            unit_price: finalPrice,
+            quantity: 1,
+          }],
+          orderId: createdOrder.id,
+          payer: {
+            name: offer?.customer_name,
+            email: offer?.customer_email,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.init_point) {
+        window.location.href = data.init_point;
+      } else {
+        throw new Error('No se recibió URL de pago');
+      }
+    } catch (error) {
+      console.error('Error with MercadoPago:', error);
+      toast.error('Error al procesar pago con MercadoPago');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleConfirmSPEI = () => {
+    toast.success('¡Gracias! Procesaremos tu pedido al confirmar la transferencia.');
+    navigate(`/checkout/success?order=${createdOrder?.order_number}`);
   };
 
   if (offerLoading || productLoading) {
@@ -143,7 +201,6 @@ const CheckoutContraoferta = () => {
     );
   }
 
-  // Allow both 'counter_offer' and 'accepted' statuses
   if (!offer || (offer.status !== 'counter_offer' && offer.status !== 'accepted')) {
     return (
       <div className="min-h-screen bg-background">
@@ -179,75 +236,76 @@ const CheckoutContraoferta = () => {
             Volver
           </Button>
 
-          <Card className="overflow-hidden">
-            <CardHeader className={`bg-gradient-to-r ${isCounterOffer ? 'from-blue-500 to-blue-600' : 'from-green-500 to-green-600'} text-white`}>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign size={24} />
-                {isCounterOffer ? 'Contraoferta Recibida' : '¡Oferta Aceptada!'}
-              </CardTitle>
-              <CardDescription className="text-white/80">
-                {isCounterOffer 
-                  ? 'El vendedor ha respondido con una contraoferta' 
-                  : 'El vendedor ha aceptado tu oferta. ¡Procede al pago!'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 space-y-6">
-              {/* Product Info */}
-              {product && (
-                <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-                  <img
-                    src={product.images?.[0] || '/placeholder.svg'}
-                    alt={product.title}
-                    className="w-20 h-20 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <Package size={14} />
-                      Producto
+          {!showPaymentStep ? (
+            // Step 1: Offer Summary
+            <Card className="overflow-hidden">
+              <CardHeader className={`bg-gradient-to-r ${isCounterOffer ? 'from-blue-500 to-blue-600' : 'from-green-500 to-green-600'} text-white`}>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign size={24} />
+                  {isCounterOffer ? 'Contraoferta Recibida' : '¡Oferta Aceptada!'}
+                </CardTitle>
+                <CardDescription className="text-white/80">
+                  {isCounterOffer 
+                    ? 'El vendedor ha respondido con una contraoferta' 
+                    : 'El vendedor ha aceptado tu oferta. ¡Procede al pago!'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                {/* Product Info */}
+                {product && (
+                  <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                    <img
+                      src={product.images?.[0] || '/placeholder.svg'}
+                      alt={product.title}
+                      className="w-20 h-20 rounded-lg object-cover"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                        <Package size={14} />
+                        Producto
+                      </div>
+                      <h3 className="font-semibold">{product.title}</h3>
+                      <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
                     </div>
-                    <h3 className="font-semibold">{product.title}</h3>
-                    <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Price Display */}
-              {isCounterOffer ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 border border-border rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Tu oferta</p>
-                    <p className="text-xl font-semibold line-through text-muted-foreground">
-                      ${offer.offer_price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                {/* Price Display */}
+                {isCounterOffer ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 border border-border rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-1">Tu oferta</p>
+                      <p className="text-xl font-semibold line-through text-muted-foreground">
+                        ${offer.offer_price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="p-4 border-2 border-blue-500 rounded-lg bg-blue-50 dark:bg-blue-950">
+                      <p className="text-sm text-blue-600 font-medium mb-1">Contraoferta</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        ${counterOfferPrice?.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 border-2 border-green-500 rounded-lg bg-green-50 dark:bg-green-950">
+                    <p className="text-sm text-green-600 font-medium mb-1">Precio acordado</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${finalPrice?.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
-                  <div className="p-4 border-2 border-blue-500 rounded-lg bg-blue-50 dark:bg-blue-950">
-                    <p className="text-sm text-blue-600 font-medium mb-1">Contraoferta</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      ${counterOfferPrice?.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                    </p>
+                )}
+
+                {/* Admin Notes */}
+                {offer.admin_notes && (
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm font-medium mb-1">Mensaje del vendedor:</p>
+                    <p className="text-muted-foreground">{offer.admin_notes}</p>
                   </div>
-                </div>
-              ) : (
-                <div className="p-4 border-2 border-green-500 rounded-lg bg-green-50 dark:bg-green-950">
-                  <p className="text-sm text-green-600 font-medium mb-1">Precio acordado</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    ${finalPrice?.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              )}
+                )}
 
-              {/* Admin Notes */}
-              {offer.admin_notes && (
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm font-medium mb-1">Mensaje del vendedor:</p>
-                  <p className="text-muted-foreground">{offer.admin_notes}</p>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
+                {/* Action Button */}
                 <Button 
-                  onClick={handleAcceptAndPay}
+                  onClick={handleProceedToPayment}
                   disabled={isProcessing}
                   className={`w-full font-bold py-6 text-lg ${isCounterOffer ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white`}
                 >
@@ -258,26 +316,129 @@ const CheckoutContraoferta = () => {
                   )}
                   {isCounterOffer ? 'Aceptar y Pagar' : 'Proceder al Pago'} ${finalPrice?.toLocaleString('es-MX')}
                 </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  {isCounterOffer 
-                    ? 'Al hacer clic, aceptas la contraoferta y serás redirigido al proceso de pago seguro'
-                    : 'Serás redirigido al proceso de pago seguro'}
-                </p>
-              </div>
 
-              {/* Trust Indicators */}
-              <div className="flex items-center justify-center gap-6 pt-4 border-t border-border">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 size={16} className="text-green-500" />
-                  Pago seguro
+                {/* Trust Indicators */}
+                <div className="flex items-center justify-center gap-6 pt-4 border-t border-border">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 size={16} className="text-green-500" />
+                    Pago seguro
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 size={16} className="text-green-500" />
+                    Garantía de compra
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 size={16} className="text-green-500" />
-                  Garantía de compra
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            // Step 2: Payment Method Selection
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard size={24} />
+                  Selecciona tu método de pago
+                </CardTitle>
+                <CardDescription>
+                  Pedido #{createdOrder?.order_number} - Total: ${finalPrice?.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <RadioGroup
+                  value={paymentMethod}
+                  onValueChange={(value) => setPaymentMethod(value as 'mercadopago' | 'spei')}
+                  className="space-y-4"
+                >
+                  <div className={`flex items-center space-x-4 p-4 rounded-lg border-2 transition-all cursor-pointer ${paymentMethod === 'spei' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                    <RadioGroupItem value="spei" id="spei" />
+                    <Label htmlFor="spei" className="flex items-center gap-3 cursor-pointer flex-1">
+                      <Building2 className="h-6 w-6" />
+                      <div>
+                        <p className="font-medium">Transferencia SPEI</p>
+                        <p className="text-sm text-muted-foreground">Transfiere desde tu banco</p>
+                      </div>
+                    </Label>
+                  </div>
+
+                  <div className={`flex items-center space-x-4 p-4 rounded-lg border-2 transition-all cursor-pointer ${paymentMethod === 'mercadopago' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                    <RadioGroupItem value="mercadopago" id="mercadopago" />
+                    <Label htmlFor="mercadopago" className="flex items-center gap-3 cursor-pointer flex-1">
+                      <CreditCard className="h-6 w-6" />
+                      <div>
+                        <p className="font-medium">MercadoPago</p>
+                        <p className="text-sm text-muted-foreground">Tarjeta, débito u otros métodos</p>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+
+                {/* SPEI Details */}
+                {paymentMethod === 'spei' && (
+                  <div className="p-4 bg-muted/50 rounded-lg space-y-4">
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <Building2 size={18} />
+                      Datos para transferencia
+                    </h4>
+                    
+                    {[
+                      { label: 'Banco', value: SPEI_ACCOUNT.bank, key: 'bank' },
+                      { label: 'CLABE', value: SPEI_ACCOUNT.clabe, key: 'clabe' },
+                      { label: 'Cuenta', value: SPEI_ACCOUNT.accountNumber, key: 'account' },
+                      { label: 'Beneficiario', value: SPEI_ACCOUNT.beneficiary, key: 'beneficiary' },
+                      { label: 'Monto', value: `$${finalPrice?.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`, key: 'amount' },
+                      { label: 'Referencia', value: createdOrder?.order_number || '', key: 'reference' },
+                    ].map((item) => (
+                      <div key={item.key} className="flex justify-between items-center py-2 border-b border-border last:border-0">
+                        <span className="text-sm text-muted-foreground">{item.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-medium">{item.value}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => copyToClipboard(item.value, item.key)}
+                          >
+                            {copiedField === item.key ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    <p className="text-xs text-muted-foreground mt-4">
+                      Tu pedido será procesado una vez confirmada la transferencia (24-48 hrs hábiles)
+                    </p>
+                  </div>
+                )}
+
+                {/* Payment Buttons */}
+                {paymentMethod === 'mercadopago' ? (
+                  <Button
+                    onClick={handleMercadoPagoPayment}
+                    disabled={isProcessing}
+                    className="w-full py-6 text-lg bg-[#009ee3] hover:bg-[#008ed0]"
+                  >
+                    {isProcessing ? (
+                      <Loader2 className="animate-spin mr-2" size={20} />
+                    ) : (
+                      <CreditCard className="mr-2" size={20} />
+                    )}
+                    Pagar con MercadoPago
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleConfirmSPEI}
+                    className="w-full py-6 text-lg"
+                  >
+                    <CheckCircle2 className="mr-2" size={20} />
+                    Ya realicé la transferencia
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
       <Footer />
