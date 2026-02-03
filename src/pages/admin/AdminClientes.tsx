@@ -484,18 +484,19 @@ const AdminClientes = () => {
         transition={{ delay: 0.3 }}
         className="bg-card rounded-2xl shadow-lg border border-border/50 overflow-hidden"
       >
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30 hover:bg-muted/30">
-              <TableHead className="font-semibold">Cliente</TableHead>
-              <TableHead className="font-semibold">Contacto</TableHead>
-              <TableHead className="font-semibold">Ubicación</TableHead>
-              <TableHead className="font-semibold">Datos Fiscales</TableHead>
-              <TableHead className="font-semibold">Actividad</TableHead>
-              <TableHead className="font-semibold">Registro</TableHead>
-              <TableHead className="text-right font-semibold">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <TableHead className="font-semibold min-w-[200px]">Cliente</TableHead>
+                <TableHead className="font-semibold min-w-[120px]">Contacto</TableHead>
+                <TableHead className="font-semibold min-w-[150px] hidden sm:table-cell">Ubicación</TableHead>
+                <TableHead className="font-semibold min-w-[150px] hidden md:table-cell">Datos Fiscales</TableHead>
+                <TableHead className="font-semibold min-w-[120px] hidden lg:table-cell">Actividad</TableHead>
+                <TableHead className="font-semibold min-w-[100px] hidden lg:table-cell">Registro</TableHead>
+                <TableHead className="text-right font-semibold min-w-[80px]">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
@@ -558,7 +559,7 @@ const AdminClientes = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {client.shipping_city || client.shipping_state ? (
                         <div className="flex items-center gap-2 text-sm">
                           <MapPin size={14} className="text-muted-foreground" />
@@ -568,7 +569,7 @@ const AdminClientes = () => {
                         <span className="text-sm text-muted-foreground">Sin ubicación</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {client.rfc ? (
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="font-mono text-xs">
@@ -587,7 +588,7 @@ const AdminClientes = () => {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {orderData ? (
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-sm">
@@ -603,7 +604,7 @@ const AdminClientes = () => {
                         <span className="text-sm text-muted-foreground">Sin actividad</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar size={14} />
                         <span>{new Date(client.created_at).toLocaleDateString('es-MX')}</span>
@@ -642,6 +643,7 @@ const AdminClientes = () => {
             )}
           </TableBody>
         </Table>
+        </div>
       </motion.div>
 
       {/* Client Details Dialog */}

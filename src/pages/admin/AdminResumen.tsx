@@ -170,16 +170,23 @@ const AdminResumen = () => {
     },
   });
 
-  const totalSales = orders?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
+  // Only count paid/completed orders for sales metrics
+  const paidStatuses = ['paid', 'processing', 'shipped', 'delivered'];
+  const paidOrdersData = orders?.filter(o => paidStatuses.includes(o.status)) || [];
+  
+  const totalSales = paidOrdersData.reduce((sum, order) => sum + Number(order.total), 0);
   const totalOrders = orders?.length || 0;
-  const paidOrders = orders?.filter(o => o.status === 'paid' || o.status === 'delivered').length || 0;
+  const paidOrders = paidOrdersData.length;
   const pendingOrders = orders?.filter(o => o.status === 'pending').length || 0;
   const processingOrders = orders?.filter(o => o.status === 'processing').length || 0;
   const shippedOrders = orders?.filter(o => o.status === 'shipped').length || 0;
   const cancelledOrders = orders?.filter(o => o.status === 'cancelled').length || 0;
 
-  // Process data for charts
+  // Process data for charts - only include paid/completed orders
   const chartData = allOrders?.reduce((acc: any[], order) => {
+    // Only include paid orders in sales chart
+    if (!paidStatuses.includes(order.status)) return acc;
+    
     const date = new Date(order.created_at).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' });
     const existing = acc.find(item => item.date === date);
     if (existing) {
@@ -225,7 +232,7 @@ const AdminResumen = () => {
 
   const stats = [
     {
-      label: 'Ventas Totales',
+      label: 'Ventas Pagadas',
       value: `$${totalSales.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
       icon: DollarSign,
       trend: '+12.5%',

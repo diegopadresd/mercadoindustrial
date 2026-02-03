@@ -312,7 +312,7 @@ const AdminDashboard = () => {
         </AnimatePresence>
 
         {/* Main Content */}
-        <main className="flex-1 min-h-screen overflow-x-hidden">
+        <main className="flex-1 min-h-screen overflow-x-hidden max-w-full">
           {/* Desktop Top Bar */}
           <header className="hidden lg:flex items-center justify-between p-6 border-b border-border/50 bg-card/30 backdrop-blur-sm sticky top-0 z-40">
             <div className="flex items-center gap-4">
@@ -358,7 +358,7 @@ const AdminDashboard = () => {
           </header>
 
           {/* Page Content */}
-          <div className="p-6 lg:p-8">
+          <div className="p-4 sm:p-6 lg:p-8 overflow-x-hidden">
             <Routes>
               <Route index element={<AdminResumen />} />
               <Route path="usuarios" element={<AdminUsuarios />} />
