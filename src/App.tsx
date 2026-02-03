@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { LocaleProvider } from "@/contexts/LocaleContext";
 import Index from "./pages/Index";
 import WelcomeAnnouncementOverlay from "./components/WelcomeAnnouncementOverlay";
 import Catalogo from "./pages/Catalogo";
@@ -50,62 +51,64 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToTop />
-            <WelcomeAnnouncementOverlay />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/catalogo" element={<Catalogo />} />
-              <Route path="/venta-externa" element={<VentaExterna />} />
-              <Route path="/productos/:id" element={<ProductoDetalle />} />
-              <Route path="/marcas" element={<Marcas />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:id" element={<BlogDetalle />} />
-              <Route path="/nosotros" element={<Nosotros />} />
-              <Route path="/recientes" element={<Recientes />} />
-              <Route path="/carrito" element={<Carrito />} />
-              <Route path="/cotizador" element={<Cotizador />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/perfil" element={<Perfil />} />
-              {/* Mi Cuenta Routes */}
-              <Route path="/mi-cuenta" element={<MiCuenta />} />
-              <Route path="/mi-cuenta/mis-publicaciones" element={<MisPublicaciones />} />
-              <Route path="/mi-cuenta/mis-compras" element={<MisCompras />} />
-              <Route path="/mi-cuenta/mis-ofertas" element={<MisOfertas />} />
-              <Route path="/mi-cuenta/chats" element={<Chats />} />
-              <Route path="/mi-cuenta/vender" element={<ActivarVendedor />} />
-              <Route path="/mi-cuenta/publicar" element={<PublicarProducto />} />
-              {/* Checkout Routes */}
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/checkout/success" element={<CheckoutSuccess />} />
-              <Route path="/checkout/failure" element={<CheckoutFailure />} />
-              <Route path="/checkout/pending" element={<CheckoutPending />} />
-              <Route path="/checkout/contraoferta/:offerId" element={<CheckoutContraoferta />} />
-              {/* Help & Info Pages */}
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/como-vender" element={<ComoVender />} />
-              <Route path="/como-comprar" element={<ComoComprar />} />
-              <Route path="/subastas-y-ofertas" element={<SubastasYOfertas />} />
-              <Route path="/subastas" element={<Subastas />} />
-              <Route path="/politicas-de-pago" element={<PoliticasDePago />} />
-              <Route path="/privacidad" element={<Privacidad />} />
-              <Route path="/terminos" element={<Terminos />} />
-              <Route path="/contacto" element={<Contacto />} />
-              <Route path="/soporte" element={<Soporte />} />
-              {/* Admin Panel */}
-              <Route path="/admin/*" element={<AdminDashboard />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </CartProvider>
-    </AuthProvider>
+    <LocaleProvider>
+      <AuthProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ScrollToTop />
+              <WelcomeAnnouncementOverlay />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/catalogo" element={<Catalogo />} />
+                <Route path="/venta-externa" element={<VentaExterna />} />
+                <Route path="/productos/:id" element={<ProductoDetalle />} />
+                <Route path="/marcas" element={<Marcas />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:id" element={<BlogDetalle />} />
+                <Route path="/nosotros" element={<Nosotros />} />
+                <Route path="/recientes" element={<Recientes />} />
+                <Route path="/carrito" element={<Carrito />} />
+                <Route path="/cotizador" element={<Cotizador />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/perfil" element={<Perfil />} />
+                {/* Mi Cuenta Routes */}
+                <Route path="/mi-cuenta" element={<MiCuenta />} />
+                <Route path="/mi-cuenta/mis-publicaciones" element={<MisPublicaciones />} />
+                <Route path="/mi-cuenta/mis-compras" element={<MisCompras />} />
+                <Route path="/mi-cuenta/mis-ofertas" element={<MisOfertas />} />
+                <Route path="/mi-cuenta/chats" element={<Chats />} />
+                <Route path="/mi-cuenta/vender" element={<ActivarVendedor />} />
+                <Route path="/mi-cuenta/publicar" element={<PublicarProducto />} />
+                {/* Checkout Routes */}
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/checkout/success" element={<CheckoutSuccess />} />
+                <Route path="/checkout/failure" element={<CheckoutFailure />} />
+                <Route path="/checkout/pending" element={<CheckoutPending />} />
+                <Route path="/checkout/contraoferta/:offerId" element={<CheckoutContraoferta />} />
+                {/* Help & Info Pages */}
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/como-vender" element={<ComoVender />} />
+                <Route path="/como-comprar" element={<ComoComprar />} />
+                <Route path="/subastas-y-ofertas" element={<SubastasYOfertas />} />
+                <Route path="/subastas" element={<Subastas />} />
+                <Route path="/politicas-de-pago" element={<PoliticasDePago />} />
+                <Route path="/privacidad" element={<Privacidad />} />
+                <Route path="/terminos" element={<Terminos />} />
+                <Route path="/contacto" element={<Contacto />} />
+                <Route path="/soporte" element={<Soporte />} />
+                {/* Admin Panel */}
+                <Route path="/admin/*" element={<AdminDashboard />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
+      </AuthProvider>
+    </LocaleProvider>
   </QueryClientProvider>
 );
 
