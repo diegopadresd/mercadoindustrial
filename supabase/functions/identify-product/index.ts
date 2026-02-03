@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl, existingProducts } = await req.json();
+    const { imageUrl, existingProducts, productNameHint } = await req.json();
 
     if (!imageUrl) {
       return new Response(
@@ -28,7 +28,12 @@ serve(async (req) => {
     // Get existing SKUs to generate a unique one
     const existingSkus = existingProducts?.map((p: any) => p.sku) || [];
     
-    const systemPrompt = `Eres un experto en maquinaria industrial, refacciones y equipos pesados. Tu trabajo es identificar piezas, componentes y maquinaria a partir de imágenes.
+    // Build context hint if user provided a product name
+    const nameHintContext = productNameHint 
+      ? `\n\nIMPORTANTE: El usuario indica que este producto es: "${productNameHint}". Usa esta información como guía principal para identificar correctamente el producto, buscar sus especificaciones reales y generar datos precisos.`
+      : '';
+    
+    const systemPrompt = `Eres un experto en maquinaria industrial, refacciones y equipos pesados. Tu trabajo es identificar piezas, componentes y maquinaria a partir de imágenes.${nameHintContext}
 
 IMPORTANTE: Debes responder ÚNICAMENTE con un objeto JSON válido, sin markdown, sin explicaciones adicionales.
 
