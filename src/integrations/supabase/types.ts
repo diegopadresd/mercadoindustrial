@@ -345,6 +345,7 @@ export type Database = {
       offers: {
         Row: {
           admin_notes: string | null
+          counter_offer_price: number | null
           created_at: string
           customer_email: string
           customer_name: string
@@ -361,6 +362,7 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          counter_offer_price?: number | null
           created_at?: string
           customer_email: string
           customer_name: string
@@ -377,6 +379,7 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          counter_offer_price?: number | null
           created_at?: string
           customer_email?: string
           customer_name?: string

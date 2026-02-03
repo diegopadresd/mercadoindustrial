@@ -5,8 +5,6 @@ import {
   Check,
   X,
   Clock,
-  Eye,
-  MessageSquare,
   Loader2,
   Search,
   Filter,
@@ -14,6 +12,7 @@ import {
   User,
   Mail,
   Phone,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +37,8 @@ import { useCreateNotification } from '@/hooks/useNotifications';
 import { useProduct } from '@/hooks/useProducts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const OfferProductInfo = ({ productId }: { productId: string }) => {
   const { data: product, isLoading } = useProduct(productId);
@@ -62,8 +63,8 @@ const OfferProductInfo = ({ productId }: { productId: string }) => {
 
 const AdminOfertas = () => {
   const { user } = useAuth();
-  const { isVendedor, isStaff, sellerId } = useUserRole();
-  const { data: offers, isLoading } = useAdminOffers();
+  const { isVendedor, isStaff } = useUserRole();
+  const { data: offers, isLoading, refetch } = useAdminOffers();
   const updateOfferStatus = useUpdateOfferStatus();
   const createNotification = useCreateNotification();
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,7 +72,9 @@ const AdminOfertas = () => {
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [actionType, setActionType] = useState<'accept' | 'reject' | null>(null);
+  const [actionType, setActionType] = useState<'accept' | 'reject' | 'counter' | null>(null);
+  const [counterOfferPrice, setCounterOfferPrice] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredOffers = offers?.filter((offer) => {
     const matchesSearch =
@@ -81,10 +84,11 @@ const AdminOfertas = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleAction = (offerId: string, action: 'accept' | 'reject') => {
+  const handleAction = (offerId: string, action: 'accept' | 'reject' | 'counter') => {
     setSelectedOffer(offerId);
     setActionType(action);
     setAdminNotes('');
+    setCounterOfferPrice('');
     setDialogOpen(true);
   };
 
@@ -94,29 +98,74 @@ const AdminOfertas = () => {
     const offer = offers?.find((o) => o.id === selectedOffer);
     if (!offer) return;
 
-    await updateOfferStatus.mutateAsync({
-      offerId: selectedOffer,
-      status: actionType === 'accept' ? 'accepted' : 'rejected',
-      adminNotes,
-      respondedBy: user.id,
-    });
+    setIsSubmitting(true);
 
-    // Create notification for the customer
-    await createNotification.mutateAsync({
-      user_id: offer.user_id,
-      title: actionType === 'accept' ? '¡Oferta Aceptada!' : 'Oferta Rechazada',
-      message:
-        actionType === 'accept'
-          ? `Tu oferta de $${offer.offer_price.toLocaleString('es-MX')} ha sido aceptada. ¡Procede al checkout!`
-          : `Tu oferta de $${offer.offer_price.toLocaleString('es-MX')} ha sido rechazada. ${adminNotes || 'Puedes intentar con otra oferta.'}`,
-      type: actionType === 'accept' ? 'offer_accepted' : 'offer_rejected',
-      action_url: actionType === 'accept' ? `/checkout/oferta/${selectedOffer}` : undefined,
-      related_offer_id: selectedOffer,
-    });
+    try {
+      if (actionType === 'counter') {
+        const counterPrice = parseFloat(counterOfferPrice);
+        if (isNaN(counterPrice) || counterPrice <= 0) {
+          toast.error('Ingresa un precio válido para la contraoferta');
+          setIsSubmitting(false);
+          return;
+        }
 
-    setDialogOpen(false);
-    setSelectedOffer(null);
-    setActionType(null);
+        // Update offer with counter offer price and status
+        const { error } = await supabase
+          .from('offers')
+          .update({
+            counter_offer_price: counterPrice,
+            status: 'counter_offer',
+            admin_notes: adminNotes || `Contraoferta de $${counterPrice.toLocaleString('es-MX')}`,
+            responded_by: user.id,
+            responded_at: new Date().toISOString(),
+          })
+          .eq('id', selectedOffer);
+
+        if (error) throw error;
+
+        // Create notification for the customer with payment link
+        await createNotification.mutateAsync({
+          user_id: offer.user_id,
+          title: '💰 ¡Nueva Contraoferta!',
+          message: `Hemos recibido tu oferta de $${offer.offer_price.toLocaleString('es-MX')} y te proponemos una contraoferta de $${counterPrice.toLocaleString('es-MX')}. ¡Acepta y paga ahora!`,
+          type: 'counter_offer',
+          action_url: `/checkout/contraoferta/${selectedOffer}`,
+          related_offer_id: selectedOffer,
+        });
+
+        toast.success('Contraoferta enviada correctamente');
+        refetch();
+      } else {
+        await updateOfferStatus.mutateAsync({
+          offerId: selectedOffer,
+          status: actionType === 'accept' ? 'accepted' : 'rejected',
+          adminNotes,
+          respondedBy: user.id,
+        });
+
+        // Create notification for the customer
+        await createNotification.mutateAsync({
+          user_id: offer.user_id,
+          title: actionType === 'accept' ? '¡Oferta Aceptada!' : 'Oferta Rechazada',
+          message:
+            actionType === 'accept'
+              ? `Tu oferta de $${offer.offer_price.toLocaleString('es-MX')} ha sido aceptada. ¡Procede al checkout!`
+              : `Tu oferta de $${offer.offer_price.toLocaleString('es-MX')} ha sido rechazada. ${adminNotes || 'Puedes intentar con otra oferta.'}`,
+          type: actionType === 'accept' ? 'offer_accepted' : 'offer_rejected',
+          action_url: actionType === 'accept' ? `/checkout/oferta/${selectedOffer}` : undefined,
+          related_offer_id: selectedOffer,
+        });
+      }
+
+      setDialogOpen(false);
+      setSelectedOffer(null);
+      setActionType(null);
+    } catch (error) {
+      console.error('Error processing action:', error);
+      toast.error('Error al procesar la acción');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -124,6 +173,7 @@ const AdminOfertas = () => {
       pending: { label: 'Pendiente', className: 'bg-yellow-500/20 text-yellow-600' },
       accepted: { label: 'Aceptada', className: 'bg-green-500/20 text-green-600' },
       rejected: { label: 'Rechazada', className: 'bg-red-500/20 text-red-600' },
+      counter_offer: { label: 'Contraoferta', className: 'bg-blue-500/20 text-blue-600' },
     };
     const c = config[status] || { label: status, className: 'bg-muted text-muted-foreground' };
     return <Badge className={c.className}>{c.label}</Badge>;
@@ -134,6 +184,7 @@ const AdminOfertas = () => {
     pending: offers?.filter((o) => o.status === 'pending').length || 0,
     accepted: offers?.filter((o) => o.status === 'accepted').length || 0,
     rejected: offers?.filter((o) => o.status === 'rejected').length || 0,
+    counter: offers?.filter((o) => o.status === 'counter_offer').length || 0,
   };
 
   // Header label based on role
@@ -151,7 +202,7 @@ const AdminOfertas = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -171,6 +222,17 @@ const AdminOfertas = () => {
             <div>
               <p className="text-2xl font-bold">{stats.pending}</p>
               <p className="text-sm text-muted-foreground">Pendientes</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-card rounded-xl p-4 border border-border">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/10">
+              <ArrowLeftRight className="text-blue-500" size={20} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.counter}</p>
+              <p className="text-sm text-muted-foreground">Contraofertas</p>
             </div>
           </div>
         </div>
@@ -217,6 +279,7 @@ const AdminOfertas = () => {
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="pending">Pendientes</SelectItem>
+            <SelectItem value="counter_offer">Contraofertas</SelectItem>
             <SelectItem value="accepted">Aceptadas</SelectItem>
             <SelectItem value="rejected">Rechazadas</SelectItem>
           </SelectContent>
@@ -285,6 +348,11 @@ const AdminOfertas = () => {
                     <p className="text-2xl font-bold text-primary">
                       ${offer.offer_price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                     </p>
+                    {(offer as any).counter_offer_price && (
+                      <p className="text-sm font-semibold text-blue-600">
+                        Contraoferta: ${(offer as any).counter_offer_price.toLocaleString('es-MX')}
+                      </p>
+                    )}
                     {offer.original_price && (
                       <p className="text-sm text-muted-foreground">
                         Precio original: ${offer.original_price.toLocaleString('es-MX')}
@@ -306,7 +374,7 @@ const AdminOfertas = () => {
                 <div className="flex flex-col items-end gap-3">
                   {getStatusBadge(offer.status)}
                   {offer.status === 'pending' && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 justify-end">
                       <Button
                         size="sm"
                         onClick={() => handleAction(offer.id, 'accept')}
@@ -314,6 +382,14 @@ const AdminOfertas = () => {
                       >
                         <Check size={16} className="mr-1" />
                         Aceptar
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleAction(offer.id, 'counter')}
+                        className="bg-blue-500 hover:bg-blue-600"
+                      >
+                        <ArrowLeftRight size={16} className="mr-1" />
+                        Contraoferta
                       </Button>
                       <Button
                         size="sm"
@@ -343,23 +419,53 @@ const AdminOfertas = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {actionType === 'accept' ? 'Aceptar Oferta' : 'Rechazar Oferta'}
+              {actionType === 'accept' 
+                ? 'Aceptar Oferta' 
+                : actionType === 'counter' 
+                ? 'Enviar Contraoferta'
+                : 'Rechazar Oferta'}
             </DialogTitle>
             <DialogDescription>
               {actionType === 'accept'
                 ? 'El cliente recibirá una notificación y podrá proceder al checkout con el precio ofertado.'
+                : actionType === 'counter'
+                ? 'Propón un nuevo precio al cliente. Recibirá una notificación con un botón para pagar directamente.'
                 : 'El cliente recibirá una notificación de que su oferta fue rechazada.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
+            {actionType === 'counter' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Precio de contraoferta (USD) *</label>
+                <div className="relative">
+                  <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    value={counterOfferPrice}
+                    onChange={(e) => setCounterOfferPrice(e.target.value)}
+                    placeholder="Ej: 15000"
+                    className="pl-9"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                {selectedOffer && offers?.find(o => o.id === selectedOffer) && (
+                  <p className="text-xs text-muted-foreground">
+                    Oferta del cliente: ${offers.find(o => o.id === selectedOffer)?.offer_price.toLocaleString('es-MX')}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Notas (opcional)</label>
+              <label className="text-sm font-medium">Notas {actionType === 'counter' ? '(opcional)' : '(opcional)'}</label>
               <Textarea
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 placeholder={
                   actionType === 'accept'
                     ? 'Ej: Oferta aceptada, válida por 48 horas'
+                    : actionType === 'counter'
+                    ? 'Ej: Este es nuestro mejor precio'
                     : 'Ej: El precio mínimo aceptable es $X'
                 }
               />
@@ -370,13 +476,19 @@ const AdminOfertas = () => {
               </Button>
               <Button
                 onClick={confirmAction}
-                className={`flex-1 ${actionType === 'accept' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
-                disabled={updateOfferStatus.isPending}
+                className={`flex-1 ${
+                  actionType === 'accept' 
+                    ? 'bg-green-500 hover:bg-green-600' 
+                    : actionType === 'counter'
+                    ? 'bg-blue-500 hover:bg-blue-600'
+                    : 'bg-red-500 hover:bg-red-600'
+                }`}
+                disabled={isSubmitting || updateOfferStatus.isPending || (actionType === 'counter' && !counterOfferPrice)}
               >
-                {updateOfferStatus.isPending ? (
+                {(isSubmitting || updateOfferStatus.isPending) ? (
                   <Loader2 className="animate-spin mr-2" size={16} />
                 ) : null}
-                Confirmar
+                {actionType === 'counter' ? 'Enviar Contraoferta' : 'Confirmar'}
               </Button>
             </div>
           </div>
