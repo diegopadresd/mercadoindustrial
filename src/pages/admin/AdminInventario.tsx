@@ -520,23 +520,21 @@ const AdminInventario = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Fotos del producto</Label>
-                    {formData.images.length > 0 && (
-                      <Button
-                        type="button"
-                        variant={identifying ? "outline" : "secondary"}
-                        size="sm"
-                        onClick={handleAIIdentify}
-                        disabled={identifying}
-                        className={`gap-2 transition-all ${!identifying ? 'hover:bg-primary hover:text-primary-foreground' : ''}`}
-                      >
-                        {identifying ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <Sparkles size={16} />
-                        )}
-                        {identifying ? 'Identificando...' : 'Identificador AI'}
-                      </Button>
-                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAIIdentify}
+                      disabled={identifying || formData.images.length === 0}
+                      className="gap-2"
+                    >
+                      {identifying ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={16} />
+                      )}
+                      {identifying ? 'Identificando...' : 'Identificador AI'}
+                    </Button>
                   </div>
                   
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
