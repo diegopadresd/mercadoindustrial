@@ -68,11 +68,26 @@ const Catalogo = () => {
   const { data: brands = [] } = useBrands();
   const { data: allCategories = [] } = useCategories();
 
-  // Leer categoría de la URL al cargar
+  // Map sector slugs to display names
+  const sectorSlugMap: Record<string, string> = {
+    'industrial': 'Industrial',
+    'mineria': 'Minería',
+    'construccion': 'Construcción',
+    'alimenticio': 'Alimenticio',
+    'electrico': 'Eléctrico',
+    'agroindustria': 'Agroindustria',
+  };
+
+  // Leer categoría y sector de la URL al cargar
   useEffect(() => {
     const categorySlug = searchParams.get('categoria');
     if (categorySlug && categorySlugMap[categorySlug]) {
       setSelectedCategories([categorySlugMap[categorySlug]]);
+    }
+    
+    const sectorSlug = searchParams.get('sector');
+    if (sectorSlug && sectorSlugMap[sectorSlug]) {
+      setSelectedSectors([sectorSlugMap[sectorSlug]]);
     }
   }, [searchParams]);
 
@@ -86,6 +101,17 @@ const Catalogo = () => {
       const matchesBrand = product.brand.toLowerCase().includes(query);
       const matchesDescription = (product.description || '').toLowerCase().includes(query);
       if (!matchesTitle && !matchesSku && !matchesBrand && !matchesDescription) return false;
+    }
+
+    // Filtro por sector
+    if (selectedSectors.length > 0) {
+      const hasSector = (product.categories || []).some(cat => 
+        selectedSectors.some(selected => 
+          cat.toLowerCase().includes(selected.toLowerCase()) || 
+          selected.toLowerCase().includes(cat.toLowerCase())
+        )
+      );
+      if (!hasSector) return false;
     }
 
     // Filtro por categoría
