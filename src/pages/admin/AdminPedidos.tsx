@@ -266,9 +266,9 @@ const AdminPedidos = () => {
                     <div className="flex items-center justify-end gap-2">
                       {order.order_type === 'quote' && Number(order.total) === 0 && (
                         <Button 
-                          variant="default" 
+                          variant="outline" 
                           size="sm"
-                          className="bg-secondary hover:bg-secondary/90"
+                          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                           onClick={() => handleOpenQuoteDialog(order)}
                         >
                           <Send size={14} className="mr-1" />
