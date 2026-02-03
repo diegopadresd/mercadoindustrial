@@ -168,40 +168,40 @@ export const HeroSection = () => {
             />
             
             {/* Location Markers - positioned over the map */}
-            {/* Tijuana - Northwest tip of Baja California at US border */}
-            <div className="absolute" style={{ left: '8%', top: '48%' }}>
+            {/* Tijuana - Punta noroeste de Baja California en la frontera */}
+            <div className="absolute" style={{ left: '3%', top: '32%' }}>
               <div className="relative group">
                 <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-white whitespace-nowrap">Tijuana</span>
                 <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" />
               </div>
             </div>
             
-            {/* Mexicali - Northeast Baja California at border */}
-            <div className="absolute" style={{ left: '14%', top: '45%' }}>
+            {/* Mexicali - Noreste de Baja California en la frontera */}
+            <div className="absolute" style={{ left: '12%', top: '30%' }}>
               <div className="relative group">
                 <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-white whitespace-nowrap">Mexicali</span>
                 <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.2s' }} />
               </div>
             </div>
             
-            {/* Nogales - Arizona/Sonora border */}
-            <div className="absolute" style={{ left: '26%', top: '48%' }}>
+            {/* Nogales - Frontera Arizona/Sonora */}
+            <div className="absolute" style={{ left: '22%', top: '33%' }}>
               <div className="relative group">
                 <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-white whitespace-nowrap">Nogales</span>
                 <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.4s' }} />
               </div>
             </div>
             
-            {/* Hermosillo - Capital of Sonora, south of Nogales */}
-            <div className="absolute" style={{ left: '22%', top: '58%' }}>
+            {/* Hermosillo - Capital de Sonora, al sur de Nogales */}
+            <div className="absolute" style={{ left: '18%', top: '45%' }}>
               <div className="relative group">
                 <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-white whitespace-nowrap">Hermosillo</span>
                 <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.6s' }} />
               </div>
             </div>
             
-            {/* Santa Catarina - Near Monterrey, Nuevo León */}
-            <div className="absolute" style={{ left: '48%', top: '65%' }}>
+            {/* Santa Catarina - Cerca de Monterrey, Nuevo León */}
+            <div className="absolute" style={{ left: '52%', top: '52%' }}>
               <div className="relative group">
                 <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-white whitespace-nowrap">Sta. Catarina</span>
                 <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.8s' }} />
