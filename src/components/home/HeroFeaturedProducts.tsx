@@ -4,9 +4,11 @@ import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export const HeroFeaturedProducts = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { formatPrice } = useLocale();
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['hero-featured-products'],
@@ -95,8 +97,7 @@ export const HeroFeaturedProducts = () => {
                     )}
                     {product.price && (
                       <p className="text-primary font-black text-xl lg:text-2xl mt-3">
-                        ${product.price.toLocaleString('es-MX')}
-                        <span className="text-white/50 text-sm ml-2 font-medium">MXN</span>
+                        {formatPrice(product.price)}
                       </p>
                     )}
                   </div>
