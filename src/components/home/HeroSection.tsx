@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import heroImage from '@/assets/hero-industrial-premium.jpg';
+import mapUsaMexico from '@/assets/map-usa-mexico.png';
 import {
   Dialog,
   DialogContent,
@@ -156,80 +157,56 @@ export const HeroSection = () => {
         transition={{ duration: 0.8, delay: 0.4 }}
         className="hidden lg:block absolute left-[3%] top-1/2 -translate-y-1/2"
       >
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-2xl">
           <p className="text-white/70 text-xs font-medium mb-3 text-center">Nuestras Sedes</p>
-          <div className="relative w-56 h-48">
-            {/* Mexico SVG Map - Realistic shape */}
-            <svg viewBox="0 0 800 600" className="w-full h-full">
-              {/* Baja California Norte */}
-              <path
-                d="M95,95 L115,75 L140,80 L155,95 L160,120 L155,150 L145,180 L130,210 L115,240 L100,260 L90,250 L85,220 L80,180 L82,140 L88,110 Z"
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="2"
-                className="opacity-80"
-              />
-              {/* Baja California Sur */}
-              <path
-                d="M100,260 L110,280 L115,310 L110,340 L100,365 L85,380 L70,370 L65,350 L70,320 L80,290 L90,265 Z"
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="2"
-                className="opacity-80"
-              />
-              {/* Main Mexico - Northwestern coast and border */}
-              <path
-                d="M160,95 L200,85 L250,80 L300,78 L350,80 L400,85 L450,92 L500,100 L540,110 L570,125 L590,145 L600,170 L605,200 L600,230 L590,260 L575,290 L555,320 L530,350 L500,375 L465,395 L425,410 L380,420 L335,425 L290,430 L250,435 L215,445 L185,460 L160,480 L140,500 L125,480 L120,450 L125,420 L135,390 L150,360 L160,330 L165,300 L160,270 L150,240 L145,210 L150,180 L155,150 L158,120 Z"
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="2"
-                className="opacity-80"
-              />
-              {/* Yucatan Peninsula */}
-              <path
-                d="M600,230 L640,215 L680,210 L720,220 L745,245 L750,280 L735,310 L705,330 L670,340 L635,335 L610,315 L595,285 L595,255 Z"
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="2"
-                className="opacity-80"
-              />
-              
-              {/* Location markers */}
-              {/* Tijuana */}
-              <g>
-                <circle cx="105" cy="95" r="10" fill="hsl(var(--primary))" className="opacity-40 animate-pulse" />
-                <circle cx="105" cy="95" r="6" fill="hsl(var(--primary))" />
-                <text x="65" y="85" textAnchor="start" className="fill-white text-[22px] font-semibold">Tijuana</text>
-              </g>
-              
-              {/* Mexicali */}
-              <g>
-                <circle cx="155" cy="90" r="10" fill="hsl(var(--primary))" className="opacity-40 animate-pulse" style={{ animationDelay: '0.3s' }} />
-                <circle cx="155" cy="90" r="6" fill="hsl(var(--primary))" />
-                <text x="165" y="75" textAnchor="start" className="fill-white text-[22px] font-semibold">Mexicali</text>
-              </g>
-              
-              {/* Nogales */}
-              <g>
-                <circle cx="210" cy="95" r="10" fill="hsl(var(--primary))" className="opacity-40 animate-pulse" style={{ animationDelay: '0.5s' }} />
-                <circle cx="210" cy="95" r="6" fill="hsl(var(--primary))" />
-                <text x="185" y="125" textAnchor="start" className="fill-white text-[22px] font-semibold">Nogales</text>
-              </g>
-              
-              {/* Hermosillo */}
-              <g>
-                <circle cx="175" cy="175" r="10" fill="hsl(var(--primary))" className="opacity-40 animate-pulse" style={{ animationDelay: '0.7s' }} />
-                <circle cx="175" cy="175" r="6" fill="hsl(var(--primary))" />
-                <text x="190" y="180" textAnchor="start" className="fill-white text-[22px] font-semibold">Hermosillo</text>
-              </g>
-              
-              {/* Santa Catarina (Monterrey area) */}
-              <g>
-                <circle cx="420" cy="220" r="10" fill="hsl(var(--primary))" className="opacity-40 animate-pulse" style={{ animationDelay: '0.9s' }} />
-                <circle cx="420" cy="220" r="6" fill="hsl(var(--primary))" />
-                <text x="435" y="210" textAnchor="start" className="fill-white text-[22px] font-semibold">Sta. Catarina</text>
-              </g>
-            </svg>
+          <div className="relative w-60 h-44">
+            {/* Map Image */}
+            <img 
+              src={mapUsaMexico} 
+              alt="Mapa USA y México" 
+              className="w-full h-full object-contain opacity-70"
+            />
+            
+            {/* Location Markers - positioned over the map */}
+            {/* Tijuana - Southwest California border */}
+            <div className="absolute" style={{ left: '18%', top: '42%' }}>
+              <div className="relative group">
+                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-white whitespace-nowrap">Tijuana</span>
+                <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" />
+              </div>
+            </div>
+            
+            {/* Mexicali - East of Tijuana at border */}
+            <div className="absolute" style={{ left: '22%', top: '38%' }}>
+              <div className="relative group">
+                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-white whitespace-nowrap">Mexicali</span>
+                <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.2s' }} />
+              </div>
+            </div>
+            
+            {/* Nogales - Arizona/Sonora border */}
+            <div className="absolute" style={{ left: '28%', top: '45%' }}>
+              <div className="relative group">
+                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-white whitespace-nowrap">Nogales</span>
+                <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.4s' }} />
+              </div>
+            </div>
+            
+            {/* Hermosillo - Sonora, south of Nogales */}
+            <div className="absolute" style={{ left: '25%', top: '55%' }}>
+              <div className="relative group">
+                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-white whitespace-nowrap">Hermosillo</span>
+                <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.6s' }} />
+              </div>
+            </div>
+            
+            {/* Santa Catarina - Near Monterrey, NE Mexico */}
+            <div className="absolute" style={{ left: '52%', top: '62%' }}>
+              <div className="relative group">
+                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-white whitespace-nowrap">Sta. Catarina</span>
+                <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.8s' }} />
+              </div>
+            </div>
           </div>
           <p className="text-primary text-xs font-bold text-center mt-2">5 Ubicaciones</p>
           <p className="text-white/50 text-[10px] text-center">México y USA</p>
