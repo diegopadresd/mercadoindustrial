@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export const FeaturedMachinery = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
@@ -15,6 +16,8 @@ export const FeaturedMachinery = () => {
     align: 'start',
     slidesToScroll: 1,
   });
+
+  const { formatPrice, t } = useLocale();
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();
@@ -38,16 +41,6 @@ export const FeaturedMachinery = () => {
       return data;
     },
   });
-
-  const formatPrice = (price: number | null) => {
-    if (!price) return 'Consultar';
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
 
   if (isLoading) {
     return (
@@ -118,15 +111,15 @@ export const FeaturedMachinery = () => {
                           </div>
                         )}
                         {/* Condition Badge */}
-                        <Badge 
-                          className={`absolute top-3 left-3 ${
+                        <span 
+                          className={`absolute top-3 left-3 px-2 py-1 text-xs font-bold rounded ${
                             isNew 
-                              ? 'bg-green-500 text-white hover:bg-green-600' 
-                              : 'bg-primary text-secondary hover:bg-primary/90'
+                              ? 'bg-green-500 text-white' 
+                              : 'bg-primary text-secondary'
                           }`}
                         >
                           {isNew ? 'NUEVO' : 'USADO'}
-                        </Badge>
+                        </span>
                       </div>
 
                       {/* Content */}
