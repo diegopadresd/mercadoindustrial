@@ -9,16 +9,20 @@ const locations = [
     mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+Hermosillo/@29.0572594,-110.9295005,17z',
   },
   {
-    city: 'Monterrey',
+    city: 'Mexicali',
+    mapUrl: 'https://www.google.com/maps/place/Mexicali,+Baja+California',
+  },
+  {
+    city: 'Santa Catarina',
     mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+Santa+Catarina/@25.7212736,-100.5028245,17z',
   },
   {
-    city: 'CDMX',
-    mapUrl: 'https://www.google.com/maps/place/Ciudad+de+M%C3%A9xico',
+    city: 'Tijuana',
+    mapUrl: 'https://www.google.com/maps/place/Tijuana,+Baja+California',
   },
   {
-    city: 'McAllen',
-    mapUrl: 'https://www.google.com/maps/place/McAllen,+TX',
+    city: 'Nogales, AZ',
+    mapUrl: 'https://www.google.com/maps/place/Nogales,+AZ',
   },
 ];
 
