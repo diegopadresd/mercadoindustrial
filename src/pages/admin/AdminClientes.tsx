@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
@@ -17,7 +17,9 @@ import {
   MoreVertical,
   Building2,
   ShoppingBag,
-  TrendingUp
+  TrendingUp,
+  X,
+  RotateCcw
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -42,12 +44,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+
+interface Filters {
+  dateRange: string;
+  hasRFC: string;
+  activity: string;
+  salesVolume: string;
+  state: string;
+}
+
+const defaultFilters: Filters = {
+  dateRange: 'all',
+  hasRFC: 'all',
+  activity: 'all',
+  salesVolume: 'all',
+  state: 'all',
+};
 
 const AdminClientes = () => {
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<Filters>(defaultFilters);
 
   const { data: clients, isLoading } = useQuery({
     queryKey: ['admin-clients', search],
@@ -92,9 +126,68 @@ const AdminClientes = () => {
     },
   });
 
-  const totalClients = clients?.length || 0;
-  const clientsWithRFC = clients?.filter(c => c.rfc).length || 0;
-  const clientsThisMonth = clients?.filter(c => {
+  // Get unique states for filter dropdown
+  const uniqueStates = useMemo(() => {
+    if (!clients) return [];
+    const states = clients
+      .map(c => c.shipping_state)
+      .filter((s): s is string => !!s);
+    return [...new Set(states)].sort();
+  }, [clients]);
+
+  // Apply filters to clients
+  const filteredClients = useMemo(() => {
+    if (!clients) return [];
+    
+    return clients.filter(client => {
+      const orderData = clientOrders?.[client.user_id];
+      const created = new Date(client.created_at);
+      const now = new Date();
+      
+      // Date range filter
+      if (filters.dateRange !== 'all') {
+        const daysDiff = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+        if (filters.dateRange === 'today' && daysDiff > 0) return false;
+        if (filters.dateRange === 'week' && daysDiff > 7) return false;
+        if (filters.dateRange === 'month' && daysDiff > 30) return false;
+        if (filters.dateRange === '3months' && daysDiff > 90) return false;
+        if (filters.dateRange === 'year' && daysDiff > 365) return false;
+      }
+      
+      // RFC filter
+      if (filters.hasRFC === 'yes' && !client.rfc) return false;
+      if (filters.hasRFC === 'no' && client.rfc) return false;
+      
+      // Activity filter
+      if (filters.activity === 'active' && !orderData) return false;
+      if (filters.activity === 'inactive' && orderData) return false;
+      
+      // Sales volume filter
+      if (filters.salesVolume !== 'all' && orderData) {
+        const total = orderData.total;
+        if (filters.salesVolume === 'low' && total >= 10000) return false;
+        if (filters.salesVolume === 'medium' && (total < 10000 || total >= 50000)) return false;
+        if (filters.salesVolume === 'high' && total < 50000) return false;
+      } else if (filters.salesVolume !== 'all' && !orderData) {
+        return false; // No orders = no sales volume
+      }
+      
+      // State filter
+      if (filters.state !== 'all' && client.shipping_state !== filters.state) return false;
+      
+      return true;
+    });
+  }, [clients, clientOrders, filters]);
+
+  const activeFiltersCount = Object.values(filters).filter(v => v !== 'all').length;
+
+  const resetFilters = () => {
+    setFilters(defaultFilters);
+  };
+
+  const totalClients = filteredClients?.length || 0;
+  const clientsWithRFC = filteredClients?.filter(c => c.rfc).length || 0;
+  const clientsThisMonth = filteredClients?.filter(c => {
     const created = new Date(c.created_at);
     const now = new Date();
     return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
@@ -166,11 +259,168 @@ const AdminClientes = () => {
             className="pl-10"
           />
         </div>
-        <Button variant="outline">
-          <Filter size={16} className="mr-2" />
-          Filtros
-        </Button>
+        <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="relative">
+              <Filter size={16} className="mr-2" />
+              Filtros
+              {activeFiltersCount > 0 && (
+                <Badge className="ml-2 bg-primary text-primary-foreground h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80" align="end">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold">Filtros</h4>
+                {activeFiltersCount > 0 && (
+                  <Button variant="ghost" size="sm" onClick={resetFilters}>
+                    <RotateCcw size={14} className="mr-1" />
+                    Limpiar
+                  </Button>
+                )}
+              </div>
+              
+              {/* Date Range */}
+              <div className="space-y-2">
+                <Label>Fecha de registro</Label>
+                <Select 
+                  value={filters.dateRange} 
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, dateRange: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los tiempos</SelectItem>
+                    <SelectItem value="today">Hoy</SelectItem>
+                    <SelectItem value="week">Última semana</SelectItem>
+                    <SelectItem value="month">Último mes</SelectItem>
+                    <SelectItem value="3months">Últimos 3 meses</SelectItem>
+                    <SelectItem value="year">Último año</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Activity */}
+              <div className="space-y-2">
+                <Label>Actividad</Label>
+                <Select 
+                  value={filters.activity} 
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, activity: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar actividad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="active">Con pedidos</SelectItem>
+                    <SelectItem value="inactive">Sin pedidos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Sales Volume */}
+              <div className="space-y-2">
+                <Label>Volumen de ventas</Label>
+                <Select 
+                  value={filters.salesVolume} 
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, salesVolume: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar volumen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="low">Bajo (&lt; $10,000)</SelectItem>
+                    <SelectItem value="medium">Medio ($10,000 - $50,000)</SelectItem>
+                    <SelectItem value="high">Alto (&gt; $50,000)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Has RFC */}
+              <div className="space-y-2">
+                <Label>Datos fiscales</Label>
+                <Select 
+                  value={filters.hasRFC} 
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, hasRFC: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="yes">Con RFC</SelectItem>
+                    <SelectItem value="no">Sin RFC</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* State */}
+              <div className="space-y-2">
+                <Label>Estado/Ubicación</Label>
+                <Select 
+                  value={filters.state} 
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, state: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    {uniqueStates.map(state => (
+                      <SelectItem key={state} value={state}>{state}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Button className="w-full" onClick={() => setFiltersOpen(false)}>
+                Aplicar filtros
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
+      
+      {/* Active Filters Display */}
+      {activeFiltersCount > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {filters.dateRange !== 'all' && (
+            <Badge variant="secondary" className="gap-1">
+              Fecha: {filters.dateRange === 'today' ? 'Hoy' : filters.dateRange === 'week' ? 'Última semana' : filters.dateRange === 'month' ? 'Último mes' : filters.dateRange === '3months' ? 'Últimos 3 meses' : 'Último año'}
+              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, dateRange: 'all' }))} />
+            </Badge>
+          )}
+          {filters.activity !== 'all' && (
+            <Badge variant="secondary" className="gap-1">
+              {filters.activity === 'active' ? 'Con pedidos' : 'Sin pedidos'}
+              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, activity: 'all' }))} />
+            </Badge>
+          )}
+          {filters.salesVolume !== 'all' && (
+            <Badge variant="secondary" className="gap-1">
+              Ventas: {filters.salesVolume === 'low' ? 'Bajo' : filters.salesVolume === 'medium' ? 'Medio' : 'Alto'}
+              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, salesVolume: 'all' }))} />
+            </Badge>
+          )}
+          {filters.hasRFC !== 'all' && (
+            <Badge variant="secondary" className="gap-1">
+              {filters.hasRFC === 'yes' ? 'Con RFC' : 'Sin RFC'}
+              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, hasRFC: 'all' }))} />
+            </Badge>
+          )}
+          {filters.state !== 'all' && (
+            <Badge variant="secondary" className="gap-1">
+              {filters.state}
+              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, state: 'all' }))} />
+            </Badge>
+          )}
+        </div>
+      )}
 
       {/* Clients Table */}
       <motion.div
@@ -201,7 +451,7 @@ const AdminClientes = () => {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : clients?.length === 0 ? (
+            ) : filteredClients?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12">
                   <div className="flex flex-col items-center gap-3">
@@ -210,13 +460,17 @@ const AdminClientes = () => {
                     </div>
                     <div>
                       <p className="font-medium">No se encontraron clientes</p>
-                      <p className="text-sm text-muted-foreground">Los clientes aparecerán aquí cuando se registren</p>
+                      <p className="text-sm text-muted-foreground">
+                        {activeFiltersCount > 0 
+                          ? 'Intenta ajustar los filtros para ver más resultados' 
+                          : 'Los clientes aparecerán aquí cuando se registren'}
+                      </p>
                     </div>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              clients?.map((client, index) => {
+              filteredClients?.map((client, index) => {
                 const orderData = clientOrders?.[client.user_id];
                 return (
                   <motion.tr
