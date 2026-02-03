@@ -525,7 +525,7 @@ const AdminInventario = () => {
                       variant="outline"
                       size="sm"
                       onClick={handleAIIdentify}
-                      disabled={identifying || formData.images.length === 0}
+                      disabled={identifying}
                       className="gap-2"
                     >
                       {identifying ? (
