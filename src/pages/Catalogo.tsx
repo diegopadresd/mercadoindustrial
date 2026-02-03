@@ -23,6 +23,7 @@ import {
 import { Filter, X, RotateCcw, Loader2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useProducts, useBrands, useCategories } from '@/hooks/useProducts';
+import { useLocale } from '@/contexts/LocaleContext';
 
 // Mapeo de slugs URL a nombres de categorías
 const categorySlugMap: Record<string, string> = {
@@ -59,6 +60,8 @@ const Catalogo = () => {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const { language, t } = useLocale();
 
   // Fetch ONLY official Mercado Industrial products from Supabase (seller_id IS NULL)
   const { data: products = [], isLoading } = useProducts({ officialOnly: true });
@@ -166,7 +169,7 @@ const Catalogo = () => {
   const FilterSidebar = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-bold text-lg">Filtro</h3>
+        <h3 className="font-display font-bold text-lg">{t('common.filters')}</h3>
         {hasActiveFilters && (
           <Button 
             variant="ghost" 
@@ -175,7 +178,7 @@ const Catalogo = () => {
             className="text-muted-foreground hover:text-foreground"
           >
             <RotateCcw size={14} className="mr-1" />
-            Limpiar
+            {t('filters.clearFilters')}
           </Button>
         )}
       </div>
@@ -183,7 +186,7 @@ const Catalogo = () => {
       <Accordion type="multiple" defaultValue={['sector', 'categoria', 'marca', 'sucursal']} className="space-y-2">
         <AccordionItem value="sector" className="border rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Sector</span>
+            <span className="font-semibold">{language === 'es' ? 'Sector' : 'Sector'}</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4">
             <div className="space-y-3">
@@ -205,7 +208,7 @@ const Catalogo = () => {
 
         <AccordionItem value="categoria" className="border rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Categoría</span>
+            <span className="font-semibold">{t('filters.category')}</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4">
             <div className="space-y-3 max-h-48 overflow-y-auto">
@@ -227,7 +230,7 @@ const Catalogo = () => {
 
         <AccordionItem value="marca" className="border rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Marca</span>
+            <span className="font-semibold">{t('filters.brand')}</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4">
             <div className="space-y-3 max-h-48 overflow-y-auto">
@@ -249,7 +252,7 @@ const Catalogo = () => {
 
         <AccordionItem value="sucursal" className="border rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Sucursal</span>
+            <span className="font-semibold">{language === 'es' ? 'Sucursal' : 'Branch'}</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4">
             <div className="space-y-3">
@@ -283,9 +286,9 @@ const Catalogo = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="section-title text-4xl mb-2">Catálogo</h1>
+          <h1 className="section-title text-4xl mb-2">{t('nav.catalog')}</h1>
           <p className="text-muted-foreground">
-            Explora más de 12,000 productos disponibles
+            {language === 'es' ? 'Explora más de 12,000 productos disponibles' : 'Explore over 12,000 available products'}
           </p>
           
           {/* Search Bar */}
@@ -294,7 +297,7 @@ const Catalogo = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
               <Input
                 type="text"
-                placeholder="Buscar por nombre, SKU, marca o descripción..."
+                placeholder={language === 'es' ? 'Buscar por nombre, SKU, marca o descripción...' : 'Search by name, SKU, brand or description...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-4 py-6 text-base rounded-xl border-border bg-card"
@@ -330,7 +333,7 @@ const Catalogo = () => {
                 onClick={() => setMobileFiltersOpen(true)}
               >
                 <Filter size={18} className="mr-2" />
-                Filtros
+                {t('common.filters')}
                 {hasActiveFilters && (
                   <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {selectedSectors.length + selectedCategories.length + selectedBrands.length + selectedLocations.length}
@@ -340,21 +343,23 @@ const Catalogo = () => {
 
               {/* Results Count */}
               <p className="text-sm text-muted-foreground hidden lg:block">
-                Mostrando {paginatedProducts.length} de {sortedProducts.length} productos
+                {language === 'es' 
+                  ? `Mostrando ${paginatedProducts.length} de ${sortedProducts.length} productos`
+                  : `Showing ${paginatedProducts.length} of ${sortedProducts.length} products`}
               </p>
 
               {/* Sort */}
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Ordenar por" />
+                  <SelectValue placeholder={t('common.sortBy')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sin-ordenar">Sin ordenar</SelectItem>
-                  <SelectItem value="recientes">Más recientes</SelectItem>
-                  <SelectItem value="destacados">Destacados</SelectItem>
-                  <SelectItem value="precio-asc">Precio: menor a mayor</SelectItem>
-                  <SelectItem value="precio-desc">Precio: mayor a menor</SelectItem>
-                  <SelectItem value="nombre">Nombre A-Z</SelectItem>
+                  <SelectItem value="sin-ordenar">{language === 'es' ? 'Sin ordenar' : 'Unsorted'}</SelectItem>
+                  <SelectItem value="recientes">{t('common.newest')}</SelectItem>
+                  <SelectItem value="destacados">{language === 'es' ? 'Destacados' : 'Featured'}</SelectItem>
+                  <SelectItem value="precio-asc">{t('common.priceAsc')}</SelectItem>
+                  <SelectItem value="precio-desc">{t('common.priceDesc')}</SelectItem>
+                  <SelectItem value="nombre">{language === 'es' ? 'Nombre A-Z' : 'Name A-Z'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -385,7 +390,7 @@ const Catalogo = () => {
                   onClick={clearFilters}
                   className="text-sm text-muted-foreground hover:text-foreground underline"
                 >
-                  Limpiar todos
+                  {t('filters.clearFilters')}
                 </button>
               </div>
             )}
@@ -394,7 +399,7 @@ const Catalogo = () => {
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Cargando productos...</span>
+                <span className="ml-2 text-muted-foreground">{t('common.loading')}</span>
               </div>
             ) : (
               <>
@@ -423,9 +428,13 @@ const Catalogo = () => {
 
                 {sortedProducts.length === 0 && (
                   <div className="text-center py-20">
-                    <p className="text-muted-foreground text-lg">No se encontraron productos con los filtros seleccionados.</p>
+                    <p className="text-muted-foreground text-lg">
+                      {language === 'es' 
+                        ? 'No se encontraron productos con los filtros seleccionados.'
+                        : 'No products found with the selected filters.'}
+                    </p>
                     <Button variant="outline" className="mt-4" onClick={clearFilters}>
-                      Limpiar filtros
+                      {t('filters.clearFilters')}
                     </Button>
                   </div>
                 )}
