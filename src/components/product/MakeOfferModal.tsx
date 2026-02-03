@@ -39,7 +39,7 @@ export const MakeOfferModal = ({ open, onOpenChange, product }: MakeOfferModalPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user || !profile) {
+    if (!user) {
       toast({
         title: 'Inicia sesión',
         description: 'Debes iniciar sesión para hacer una oferta.',
@@ -68,14 +68,19 @@ export const MakeOfferModal = ({ open, onOpenChange, product }: MakeOfferModalPr
       return;
     }
 
+    // Use profile data if available, fallback to user data
+    const customerName = profile?.full_name || user.user_metadata?.full_name || 'Cliente';
+    const customerEmail = profile?.email || user.email || '';
+    const customerPhone = profile?.phone || undefined;
+
     await createOffer.mutateAsync({
       product_id: product.id,
       offer_price: amount,
       original_price: product.price || null,
       user_id: user.id,
-      customer_name: profile.full_name || 'Cliente',
-      customer_email: profile.email,
-      customer_phone: profile.phone || undefined,
+      customer_name: customerName,
+      customer_email: customerEmail,
+      customer_phone: customerPhone,
     });
 
     setOfferAmount('');
