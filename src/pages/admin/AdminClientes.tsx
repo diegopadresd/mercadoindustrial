@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
+import * as XLSX from 'xlsx';
 import { 
   Users, 
   Search,
@@ -59,6 +60,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from '@/hooks/use-toast';
 
 interface Filters {
   dateRange: string;
@@ -204,6 +206,54 @@ const AdminClientes = () => {
     setDetailsOpen(true);
   };
 
+  const exportToExcel = () => {
+    if (!filteredClients || filteredClients.length === 0) {
+      toast({
+        title: "Sin datos",
+        description: "No hay clientes para exportar",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const exportData = filteredClients.map(client => {
+      const orderData = clientOrders?.[client.user_id];
+      return {
+        'Nombre': client.full_name,
+        'Email': client.email,
+        'Teléfono': client.phone || 'N/A',
+        'RFC': client.rfc || 'N/A',
+        'Dirección': client.shipping_address || 'N/A',
+        'Ciudad': client.shipping_city || 'N/A',
+        'Estado': client.shipping_state || 'N/A',
+        'País': client.shipping_country || 'México',
+        'Código Postal': client.shipping_postal_code || 'N/A',
+        'Pedidos': orderData?.count || 0,
+        'Total Compras': orderData?.total ? `$${orderData.total.toLocaleString('es-MX')}` : '$0',
+        'Fecha de Registro': new Date(client.created_at).toLocaleDateString('es-MX'),
+        'Estado de Cuenta': client.status || 'active'
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Clientes');
+    
+    // Auto-size columns
+    const colWidths = Object.keys(exportData[0]).map(key => ({
+      wch: Math.max(key.length, ...exportData.map(row => String(row[key as keyof typeof row]).length))
+    }));
+    worksheet['!cols'] = colWidths;
+
+    const fileName = `clientes_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    toast({
+      title: "Exportación exitosa",
+      description: `Se exportaron ${filteredClients.length} clientes a Excel`
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -218,9 +268,9 @@ const AdminClientes = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={exportToExcel}>
             <Download size={16} className="mr-2" />
-            Exportar
+            Exportar Excel
           </Button>
         </div>
       </div>
