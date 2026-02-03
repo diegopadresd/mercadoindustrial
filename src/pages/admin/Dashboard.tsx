@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import AccessDenied from '@/components/admin/AccessDenied';
+import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.webp';
 
 // Admin sub-pages
 import AdminResumen from './AdminResumen';
@@ -144,9 +145,11 @@ const AdminDashboard = () => {
           <Menu size={24} />
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">MI</span>
-          </div>
+          <img 
+            src={logoMercadoIndustrial} 
+            alt="Mercado Industrial" 
+            className="w-8 h-8 object-contain"
+          />
           <span className="font-display font-bold">Admin</span>
         </div>
         <button className="p-2 hover:bg-muted rounded-lg transition-colors relative">
@@ -168,9 +171,11 @@ const AdminDashboard = () => {
           <div className="p-6 border-b border-border/50">
             <div className="flex items-center justify-between">
               <Link to="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
-                  <span className="text-primary-foreground font-bold">MI</span>
-                </div>
+                <img 
+                  src={logoMercadoIndustrial} 
+                  alt="Mercado Industrial" 
+                  className="w-10 h-10 object-contain"
+                />
                 {!sidebarCollapsed && (
                   <div>
                     <span className="font-display font-bold text-lg">Mercado</span>
