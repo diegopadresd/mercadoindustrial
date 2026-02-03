@@ -20,13 +20,14 @@ export const useProductAI = () => {
 
   const identifyProduct = async (
     imageUrl: string,
-    existingProducts: Array<{ sku: string }>
+    existingProducts: Array<{ sku: string }>,
+    productNameHint?: string
   ): Promise<ProductAIResult | null> => {
     try {
       setIdentifying(true);
 
       const { data, error } = await supabase.functions.invoke('identify-product', {
-        body: { imageUrl, existingProducts },
+        body: { imageUrl, existingProducts, productNameHint },
       });
 
       if (error) {

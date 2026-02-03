@@ -77,6 +77,8 @@ const AdminInventario = () => {
   const [showPublishRequestDialog, setShowPublishRequestDialog] = useState(false);
   const [productToRequest, setProductToRequest] = useState<any>(null);
   const [aiResult, setAIResult] = useState<ProductAIResult | null>(null);
+  const [manualProductName, setManualProductName] = useState('');
+  const [isReidentifying, setIsReidentifying] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -350,6 +352,7 @@ const AdminInventario = () => {
     });
     setEditingProduct(null);
     setAIResult(null);
+    setManualProductName('');
   };
 
   const openEditDialog = (product: any) => {
@@ -454,10 +457,34 @@ const AdminInventario = () => {
     }));
     
     setShowAIConfirmDialog(false);
+    setManualProductName('');
     toast({
       title: 'Información aplicada',
       description: `Producto identificado con confianza ${aiResult.confidence}`,
     });
+  };
+
+  const handleReidentifyWithName = async () => {
+    if (!manualProductName.trim() || formData.images.length === 0) return;
+    
+    setIsReidentifying(true);
+    const result = await identifyProduct(formData.images[0], products || [], manualProductName.trim());
+    setIsReidentifying(false);
+    
+    if (result && result.identified) {
+      setAIResult(result);
+      setManualProductName('');
+      toast({
+        title: 'Producto re-identificado',
+        description: 'Se encontró información actualizada',
+      });
+    } else {
+      toast({
+        title: 'No encontrado',
+        description: result?.notes || 'No se pudo encontrar información con ese nombre',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -878,8 +905,11 @@ const AdminInventario = () => {
       </div>
 
       {/* AI Confirmation Dialog */}
-      <AlertDialog open={showAIConfirmDialog} onOpenChange={setShowAIConfirmDialog}>
-        <AlertDialogContent>
+      <AlertDialog open={showAIConfirmDialog} onOpenChange={(open) => {
+        setShowAIConfirmDialog(open);
+        if (!open) setManualProductName('');
+      }}>
+        <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Sparkles className="text-primary" size={20} />
@@ -902,7 +932,42 @@ const AdminInventario = () => {
                     {aiResult.notes && <p className="text-muted-foreground italic">{aiResult.notes}</p>}
                   </div>
                 )}
-                <p>¿Deseas aplicar esta información al formulario?</p>
+                
+                {/* Manual search section */}
+                <div className="border-t pt-4 mt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">
+                    ¿No es correcto? Introduce el nombre del producto:
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ej: Motor Caterpillar C15"
+                      value={manualProductName}
+                      onChange={(e) => setManualProductName(e.target.value)}
+                      className="flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleReidentifyWithName();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleReidentifyWithName}
+                      disabled={isReidentifying || !manualProductName.trim()}
+                    >
+                      {isReidentifying ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Search size={16} />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                
+                <p className="text-sm">¿Deseas aplicar esta información al formulario?</p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
