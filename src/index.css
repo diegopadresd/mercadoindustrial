@@ -308,3 +308,22 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--steel-dark));
 }
+
+/* Mobile scroll improvements */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  body {
+    overscroll-behavior-y: contain;
+  }
+  
+  /* Prevent layout shift on mobile scroll */
+  .sticky {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+  }
+}
