@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { QuoteOptionsDialog } from '@/components/cart/QuoteOptionsDialog';
+import { PaymentOptionsDialog } from '@/components/cart/PaymentOptionsDialog';
 import { 
   ShoppingCart, 
   Trash2, 
@@ -27,6 +28,7 @@ const Carrito = () => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const handleQuantityChange = async (productId: string, delta: number, currentQuantity: number) => {
     await updateQuantity(productId, currentQuantity + delta);
@@ -36,18 +38,12 @@ const Carrito = () => {
     await removeFromCart(productId);
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    
-    setIsProcessing(true);
-    // TODO: Implement Mercado Pago checkout
-    setTimeout(() => {
-      setIsProcessing(false);
-      alert('Mercado Pago integration pending - access token required');
-    }, 1000);
+    setPaymentDialogOpen(true);
   };
 
   const handleQuoteRequest = () => {
@@ -298,6 +294,14 @@ const Carrito = () => {
         open={quoteDialogOpen} 
         onOpenChange={setQuoteDialogOpen}
         items={items}
+      />
+
+      {/* Payment Options Dialog */}
+      <PaymentOptionsDialog
+        open={paymentDialogOpen}
+        onOpenChange={setPaymentDialogOpen}
+        items={items}
+        subtotal={subtotal}
       />
     </div>
   );
