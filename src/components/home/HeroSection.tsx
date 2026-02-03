@@ -63,7 +63,7 @@ export const HeroSection = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-20 relative z-10">
-        <div className="max-w-3xl">
+        <div className="max-w-3xl mx-auto text-center">
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -94,7 +94,7 @@ export const HeroSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-lg md:text-xl text-white/80 mb-10 max-w-xl leading-relaxed"
+            className="text-lg md:text-xl text-white/80 mb-10 max-w-xl mx-auto leading-relaxed"
           >
             Compra y vende maquinaria industrial con confianza. 
             Atención personalizada, envío internacional y la mejor selección de equipos.
@@ -105,7 +105,7 @@ export const HeroSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="flex flex-wrap gap-4"
+            className="flex flex-wrap justify-center gap-4"
           >
             <Link 
               to="/catalogo"
@@ -131,7 +131,7 @@ export const HeroSection = () => {
             className="mt-16 pt-8 border-t border-white/10"
           >
             <p className="text-white/50 text-sm mb-4">Confían en nosotros empresas de</p>
-            <div className="flex flex-wrap gap-6">
+            <div className="flex flex-wrap justify-center gap-6">
               {['Minería', 'Construcción', 'Manufactura', 'Agroindustria', 'Energía'].map((sector, index) => (
                 <motion.span
                   key={sector}
