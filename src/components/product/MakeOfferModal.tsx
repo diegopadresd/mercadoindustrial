@@ -28,7 +28,7 @@ interface MakeOfferModalProps {
 }
 
 export const MakeOfferModal = ({ open, onOpenChange, product }: MakeOfferModalProps) => {
-  const { user, profile } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const createOffer = useCreateOffer();
@@ -82,6 +82,18 @@ export const MakeOfferModal = ({ open, onOpenChange, product }: MakeOfferModalPr
     setMessage('');
     onOpenChange(false);
   };
+
+  if (isLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (!user) {
     return (
