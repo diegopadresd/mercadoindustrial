@@ -14,7 +14,6 @@ import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
 const navigation = [
   { name: 'Inicio', href: '/' },
   { name: 'Catálogo', href: '/catalogo' },
-  { name: 'Venta Externa', href: '/venta-externa' },
   { name: 'Marcas', href: '/marcas' },
   { name: 'Blog', href: '/blog' },
   { name: 'Quiénes Somos', href: '/nosotros' },
@@ -285,25 +284,40 @@ export const Header = () => {
       {/* Navigation */}
       <nav className="hidden lg:block bg-background">
         <div className="container mx-auto px-4">
-          <ul className="flex items-center gap-1">
-            {navigation.map((item) => (
-              <li key={item.name}>
-                <Link
-                  to={item.href}
-                  className={`relative inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                    location.pathname === item.href
-                      ? 'bg-secondary text-secondary-foreground'
-                      : 'text-secondary hover:bg-secondary hover:text-secondary-foreground'
-                  }`}
-                >
-                  {item.name}
-                  {location.pathname === item.href && (
-                    <span className="absolute -bottom-[10px] left-4 right-4 h-[3px] bg-primary rounded-t-full" />
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="flex items-center justify-between">
+            <ul className="flex items-center gap-1">
+              {navigation.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    to={item.href}
+                    className={`relative inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                      location.pathname === item.href
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'text-secondary hover:bg-secondary hover:text-secondary-foreground'
+                    }`}
+                  >
+                    {item.name}
+                    {location.pathname === item.href && (
+                      <span className="absolute -bottom-[10px] left-4 right-4 h-[3px] bg-primary rounded-t-full" />
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            
+            {/* Venta Externa - Destacado */}
+            <Link
+              to="/venta-externa"
+              className={`inline-flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                location.pathname === '/venta-externa'
+                  ? 'bg-orange-500 text-white shadow-lg'
+                  : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-md hover:shadow-lg hover:scale-105'
+              }`}
+            >
+              <Store size={18} />
+              Venta Externa
+            </Link>
+          </div>
         </div>
       </nav>
 
