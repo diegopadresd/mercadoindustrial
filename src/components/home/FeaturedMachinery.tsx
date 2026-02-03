@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -17,7 +16,7 @@ export const FeaturedMachinery = () => {
     slidesToScroll: 1,
   });
 
-  const { formatPrice, t } = useLocale();
+  const { formatPrice, t, language } = useLocale();
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();
@@ -118,7 +117,7 @@ export const FeaturedMachinery = () => {
                               : 'bg-primary text-secondary'
                           }`}
                         >
-                          {isNew ? 'NUEVO' : 'USADO'}
+                          {isNew ? (language === 'es' ? 'NUEVO' : 'NEW') : (language === 'es' ? 'USADO' : 'USED')}
                         </span>
                       </div>
 
@@ -130,8 +129,8 @@ export const FeaturedMachinery = () => {
                         
                         {/* Specs */}
                         <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground mb-3 h-5">
-                          {product.year && <span>Año: {product.year}</span>}
-                          {product.hours_of_use && <span>• Horas: {product.hours_of_use}</span>}
+                          {product.year && <span>{language === 'es' ? 'Año' : 'Year'}: {product.year}</span>}
+                          {product.hours_of_use && <span>• {language === 'es' ? 'Horas' : 'Hours'}: {product.hours_of_use}</span>}
                         </div>
 
                         {/* Price */}
@@ -145,7 +144,7 @@ export const FeaturedMachinery = () => {
                         <div className="mt-auto">
                           <Button asChild className="w-full bg-primary text-secondary hover:bg-primary/90">
                             <Link to={`/productos/${product.id}`}>
-                              Ver Detalles
+                              {language === 'es' ? 'Ver Detalles' : 'View Details'}
                             </Link>
                           </Button>
                         </div>
