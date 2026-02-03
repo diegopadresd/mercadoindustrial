@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut, Package, ShoppingBag, MessageSquare, Store } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut, Package, ShoppingBag, MessageSquare, Store, Globe, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useLocale } from '@/contexts/LocaleContext';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
 
@@ -36,10 +37,13 @@ export const Header = () => {
   const [selectedSector, setSelectedSector] = useState('Todos los sectores');
   const [sectorDropdownOpen, setSectorDropdownOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
   const location = useLocation();
   const { user, profile, isAdmin, signOut } = useAuth();
   const { isVendedor } = useUserRole();
   const { itemCount } = useCart();
+  const { language, currency, setLanguage, setCurrency, t } = useLocale();
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -57,16 +61,108 @@ export const Header = () => {
               industrialmarketllc@gmail.com
             </a>
           </div>
-          <div className="flex items-center gap-6">
-            <span className="font-semibold text-primary">MÉXICO E HISPANOAMÉRICA</span>
-            <a href="tel:662-168-0047" className="flex items-center gap-1 hover:text-primary transition-colors">
-              <Phone size={14} />
-              662-168-0047
-            </a>
-            <a href="mailto:ventas@mercadoindustrial.mx" className="hidden md:flex items-center gap-1 hover:text-primary transition-colors">
-              <Mail size={14} />
-              ventas@mercadoindustrial.mx
-            </a>
+          <div className="flex items-center gap-4 md:gap-6">
+            {/* Language Toggle */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setLangDropdownOpen(!langDropdownOpen);
+                  setCurrencyDropdownOpen(false);
+                }}
+                className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-secondary-foreground/10 transition-colors"
+                title={t('common.language')}
+              >
+                <Globe size={14} />
+                <span className="font-medium">{language.toUpperCase()}</span>
+                <ChevronDown size={12} className={`transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <AnimatePresence>
+                {langDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="absolute top-full right-0 mt-1 bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1 min-w-[100px] z-50"
+                  >
+                    <button
+                      onClick={() => {
+                        setLanguage('es');
+                        setLangDropdownOpen(false);
+                      }}
+                      className={`w-full px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 ${language === 'es' ? 'bg-muted font-medium' : ''}`}
+                    >
+                      🇲🇽 Español
+                    </button>
+                    <button
+                      onClick={() => {
+                        setLanguage('en');
+                        setLangDropdownOpen(false);
+                      }}
+                      className={`w-full px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 ${language === 'en' ? 'bg-muted font-medium' : ''}`}
+                    >
+                      🇺🇸 English
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Currency Toggle */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setCurrencyDropdownOpen(!currencyDropdownOpen);
+                  setLangDropdownOpen(false);
+                }}
+                className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-secondary-foreground/10 transition-colors"
+                title={t('common.currency')}
+              >
+                <DollarSign size={14} />
+                <span className="font-medium">{currency}</span>
+                <ChevronDown size={12} className={`transition-transform ${currencyDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <AnimatePresence>
+                {currencyDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="absolute top-full right-0 mt-1 bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1 min-w-[100px] z-50"
+                  >
+                    <button
+                      onClick={() => {
+                        setCurrency('MXN');
+                        setCurrencyDropdownOpen(false);
+                      }}
+                      className={`w-full px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 ${currency === 'MXN' ? 'bg-muted font-medium' : ''}`}
+                    >
+                      🇲🇽 MXN
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCurrency('USD');
+                        setCurrencyDropdownOpen(false);
+                      }}
+                      className={`w-full px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 ${currency === 'USD' ? 'bg-muted font-medium' : ''}`}
+                    >
+                      🇺🇸 USD
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="hidden md:flex items-center gap-6">
+              <span className="font-semibold text-primary">MÉXICO</span>
+              <a href="tel:662-168-0047" className="flex items-center gap-1 hover:text-primary transition-colors">
+                <Phone size={14} />
+                662-168-0047
+              </a>
+              <a href="mailto:ventas@mercadoindustrial.mx" className="hidden lg:flex items-center gap-1 hover:text-primary transition-colors">
+                <Mail size={14} />
+                ventas@mercadoindustrial.mx
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -451,16 +547,68 @@ export const Header = () => {
                 <div className="flex flex-col gap-2">
                   <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
                     <Button variant="outline" className="w-full">
-                      Iniciar Sesión
+                      {t('auth.login')}
                     </Button>
                   </Link>
                   <Link to="/auth?tab=register" onClick={() => setMobileMenuOpen(false)}>
                     <Button className="w-full">
-                      Crear Cuenta
+                      {t('auth.createAccount')}
                     </Button>
                   </Link>
                 </div>
               )}
+            </div>
+
+            {/* Mobile Language & Currency */}
+            <div className="mt-4 pt-4 border-t border-border space-y-3">
+              <div className="flex items-center justify-between px-2">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Globe size={16} />
+                  {t('common.language')}
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setLanguage('es')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                      language === 'es' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    🇲🇽 ES
+                  </button>
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                      language === 'en' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    🇺🇸 EN
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between px-2">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <DollarSign size={16} />
+                  {t('common.currency')}
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setCurrency('MXN')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                      currency === 'MXN' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    🇲🇽 MXN
+                  </button>
+                  <button
+                    onClick={() => setCurrency('USD')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                      currency === 'USD' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    🇺🇸 USD
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </SheetContent>

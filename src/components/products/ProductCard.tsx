@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ShoppingCart, MapPin, Gavel, Timer, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
+import { useLocale } from '@/contexts/LocaleContext';
 import { Badge } from '@/components/ui/badge';
 
 export interface ProductCardProps {
@@ -41,6 +42,7 @@ export const ProductCard = ({
   isExternal,
 }: ProductCardProps) => {
   const { addToCart } = useCart();
+  const { formatPrice, t } = useLocale();
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -146,9 +148,9 @@ export const ProductCard = ({
           {isAuction ? (
             <>
               <div className="flex justify-between">
-                <span className="text-muted-foreground/70">Compra ya</span>
+                <span className="text-muted-foreground/70">{t('auction.buyNow')}</span>
                 <span className="font-bold text-primary text-lg">
-                  ${auctionMinPrice?.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  {formatPrice(auctionMinPrice)}
                 </span>
               </div>
               {auctionEndDate && (
@@ -156,8 +158,8 @@ export const ProductCard = ({
                   <Timer size={12} />
                   <span>
                     {isAuctionActive 
-                      ? `Termina: ${auctionEndDate.toLocaleDateString('es-MX')}`
-                      : 'Finalizada'
+                      ? `${t('auction.endsIn')}: ${auctionEndDate.toLocaleDateString('es-MX')}`
+                      : t('auction.ended')
                     }
                   </span>
                 </div>
@@ -165,14 +167,14 @@ export const ProductCard = ({
             </>
           ) : contactForQuote || !price ? (
             <div className="flex justify-between">
-              <span className="text-muted-foreground/70">Precio</span>
-              <span className="font-medium text-secondary">Cotizar</span>
+              <span className="text-muted-foreground/70">{t('product.price')}</span>
+              <span className="font-medium text-secondary">{t('common.requestQuote')}</span>
             </div>
           ) : (
             <div className="flex justify-between">
-              <span className="text-muted-foreground/70">Precio</span>
+              <span className="text-muted-foreground/70">{t('product.price')}</span>
               <span className="font-bold text-primary text-lg">
-                ${price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                {formatPrice(price)}
               </span>
             </div>
           )}
@@ -188,7 +190,7 @@ export const ProductCard = ({
             >
               <Link to={`/productos/${id}`}>
                 <Gavel size={16} className="mr-1" />
-                Ver subasta
+                {t('auction.bidNow')}
               </Link>
             </Button>
           ) : contactForQuote || !price ? (
@@ -200,14 +202,14 @@ export const ProductCard = ({
                 onClick={handleQuote}
               >
                 <ShoppingCart size={16} className="mr-1" />
-                Agregar
+                {t('common.addToCart')}
               </Button>
               <Button 
                 size="sm" 
                 className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground"
                 onClick={handleQuote}
               >
-                Cotizar
+                {t('common.requestQuote')}
               </Button>
             </>
           ) : (
@@ -219,14 +221,14 @@ export const ProductCard = ({
                 onClick={handleAddToCart}
               >
                 <ShoppingCart size={16} className="mr-1" />
-                Agregar
+                {t('common.addToCart')}
               </Button>
               <Button 
                 size="sm" 
                 className="flex-1 btn-gold"
                 onClick={handleAddToCart}
               >
-                Comprar
+                {t('common.buyNow')}
               </Button>
             </>
           )}
