@@ -73,7 +73,7 @@ export const HeroSection = () => {
                 className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6"
               >
                 <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                <span className="text-primary font-medium text-sm">+15,000 máquinas disponibles</span>
+                <span className="text-primary font-medium text-sm">+12,643 productos disponibles</span>
               </motion.div>
 
               {/* Headline */}
@@ -83,11 +83,11 @@ export const HeroSection = () => {
                 transition={{ duration: 0.7, delay: 0.1 }}
                 className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-white leading-[1.1] mb-6"
               >
-                El Marketplace Premier
+                El marketplace
                 <br />
-                para <span className="text-primary">Maquinaria</span>
+                <span className="text-primary">industrial</span> más
                 <br />
-                <span className="text-primary">Industrial Usada</span>
+                grande de México
               </motion.h1>
 
               {/* Subtitle */}
@@ -97,8 +97,8 @@ export const HeroSection = () => {
                 transition={{ duration: 0.7, delay: 0.2 }}
                 className="text-lg text-white/80 mb-8 leading-relaxed"
               >
-                Compra y venta profesional de maquinaria pesada para 
-                equipamiento industrial y sus precios más competitivos.
+                Compra y vende maquinaria industrial con confianza. 
+                Atención personalizada, envío internacional y la mejor selección de equipos.
               </motion.p>
 
               {/* CTAs */}
@@ -110,16 +110,41 @@ export const HeroSection = () => {
               >
                 <Link 
                   to="/catalogo"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-secondary font-bold rounded-lg hover:bg-primary/90 transition-all duration-300 shadow-gold"
+                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-secondary font-bold rounded-lg hover:bg-primary/90 transition-all duration-300 shadow-gold"
                 >
-                  Ver Catálogo
+                  Comprar Maquinaria
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <button 
                   onClick={() => setShowSellingScheme(true)}
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-transparent text-white font-bold rounded-lg border-2 border-white/30 hover:bg-white/10 transition-all duration-300"
+                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-transparent text-white font-bold rounded-lg border-2 border-white/30 hover:bg-white/10 transition-all duration-300"
                 >
-                  Vender Equipo
+                  Vender Maquinaria
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </button>
+              </motion.div>
+
+              {/* Trust Indicators */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.7, delay: 0.5 }}
+                className="mt-10 pt-6 border-t border-white/10"
+              >
+                <p className="text-white/50 text-sm mb-3">Confían en nosotros empresas de</p>
+                <div className="flex flex-wrap gap-4">
+                  {['Minería', 'Construcción', 'Manufactura', 'Agroindustria', 'Energía'].map((sector, index) => (
+                    <motion.span
+                      key={sector}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.6 + index * 0.1 }}
+                      className="text-white/70 font-medium text-sm"
+                    >
+                      {sector}
+                    </motion.span>
+                  ))}
+                </div>
               </motion.div>
             </div>
 
@@ -133,12 +158,16 @@ export const HeroSection = () => {
               <div className="bg-secondary/80 backdrop-blur-md rounded-2xl p-8 text-right">
                 <div className="space-y-6">
                   <div>
-                    <span className="block text-6xl font-display font-black text-primary">+15,000</span>
-                    <span className="text-white/70 text-sm">Máquinas</span>
+                    <span className="block text-5xl font-display font-black text-primary">+12,643</span>
+                    <span className="text-white/70 text-sm">Productos</span>
                   </div>
                   <div>
-                    <span className="block text-6xl font-display font-black text-primary">+500</span>
-                    <span className="text-white/70 text-sm">Vendedores Verificados</span>
+                    <span className="block text-5xl font-display font-black text-primary">+500</span>
+                    <span className="text-white/70 text-sm">Marcas</span>
+                  </div>
+                  <div>
+                    <span className="block text-5xl font-display font-black text-primary">5</span>
+                    <span className="text-white/70 text-sm">Ubicaciones</span>
                   </div>
                 </div>
               </div>
