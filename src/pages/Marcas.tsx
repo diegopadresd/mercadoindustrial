@@ -11,14 +11,14 @@ const brands = [
   { name: 'MI COMPONENTS', products: 312, logo: '/logo-mercado-industrial.webp' },
   { name: 'FLOWSERVE', products: 89, logo: '/brands/flowserve.svg' },
   { name: 'GENIE', products: 67, logo: '/brands/genie.svg' },
-  { name: 'KUE-KEN CRUSHER', products: 34, logo: '/brands/terex.svg' },
+  { name: 'KUE-KEN CRUSHER', products: 34, logo: null },
   { name: 'TEREX PEGSON', products: 28, logo: '/brands/terex.svg' },
   { name: 'SAUER SUNDSTRAND', products: 56, logo: '/brands/danfoss.svg' },
   { name: 'MERCEDES-BENZ', products: 23, logo: '/brands/mercedes-benz.svg' },
-  { name: 'ALLIS-CHALMERS', products: 41, logo: '/brands/john-deere.svg' },
+  { name: 'ALLIS-CHALMERS', products: 41, logo: null },
   { name: 'KOMATSU', products: 78, logo: '/brands/komatsu.svg' },
   { name: 'JOHN DEERE', products: 52, logo: '/brands/john-deere.svg' },
-  { name: 'WEG', products: 134, logo: '/brands/siemens.svg' },
+  { name: 'WEG', products: 134, logo: null },
   { name: 'SIEMENS', products: 98, logo: '/brands/siemens.svg' },
   { name: 'ABB', products: 67, logo: '/brands/abb.svg' },
   { name: 'LINCOLN ELECTRIC', products: 45, logo: '/brands/lincoln-electric.svg' },
@@ -83,17 +83,18 @@ const Marcas = () => {
                 to={`/catalogo?marca=${encodeURIComponent(brand.name)}`}
                 className="group block bg-card rounded-2xl p-6 shadow-card hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/30"
               >
-                <div className="aspect-[3/2] flex items-center justify-center mb-4 bg-gradient-to-br from-muted/50 to-muted rounded-xl p-4">
-                  <img
-                    src={brand.logo}
-                    alt={brand.name}
-                    className="max-h-16 w-auto object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      target.parentElement!.innerHTML = `<span class="text-2xl font-bold text-primary/70">${brand.name.split(' ')[0]}</span>`;
-                    }}
-                  />
+                <div className="aspect-[3/2] flex items-center justify-center mb-4 bg-gradient-to-br from-muted/50 to-muted rounded-xl p-6">
+                  {brand.logo ? (
+                    <img
+                      src={brand.logo}
+                      alt={brand.name}
+                      className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
+                    />
+                  ) : (
+                    <span className="text-2xl md:text-3xl font-display font-bold text-primary/70 group-hover:text-primary transition-colors text-center leading-tight">
+                      {brand.name}
+                    </span>
+                  )}
                 </div>
                 <div className="text-center">
                   <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors mb-1">
