@@ -40,12 +40,12 @@ export const FeaturedMachinery = () => {
 
   if (isLoading) {
     return (
-      <section className="py-12 bg-muted/30">
+      <section className="relative -mt-24 z-20 pb-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="bg-card rounded-xl overflow-hidden">
-                <Skeleton className="h-48 w-full" />
+              <div key={i} className="bg-card rounded-xl overflow-hidden shadow-lg">
+                <Skeleton className="h-40 w-full" />
                 <div className="p-4 space-y-3">
                   <Skeleton className="h-5 w-3/4" />
                   <Skeleton className="h-4 w-full" />
@@ -60,9 +60,9 @@ export const FeaturedMachinery = () => {
   }
 
   return (
-    <section className="py-12 bg-muted/30">
+    <section className="relative -mt-24 z-20 pb-12">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {products?.map((product, index) => {
             const condition = getConditionBadge(product.is_new);
             return (
@@ -71,7 +71,7 @@ export const FeaturedMachinery = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-card rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Image */}
                 <div className="relative aspect-[4/3] bg-muted">
