@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, Package, Clock, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
@@ -89,9 +89,23 @@ export const OfertasEnviadas = ({ userId }: OfertasEnviadasProps) => {
         );
       case 'accepted':
         return (
+          <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 flex items-center gap-1">
+            <CheckCircle size={12} />
+            Pago Pendiente
+          </Badge>
+        );
+      case 'paid':
+        return (
           <Badge className="bg-green-500/10 text-green-600 border-green-500/20 flex items-center gap-1">
             <CheckCircle size={12} />
-            Aceptada
+            Pago Completado
+          </Badge>
+        );
+      case 'counter_offer':
+        return (
+          <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 flex items-center gap-1">
+            <DollarSign size={12} />
+            Contraoferta
           </Badge>
         );
       case 'rejected':
