@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import heroImage from '@/assets/hero-industrial-premium.jpg';
@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCountUp } from '@/hooks/useCountUp';
+import { useRef } from 'react';
 
 const sellingSchemes = [
   {
@@ -40,12 +42,46 @@ const sellingSchemes = [
   },
 ];
 
+interface AnimatedStatProps {
+  end: number;
+  label: string;
+  prefix?: string;
+  delay?: number;
+  isInView: boolean;
+  size?: 'sm' | 'lg';
+  align?: 'left' | 'center' | 'right';
+}
+
+const AnimatedStat = ({ end, label, prefix = '', delay = 0, isInView, size = 'lg', align = 'right' }: AnimatedStatProps) => {
+  const { formattedCount } = useCountUp({
+    end: isInView ? end : 0,
+    duration: 2000,
+    delay,
+    prefix,
+  });
+
+  const textSize = size === 'sm' ? 'text-2xl sm:text-3xl' : 'text-4xl sm:text-5xl';
+  const labelSize = size === 'sm' ? 'text-xs sm:text-sm' : 'text-sm';
+  const textAlign = align === 'center' ? 'text-center' : align === 'left' ? 'text-left' : 'text-right';
+
+  return (
+    <div className={textAlign}>
+      <span className={`block ${textSize} font-display font-black text-primary`}>
+        {formattedCount}
+      </span>
+      <span className={`text-white/70 ${labelSize}`}>{label}</span>
+    </div>
+  );
+};
+
 export const HeroSection = () => {
   const [showSellingScheme, setShowSellingScheme] = useState(false);
+  const statsRef = useRef(null);
+  const isInView = useInView(statsRef, { once: true, margin: '-50px' });
 
   return (
     <>
-      <section className="relative min-h-[55vh] flex items-start pt-16 overflow-hidden pb-32">
+      <section ref={statsRef} className="relative min-h-[55vh] flex items-start pt-16 overflow-hidden pb-32">
         {/* Background Image */}
         <div className="absolute inset-0">
           <motion.img
@@ -148,7 +184,7 @@ export const HeroSection = () => {
               </motion.div>
             </div>
 
-            {/* Right Content - Stats Card */}
+            {/* Right Content - Stats Card (Desktop) */}
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -157,22 +193,29 @@ export const HeroSection = () => {
             >
               <div className="bg-secondary/80 backdrop-blur-md rounded-2xl p-8 text-right">
                 <div className="space-y-6">
-                  <div>
-                    <span className="block text-5xl font-display font-black text-primary">+12,643</span>
-                    <span className="text-white/70 text-sm">Productos</span>
-                  </div>
-                  <div>
-                    <span className="block text-5xl font-display font-black text-primary">+500</span>
-                    <span className="text-white/70 text-sm">Marcas</span>
-                  </div>
-                  <div>
-                    <span className="block text-5xl font-display font-black text-primary">5</span>
-                    <span className="text-white/70 text-sm">Ubicaciones</span>
-                  </div>
+                  <AnimatedStat end={12643} label="Productos" prefix="+" delay={0} isInView={isInView} />
+                  <AnimatedStat end={500} label="Marcas" prefix="+" delay={200} isInView={isInView} />
+                  <AnimatedStat end={5} label="Ubicaciones" prefix="" delay={400} isInView={isInView} />
                 </div>
               </div>
             </motion.div>
           </div>
+
+          {/* Mobile Stats Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.6 }}
+            className="lg:hidden mt-8"
+          >
+            <div className="bg-secondary/80 backdrop-blur-md rounded-2xl p-6">
+              <div className="grid grid-cols-3 gap-4">
+                <AnimatedStat end={12643} label="Productos" prefix="+" delay={600} isInView={isInView} size="sm" align="center" />
+                <AnimatedStat end={500} label="Marcas" prefix="+" delay={800} isInView={isInView} size="sm" align="center" />
+                <AnimatedStat end={5} label="Ubicaciones" prefix="" delay={1000} isInView={isInView} size="sm" align="center" />
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
