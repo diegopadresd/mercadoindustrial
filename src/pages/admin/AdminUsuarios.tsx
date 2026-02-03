@@ -75,6 +75,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AccessDenied from '@/components/admin/AccessDenied';
+import { VendorProductsDialog } from '@/components/admin/VendorProductsDialog';
 
 interface UserWithRole {
   id: string;
@@ -114,7 +115,9 @@ const AdminUsuarios = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showApplicationDialog, setShowApplicationDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showVendorProductsDialog, setShowVendorProductsDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
+  const [selectedVendor, setSelectedVendor] = useState<UserWithRole | null>(null);
   const [selectedApplication, setSelectedApplication] = useState<SellerApplication | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [newRole, setNewRole] = useState<AppRole>('vendedor');
@@ -645,6 +648,23 @@ const AdminUsuarios = () => {
                                 <Shield size={16} className="mr-2" />
                                 Cambiar Rol
                               </DropdownMenuItem>
+                              
+                              {/* Show "Ver Publicaciones" only for vendors */}
+                              {userData.role === 'vendedor' && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedVendor(userData);
+                                      setShowVendorProductsDialog(true);
+                                    }}
+                                  >
+                                    <Package size={16} className="mr-2" />
+                                    Ver Publicaciones
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              
                               <DropdownMenuSeparator />
                               {userData.status === 'inactive' ? (
                                 <DropdownMenuItem
@@ -1101,6 +1121,19 @@ const AdminUsuarios = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Vendor Products Dialog */}
+      {selectedVendor && (
+        <VendorProductsDialog
+          open={showVendorProductsDialog}
+          onOpenChange={(open) => {
+            setShowVendorProductsDialog(open);
+            if (!open) setSelectedVendor(null);
+          }}
+          vendorId={selectedVendor.user_id}
+          vendorName={selectedVendor.full_name}
+        />
+      )}
     </div>
   );
 };
