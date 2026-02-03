@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut, Package, ShoppingBag, MessageSquare, Store, Globe, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -45,6 +45,25 @@ export const Header = () => {
   const { itemCount } = useCart();
   const { language, currency, setLanguage, setCurrency, t } = useLocale();
 
+  // Refs for click outside detection
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+  const currencyDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+      if (currencyDropdownRef.current && !currencyDropdownRef.current.contains(event.target as Node)) {
+        setCurrencyDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       {/* Top Bar */}
@@ -63,7 +82,7 @@ export const Header = () => {
           </div>
           <div className="flex items-center gap-4 md:gap-6">
             {/* Language Toggle */}
-            <div className="relative">
+            <div className="relative" ref={langDropdownRef}>
               <button
                 onClick={() => {
                   setLangDropdownOpen(!langDropdownOpen);
@@ -108,7 +127,7 @@ export const Header = () => {
             </div>
 
             {/* Currency Toggle */}
-            <div className="relative">
+            <div className="relative" ref={currencyDropdownRef}>
               <button
                 onClick={() => {
                   setCurrencyDropdownOpen(!currencyDropdownOpen);
