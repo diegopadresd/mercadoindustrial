@@ -148,6 +148,77 @@ export const HeroSection = () => {
 
       </div>
     </div>
+    
+      {/* Mexico Map with Locations - Left Side */}
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.4 }}
+        className="hidden lg:block absolute left-[3%] top-1/2 -translate-y-1/2"
+      >
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl">
+          <p className="text-white/70 text-xs font-medium mb-3 text-center">Nuestras Sedes</p>
+          <div className="relative w-48 h-56">
+            {/* Mexico SVG Map */}
+            <svg viewBox="0 0 200 220" className="w-full h-full">
+              {/* Mexico shape simplified */}
+              <path
+                d="M20,80 L30,60 L50,50 L80,45 L100,40 L130,45 L160,55 L180,70 L185,90 L180,110 L170,130 L155,145 L140,155 L120,165 L100,175 L85,185 L70,190 L55,185 L45,175 L35,160 L25,140 L20,120 L15,100 Z"
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="1.5"
+                className="opacity-60"
+              />
+              {/* Baja California */}
+              <path
+                d="M15,45 L25,35 L35,40 L40,55 L35,75 L25,90 L20,80 L15,65 Z"
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="1.5"
+                className="opacity-60"
+              />
+              
+              {/* Location markers with pulse effect */}
+              {/* Tijuana */}
+              <g className="cursor-pointer">
+                <circle cx="22" cy="42" r="8" fill="hsl(var(--primary))" className="opacity-20 animate-ping" />
+                <circle cx="22" cy="42" r="4" fill="hsl(var(--primary))" />
+                <text x="22" y="32" textAnchor="middle" className="fill-white text-[8px] font-medium">Tijuana</text>
+              </g>
+              
+              {/* Mexicali */}
+              <g className="cursor-pointer">
+                <circle cx="35" cy="38" r="8" fill="hsl(var(--primary))" className="opacity-20 animate-ping" style={{ animationDelay: '0.2s' }} />
+                <circle cx="35" cy="38" r="4" fill="hsl(var(--primary))" />
+                <text x="48" y="35" textAnchor="start" className="fill-white text-[8px] font-medium">Mexicali</text>
+              </g>
+              
+              {/* Nogales (AZ - USA) */}
+              <g className="cursor-pointer">
+                <circle cx="55" cy="48" r="8" fill="hsl(var(--primary))" className="opacity-20 animate-ping" style={{ animationDelay: '0.4s' }} />
+                <circle cx="55" cy="48" r="4" fill="hsl(var(--primary))" />
+                <text x="55" y="62" textAnchor="middle" className="fill-white text-[8px] font-medium">Nogales</text>
+              </g>
+              
+              {/* Hermosillo */}
+              <g className="cursor-pointer">
+                <circle cx="50" cy="75" r="8" fill="hsl(var(--primary))" className="opacity-20 animate-ping" style={{ animationDelay: '0.6s' }} />
+                <circle cx="50" cy="75" r="4" fill="hsl(var(--primary))" />
+                <text x="65" y="78" textAnchor="start" className="fill-white text-[8px] font-medium">Hermosillo</text>
+              </g>
+              
+              {/* Santa Catarina (Monterrey area) */}
+              <g className="cursor-pointer">
+                <circle cx="130" cy="105" r="8" fill="hsl(var(--primary))" className="opacity-20 animate-ping" style={{ animationDelay: '0.8s' }} />
+                <circle cx="130" cy="105" r="4" fill="hsl(var(--primary))" />
+                <text x="130" y="120" textAnchor="middle" className="fill-white text-[8px] font-medium">Sta. Catarina</text>
+              </g>
+            </svg>
+          </div>
+          <p className="text-primary text-xs font-bold text-center mt-2">5 Ubicaciones</p>
+          <p className="text-white/50 text-[10px] text-center">México y USA</p>
+        </div>
+      </motion.div>
 
     {/* Decorative Elements */}
     <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background to-transparent" />
