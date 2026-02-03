@@ -171,7 +171,8 @@ const AdminOfertas = () => {
   const getStatusBadge = (status: string) => {
     const config: Record<string, { label: string; className: string }> = {
       pending: { label: 'Pendiente', className: 'bg-yellow-500/20 text-yellow-600' },
-      accepted: { label: 'Aceptada', className: 'bg-green-500/20 text-green-600' },
+      accepted: { label: 'Aceptada - Pago Pendiente', className: 'bg-orange-500/20 text-orange-600' },
+      paid: { label: 'Pago Completado', className: 'bg-green-500/20 text-green-600' },
       rejected: { label: 'Rechazada', className: 'bg-red-500/20 text-red-600' },
       counter_offer: { label: 'Contraoferta', className: 'bg-blue-500/20 text-blue-600' },
     };
@@ -280,7 +281,8 @@ const AdminOfertas = () => {
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="pending">Pendientes</SelectItem>
             <SelectItem value="counter_offer">Contraofertas</SelectItem>
-            <SelectItem value="accepted">Aceptadas</SelectItem>
+            <SelectItem value="accepted">Pago Pendiente</SelectItem>
+            <SelectItem value="paid">Pago Completado</SelectItem>
             <SelectItem value="rejected">Rechazadas</SelectItem>
           </SelectContent>
         </Select>
