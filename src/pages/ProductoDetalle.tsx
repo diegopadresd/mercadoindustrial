@@ -49,6 +49,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getProductById } from '@/data/products';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useLocale } from '@/contexts/LocaleContext';
 import { useCreateOffer } from '@/hooks/useOffers';
 import { useProduct } from '@/hooks/useProducts';
 import { SellerProfileCard } from '@/components/product/SellerProfileCard';
@@ -154,6 +155,7 @@ const ProductoDetalle = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { addToCart } = useCart();
+  const { language, formatPrice, t } = useLocale();
   const createOffer = useCreateOffer();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [faqs, setFaqs] = useState(initialFaqs);
@@ -365,7 +367,7 @@ const ProductoDetalle = () => {
           className="inline-flex items-center gap-2 text-primary hover:underline mb-6"
         >
           <ArrowLeft size={18} />
-          Regresar al catálogo
+          {language === 'es' ? 'Regresar al catálogo' : 'Back to catalog'}
         </Link>
 
         <div className="grid lg:grid-cols-2 gap-12">
@@ -493,29 +495,31 @@ const ProductoDetalle = () => {
 
             {/* General Info Card */}
             <div className="bg-card rounded-2xl p-6 shadow-card">
-              <h2 className="font-display font-bold text-xl mb-4">Descripción general</h2>
+              <h2 className="font-display font-bold text-xl mb-4">
+                {language === 'es' ? 'Descripción general' : 'General Description'}
+              </h2>
               
               <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Sku</span>
+                  <span className="text-muted-foreground">{t('product.sku')}</span>
                   <span className="font-semibold">{productData.sku}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Marca</span>
+                  <span className="text-muted-foreground">{t('product.brand')}</span>
                   <Link to={`/catalogo?marca=${productData.brand}`} className="font-semibold text-primary hover:underline">
                     {productData.brand}
                   </Link>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Stock</span>
-                  <span className="font-semibold">{productData.stock ?? 1} Disponible</span>
+                  <span className="text-muted-foreground">{t('product.stock')}</span>
+                  <span className="font-semibold">{productData.stock ?? 1} {language === 'es' ? 'Disponible' : 'Available'}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Ubicación</span>
+                  <span className="text-muted-foreground">{t('product.location')}</span>
                   <span className="font-semibold">{productData.branch ?? productData.location}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground">Sucursal</span>
+                  <span className="text-muted-foreground">{language === 'es' ? 'Sucursal' : 'Branch'}</span>
                   <span className="font-semibold flex items-center gap-1">
                     <MapPin size={14} />
                     {productData.location}
@@ -527,9 +531,9 @@ const ProductoDetalle = () => {
               {productData.price && (
                 <div className="mt-6 pt-6 border-t border-border">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-muted-foreground">Precio</span>
+                    <span className="text-muted-foreground">{t('product.price')}</span>
                     <span className="text-3xl font-display font-bold text-primary">
-                      ${productData.price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      {formatPrice(productData.price)}
                     </span>
                   </div>
                 </div>
@@ -539,10 +543,10 @@ const ProductoDetalle = () => {
               <Button 
                 onClick={handleQuoteShipping}
                 variant="outline" 
-                className="w-full border-primary text-primary hover:bg-primary/10"
+                className="w-full border-primary text-primary hover:bg-primary/10 mt-4"
               >
                 <Truck className="mr-2" size={18} />
-                Cotizar envío
+                {language === 'es' ? 'Cotizar envío' : 'Quote Shipping'}
               </Button>
 
               {/* Auction Section (if product is in auction) */}
@@ -568,10 +572,10 @@ const ProductoDetalle = () => {
                     <div className="flex gap-3">
                       <Button className="flex-1 btn-gold" onClick={handleAddToCart}>
                         <ShoppingCart className="mr-2" size={18} />
-                        Agregar al carrito
+                        {t('common.addToCart')}
                       </Button>
                       <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" onClick={handleBuyNow}>
-                        Comprar ahora
+                        {t('common.buyNow')}
                       </Button>
                     </div>
                     {/* Make Offer button - for logged in users */}
@@ -580,7 +584,7 @@ const ProductoDetalle = () => {
                       onClick={() => setOfferDialogOpen(true)}
                     >
                       <DollarSign size={18} className="mr-2" />
-                      Hacer una oferta
+                      {t('product.makeOffer')}
                     </Button>
                     <MakeOfferModal
                       open={offerDialogOpen}
@@ -599,10 +603,10 @@ const ProductoDetalle = () => {
                     <div className="flex gap-3">
                       <Button className="flex-1" variant="outline" onClick={handleAddToCart}>
                         <ShoppingCart className="mr-2" size={18} />
-                        Agregar al carrito
+                        {t('common.addToCart')}
                       </Button>
                       <Button className="flex-1 btn-gold" onClick={handleQuoteRequest}>
-                        Cotizar ahora
+                        {t('common.requestQuote')}
                       </Button>
                     </div>
                     {/* Make Offer button - still available */}
@@ -611,7 +615,7 @@ const ProductoDetalle = () => {
                       onClick={() => setOfferDialogOpen(true)}
                     >
                       <DollarSign size={18} className="mr-2" />
-                      Hacer una oferta
+                      {t('product.makeOffer')}
                     </Button>
                     <MakeOfferModal
                       open={offerDialogOpen}
@@ -629,11 +633,11 @@ const ProductoDetalle = () => {
                   <div className="flex gap-3">
                     <Button className="flex-1" onClick={handleAddToCart}>
                       <ShoppingCart className="mr-2" size={18} />
-                      Agregar al carrito
+                      {t('common.addToCart')}
                     </Button>
                     <Button className="flex-1 btn-gold" onClick={handleQuoteRequest}>
                       <MessageCircle className="mr-2" size={18} />
-                      Cotizar ahora
+                      {t('common.requestQuote')}
                     </Button>
                   </div>
                 ) : null}
@@ -646,7 +650,7 @@ const ProductoDetalle = () => {
                       onClick={() => setOfferDialogOpen(true)}
                     >
                       <DollarSign size={18} className="mr-2" />
-                      Hacer una oferta directa
+                      {language === 'es' ? 'Hacer una oferta directa' : 'Make a direct offer'}
                     </Button>
                     <MakeOfferModal
                       open={offerDialogOpen}
@@ -664,7 +668,9 @@ const ProductoDetalle = () => {
 
               {/* Compra con Confianza Section */}
               <div className="border-t border-border pt-6">
-                <h3 className="font-display font-bold text-lg mb-4">Compra con confianza</h3>
+                <h3 className="font-display font-bold text-lg mb-4">
+                  {language === 'es' ? 'Compra con confianza' : 'Buy with Confidence'}
+                </h3>
                 <div className="space-y-4">
                   {/* Publicación Oficial de Mercado Industrial - solo cuando seller_id es null */}
                   {!(productData as any).seller_id && (
@@ -674,11 +680,15 @@ const ProductoDetalle = () => {
                       </div>
                       <div>
                         <p className="font-semibold text-foreground flex items-center gap-2">
-                          Publicación Oficial de Mercado Industrial
-                          <Badge className="bg-primary text-primary-foreground text-xs">Certificada</Badge>
+                          {language === 'es' ? 'Publicación Oficial de Mercado Industrial' : 'Official Mercado Industrial Listing'}
+                          <Badge className="bg-primary text-primary-foreground text-xs">
+                            {language === 'es' ? 'Certificada' : 'Certified'}
+                          </Badge>
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Este producto es publicado directamente por Mercado Industrial, garantizando autenticidad, calidad y soporte directo.
+                          {language === 'es' 
+                            ? 'Este producto es publicado directamente por Mercado Industrial, garantizando autenticidad, calidad y soporte directo.'
+                            : 'This product is published directly by Mercado Industrial, guaranteeing authenticity, quality, and direct support.'}
                         </p>
                       </div>
                     </div>
@@ -690,11 +700,13 @@ const ProductoDetalle = () => {
                       <BadgeCheck size={20} className="text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">Programa de vendedor Sobresaliente</p>
+                      <p className="font-semibold text-foreground">
+                        {language === 'es' ? 'Programa de vendedor Sobresaliente' : 'Outstanding Seller Program'}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Vendedor confiable, envío rápido y devoluciones fáciles.{' '}
+                        {language === 'es' ? 'Vendedor confiable, envío rápido y devoluciones fáciles.' : 'Reliable seller, fast shipping and easy returns.'}{' '}
                         <Link to="/como-comprar" className="text-foreground underline hover:text-primary">
-                          Más información
+                          {language === 'es' ? 'Más información' : 'Learn more'}
                         </Link>
                       </p>
                     </div>
@@ -706,11 +718,13 @@ const ProductoDetalle = () => {
                       <ShieldCheck size={20} className="text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">Devolución de tu dinero de Mercado Industrial</p>
+                      <p className="font-semibold text-foreground">
+                        {language === 'es' ? 'Devolución de tu dinero de Mercado Industrial' : 'Mercado Industrial Money Back Guarantee'}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Recibe el artículo que pediste o te devolvemos tu dinero.{' '}
+                        {language === 'es' ? 'Recibe el artículo que pediste o te devolvemos tu dinero.' : 'Get the item you ordered or get your money back.'}{' '}
                         <Link to="/politicas-de-pago" className="text-foreground underline hover:text-primary">
-                          Más información
+                          {language === 'es' ? 'Más información' : 'Learn more'}
                         </Link>
                       </p>
                     </div>
@@ -724,7 +738,7 @@ const ProductoDetalle = () => {
               <div className="bg-card rounded-2xl p-6 shadow-card">
                 <h2 className="font-display font-bold text-xl mb-4 flex items-center gap-2">
                   <Package size={20} className="text-primary" />
-                  Especificaciones
+                  {t('product.specifications')}
                 </h2>
                 
                 <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
@@ -744,39 +758,43 @@ const ProductoDetalle = () => {
         >
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="section-title mb-2">Preguntas y Respuestas</h2>
+              <h2 className="section-title mb-2">
+                {language === 'es' ? 'Preguntas y Respuestas' : 'Questions & Answers'}
+              </h2>
               <p className="text-muted-foreground">
-                {faqs.length} preguntas sobre este producto
+                {faqs.length} {language === 'es' ? 'preguntas sobre este producto' : 'questions about this product'}
               </p>
             </div>
             <Dialog open={questionDialogOpen} onOpenChange={setQuestionDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="btn-gold">
                   <MessageCircle className="mr-2" size={18} />
-                  Hacer una pregunta
+                  {t('product.askQuestion')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Hacer una pregunta</DialogTitle>
+                  <DialogTitle>{t('product.askQuestion')}</DialogTitle>
                   <DialogDescription>
-                    Tu pregunta será respondida por el vendedor y quedará visible para otros compradores.
+                    {language === 'es' 
+                      ? 'Tu pregunta será respondida por el vendedor y quedará visible para otros compradores.'
+                      : 'Your question will be answered by the seller and will be visible to other buyers.'}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="question">Tu pregunta</Label>
+                    <Label htmlFor="question">{language === 'es' ? 'Tu pregunta' : 'Your question'}</Label>
                     <Textarea
                       id="question"
                       value={newQuestion}
                       onChange={(e) => setNewQuestion(e.target.value)}
-                      placeholder="Escribe tu pregunta sobre este producto..."
+                      placeholder={language === 'es' ? 'Escribe tu pregunta sobre este producto...' : 'Write your question about this product...'}
                       rows={4}
                     />
                   </div>
                   <Button onClick={handleSubmitQuestion} className="w-full btn-gold">
                     <Send size={18} className="mr-2" />
-                    Enviar pregunta
+                    {language === 'es' ? 'Enviar pregunta' : 'Send question'}
                   </Button>
                 </div>
               </DialogContent>
@@ -828,7 +846,9 @@ const ProductoDetalle = () => {
                   </div>
                 ) : (
                   <div className="ml-14 pl-4 border-l-2 border-muted">
-                    <p className="text-muted-foreground italic">Esperando respuesta del vendedor...</p>
+                    <p className="text-muted-foreground italic">
+                      {language === 'es' ? 'Esperando respuesta del vendedor...' : 'Waiting for seller response...'}
+                    </p>
                   </div>
                 )}
               </motion.div>
@@ -843,7 +863,9 @@ const ProductoDetalle = () => {
           viewport={{ once: true }}
           className="mt-16"
         >
-          <h2 className="section-title mb-8">Información del Vendedor</h2>
+          <h2 className="section-title mb-8">
+            {language === 'es' ? 'Información del Vendedor' : 'Seller Information'}
+          </h2>
           <div className="grid lg:grid-cols-2 gap-8">
             <SellerProfileCard 
               seller={mockSeller} 

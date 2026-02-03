@@ -42,7 +42,7 @@ export const ProductCard = ({
   isExternal,
 }: ProductCardProps) => {
   const { addToCart } = useCart();
-  const { formatPrice, t } = useLocale();
+  const { formatPrice, t, language } = useLocale();
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -102,17 +102,17 @@ export const ProductCard = ({
           {isExternal && (
             <Badge className="bg-amber-500 text-white">
               <Store size={12} className="mr-1" />
-              Externo
+              {language === 'es' ? 'Externo' : 'External'}
             </Badge>
           )}
           {isAuction && (
             <Badge className="bg-primary text-primary-foreground">
               <Gavel size={12} className="mr-1" />
-              Subasta
+              {language === 'es' ? 'Subasta' : 'Auction'}
             </Badge>
           )}
-          {isNew && <span className="badge-new">Nuevo</span>}
-          {isFeatured && <span className="badge-featured">Destacado</span>}
+          {isNew && <span className="badge-new">{language === 'es' ? 'Nuevo' : 'New'}</span>}
+          {isFeatured && <span className="badge-featured">{language === 'es' ? 'Destacado' : 'Featured'}</span>}
           {!isAuction && !isExternal && categories.slice(0, 2).map((cat) => (
             <span key={cat} className="badge-category">{cat}</span>
           ))}
@@ -136,11 +136,11 @@ export const ProductCard = ({
 
         <div className="space-y-2 text-sm text-muted-foreground mb-4">
           <div className="flex justify-between">
-            <span className="text-muted-foreground/70">Sku</span>
+            <span className="text-muted-foreground/70">{t('product.sku')}</span>
             <span className="font-medium text-foreground">{sku}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground/70">Marca</span>
+            <span className="text-muted-foreground/70">{t('product.brand')}</span>
             <span className="font-medium text-foreground">{brand}</span>
           </div>
           
