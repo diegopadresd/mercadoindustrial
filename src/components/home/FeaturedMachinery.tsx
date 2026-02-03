@@ -51,7 +51,7 @@ export const FeaturedMachinery = () => {
 
   if (isLoading) {
     return (
-      <section className="relative -mt-20 z-20 pb-12">
+      <section className="relative -mt-28 z-20 pb-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {[...Array(5)].map((_, i) => (
@@ -71,7 +71,7 @@ export const FeaturedMachinery = () => {
   }
 
   return (
-    <section className="relative -mt-20 z-20 pb-12">
+    <section className="relative -mt-28 z-20 pb-12">
       <div className="container mx-auto px-4">
         <div className="relative">
           {/* Navigation Arrows */}
