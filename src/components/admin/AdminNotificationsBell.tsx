@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Bell, ShoppingCart, Tag, Ticket, Clock, Loader2 } from 'lucide-react';
+import { Bell, ShoppingCart, Tag, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -144,19 +144,19 @@ const AdminNotificationsBell = () => {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="p-4 border-b border-border">
+      <PopoverContent className="w-80 p-0 bg-popover border border-border shadow-lg z-50" align="end">
+        <div className="p-3 border-b border-border bg-popover">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold">Notificaciones</h4>
+            <h4 className="font-semibold text-popover-foreground">Notificaciones</h4>
             {totalCount > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs shrink-0">
                 {totalCount} pendientes
               </Badge>
             )}
           </div>
         </div>
         
-        <ScrollArea className="h-[300px]">
+        <ScrollArea className="h-[280px] bg-popover">
           {notifications.length === 0 ? (
             <div className="p-8 text-center">
               <Bell size={32} className="mx-auto text-muted-foreground/30 mb-2" />
@@ -170,16 +170,15 @@ const AdminNotificationsBell = () => {
                   onClick={() => handleItemClick(item.path)}
                   className="w-full p-3 text-left hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
+                  <div className="flex items-start gap-2">
+                    <div className="p-1.5 rounded-lg bg-muted shrink-0">
                       {getIcon(item.type)}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{item.title}</p>
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <p className="text-sm font-medium truncate text-popover-foreground">{item.title}</p>
                       <p className="text-xs text-muted-foreground truncate">{item.description}</p>
                     </div>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock size={10} />
+                    <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">
                       {item.time}
                     </span>
                   </div>
@@ -189,12 +188,12 @@ const AdminNotificationsBell = () => {
           )}
         </ScrollArea>
         
-        <div className="p-3 border-t border-border bg-muted/30">
-          <div className="grid grid-cols-3 gap-2">
+        <div className="p-2 border-t border-border bg-muted/50">
+          <div className="grid grid-cols-3 gap-1">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs"
+              className="text-xs h-8"
               onClick={() => handleItemClick('/admin/pedidos')}
             >
               <ShoppingCart size={12} className="mr-1" />
@@ -203,7 +202,7 @@ const AdminNotificationsBell = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs"
+              className="text-xs h-8"
               onClick={() => handleItemClick('/admin/ofertas')}
             >
               <Tag size={12} className="mr-1" />
@@ -212,7 +211,7 @@ const AdminNotificationsBell = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs"
+              className="text-xs h-8"
               onClick={() => handleItemClick('/admin/soporte')}
             >
               <Ticket size={12} className="mr-1" />
