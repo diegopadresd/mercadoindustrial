@@ -48,6 +48,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { getProductById } from '@/data/products';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { useCreateOffer } from '@/hooks/useOffers';
 import { useProduct } from '@/hooks/useProducts';
 import { SellerProfileCard } from '@/components/product/SellerProfileCard';
@@ -152,6 +153,7 @@ const ProductoDetalle = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { addToCart } = useCart();
   const createOffer = useCreateOffer();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [faqs, setFaqs] = useState(initialFaqs);
@@ -304,6 +306,52 @@ const ProductoDetalle = () => {
         '_blank'
       );
     }
+  };
+
+  // Handler for adding product to cart
+  const handleAddToCart = async () => {
+    if (!productData) return;
+    
+    await addToCart({
+      productId: productData.id,
+      title: productData.title,
+      sku: productData.sku,
+      brand: productData.brand,
+      price: productData.price ?? null,
+      image: productData.images?.[0] || '/placeholder.svg',
+    });
+  };
+
+  // Handler for buy now - adds to cart and navigates to cart
+  const handleBuyNow = async () => {
+    if (!productData) return;
+    
+    await addToCart({
+      productId: productData.id,
+      title: productData.title,
+      sku: productData.sku,
+      brand: productData.brand,
+      price: productData.price ?? null,
+      image: productData.images?.[0] || '/placeholder.svg',
+    });
+    
+    navigate('/carrito');
+  };
+
+  // Handler for quote request - adds to cart without price
+  const handleQuoteRequest = async () => {
+    if (!productData) return;
+    
+    await addToCart({
+      productId: productData.id,
+      title: productData.title,
+      sku: productData.sku,
+      brand: productData.brand,
+      price: null,
+      image: productData.images?.[0] || '/placeholder.svg',
+    });
+    
+    navigate('/carrito');
   };
 
   return (
@@ -518,11 +566,11 @@ const ProductoDetalle = () => {
                 {!(productData as any).is_auction && productData.price && !(productData as any).contact_for_quote ? (
                   <>
                     <div className="flex gap-3">
-                      <Button className="flex-1 btn-gold">
+                      <Button className="flex-1 btn-gold" onClick={handleAddToCart}>
                         <ShoppingCart className="mr-2" size={18} />
                         Agregar al carrito
                       </Button>
-                      <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground">
+                      <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" onClick={handleBuyNow}>
                         Comprar ahora
                       </Button>
                     </div>
@@ -548,49 +596,15 @@ const ProductoDetalle = () => {
                 ) : !(productData as any).is_auction && ((productData as any).contact_for_quote || !productData.price) ? (
                   /* Product requires quote - no price */
                   <div className="space-y-4">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button className="w-full btn-gold">
-                          <MessageCircle className="mr-2" size={18} />
-                          Contacta al vendedor para obtener una cotización
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Solicitar cotización</DialogTitle>
-                          <DialogDescription>
-                            Envía un mensaje al vendedor para solicitar una cotización de este producto.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div>
-                            <Label>Producto</Label>
-                            <p className="text-sm text-muted-foreground">{productData.title}</p>
-                            <p className="text-xs text-muted-foreground">SKU: {productData.sku}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="quote-message">Tu mensaje</Label>
-                            <Textarea 
-                              id="quote-message"
-                              placeholder="Hola, me interesa este producto. ¿Cuál es el precio y disponibilidad?"
-                              rows={4}
-                            />
-                          </div>
-                          <Button 
-                            className="w-full btn-gold"
-                            onClick={() => {
-                              toast({
-                                title: '¡Mensaje enviado!',
-                                description: 'El vendedor recibirá tu solicitud de cotización y te contactará pronto.',
-                              });
-                            }}
-                          >
-                            <Send className="mr-2" size={16} />
-                            Enviar solicitud
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <div className="flex gap-3">
+                      <Button className="flex-1" variant="outline" onClick={handleAddToCart}>
+                        <ShoppingCart className="mr-2" size={18} />
+                        Agregar al carrito
+                      </Button>
+                      <Button className="flex-1 btn-gold" onClick={handleQuoteRequest}>
+                        Cotizar ahora
+                      </Button>
+                    </div>
                     {/* Make Offer button - still available */}
                     <Button 
                       className="w-full btn-offer"
@@ -613,11 +627,11 @@ const ProductoDetalle = () => {
                 ) : !(productData as any).is_auction ? (
                   /* Fallback for normal products */
                   <div className="flex gap-3">
-                    <Button className="flex-1">
+                    <Button className="flex-1" onClick={handleAddToCart}>
                       <ShoppingCart className="mr-2" size={18} />
                       Agregar al carrito
                     </Button>
-                    <Button className="flex-1 btn-gold">
+                    <Button className="flex-1 btn-gold" onClick={handleQuoteRequest}>
                       <MessageCircle className="mr-2" size={18} />
                       Cotizar ahora
                     </Button>
