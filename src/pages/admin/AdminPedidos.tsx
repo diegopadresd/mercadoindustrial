@@ -177,63 +177,64 @@ const AdminPedidos = () => {
 
       {/* Orders Table */}
       <div className="bg-card rounded-2xl shadow-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Pedido</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  Cargando pedidos...
-                </TableCell>
+                <TableHead className="min-w-[120px]">Pedido</TableHead>
+                <TableHead className="min-w-[180px]">Cliente</TableHead>
+                <TableHead className="min-w-[100px] hidden sm:table-cell">Tipo</TableHead>
+                <TableHead className="min-w-[100px]">Total</TableHead>
+                <TableHead className="min-w-[130px] hidden md:table-cell">Estado</TableHead>
+                <TableHead className="min-w-[100px] hidden lg:table-cell">Fecha</TableHead>
+                <TableHead className="text-right min-w-[80px]">Acciones</TableHead>
               </TableRow>
-            ) : orders?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  <ShoppingCart className="mx-auto mb-2 text-muted-foreground/50" size={32} />
-                  <p className="text-muted-foreground">No se encontraron pedidos</p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              orders?.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell>
-                    <span className="font-mono font-medium">{order.order_number}</span>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    Cargando pedidos...
                   </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{order.customer_name}</p>
-                      <p className="text-sm text-muted-foreground">{order.customer_email}</p>
-                    </div>
+                </TableRow>
+              ) : orders?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    <ShoppingCart className="mx-auto mb-2 text-muted-foreground/50" size={32} />
+                    <p className="text-muted-foreground">No se encontraron pedidos</p>
                   </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      order.order_type === 'quote' 
-                        ? 'bg-secondary/20 text-secondary' 
-                        : 'bg-primary/20 text-primary'
-                    }`}>
-                      {order.order_type === 'quote' ? 'Cotización' : 'Compra'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {order.order_type === 'quote' && Number(order.total) === 0 ? (
-                      <span className="text-muted-foreground text-sm italic">Por cotizar</span>
-                    ) : (
-                      <span className="font-semibold">
-                        ${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                </TableRow>
+              ) : (
+                orders?.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell>
+                      <span className="font-mono font-medium text-xs sm:text-sm">{order.order_number}</span>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-sm">{order.customer_name}</p>
+                        <p className="text-xs text-muted-foreground truncate max-w-[150px]">{order.customer_email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        order.order_type === 'quote' 
+                          ? 'bg-secondary/20 text-secondary' 
+                          : 'bg-primary/20 text-primary'
+                      }`}>
+                        {order.order_type === 'quote' ? 'Cotización' : 'Compra'}
                       </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
+                    </TableCell>
+                    <TableCell>
+                      {order.order_type === 'quote' && Number(order.total) === 0 ? (
+                        <span className="text-muted-foreground text-xs sm:text-sm italic">Por cotizar</span>
+                      ) : (
+                        <span className="font-semibold text-xs sm:text-sm">
+                          ${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
                     <Select
                       value={order.status}
                       onValueChange={(value) => updateStatusMutation.mutate({ orderId: order.id, status: value as 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled' })}
@@ -250,7 +251,7 @@ const AdminPedidos = () => {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <div className="text-sm">
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Calendar size={14} />
@@ -263,15 +264,15 @@ const AdminPedidos = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1 sm:gap-2">
                       {order.order_type === 'quote' && Number(order.total) === 0 && (
                         <Button 
                           variant="outline" 
                           size="sm"
-                          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-xs"
                           onClick={() => handleOpenQuoteDialog(order)}
                         >
-                          <Send size={14} className="mr-1" />
+                          <Send size={14} className="mr-1 hidden sm:inline" />
                           Cotizar
                         </Button>
                       )}
@@ -279,15 +280,16 @@ const AdminPedidos = () => {
                         <Button 
                           variant="outline" 
                           size="sm"
+                          className="text-xs"
                           onClick={() => handleOpenQuoteDialog(order)}
                         >
-                          <FileText size={14} className="mr-1" />
+                          <FileText size={14} className="mr-1 hidden sm:inline" />
                           Editar
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm">
-                        <Eye size={16} className="mr-1" />
-                        Ver
+                      <Button variant="ghost" size="sm" className="text-xs">
+                        <Eye size={16} />
+                        <span className="ml-1 hidden sm:inline">Ver</span>
                       </Button>
                     </div>
                   </TableCell>
@@ -296,6 +298,7 @@ const AdminPedidos = () => {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Quote Response Dialog */}
