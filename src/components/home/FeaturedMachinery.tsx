@@ -104,8 +104,8 @@ export const FeaturedMachinery = () => {
                     className="flex-[0_0_calc(100%-16px)] sm:flex-[0_0_calc(50%-12px)] lg:flex-[0_0_calc(20%-13px)] min-w-0"
                   >
                     <div className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
-                      {/* Image */}
-                      <div className="relative aspect-[4/3] bg-muted">
+                      {/* Image - Fixed height container */}
+                      <div className="relative h-40 bg-muted overflow-hidden">
                         {product.images?.[0] ? (
                           <img
                             src={product.images[0]}
