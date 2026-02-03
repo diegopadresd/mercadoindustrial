@@ -25,6 +25,7 @@ import FAQ from "./pages/FAQ";
 import ComoVender from "./pages/ComoVender";
 import ComoComprar from "./pages/ComoComprar";
 import SubastasYOfertas from "./pages/SubastasYOfertas";
+import Subastas from "./pages/Subastas";
 import PoliticasDePago from "./pages/PoliticasDePago";
 import Privacidad from "./pages/Privacidad";
 import Terminos from "./pages/Terminos";
@@ -82,6 +83,7 @@ const App = () => (
               <Route path="/como-vender" element={<ComoVender />} />
               <Route path="/como-comprar" element={<ComoComprar />} />
               <Route path="/subastas-y-ofertas" element={<SubastasYOfertas />} />
+              <Route path="/subastas" element={<Subastas />} />
               <Route path="/politicas-de-pago" element={<PoliticasDePago />} />
               <Route path="/privacidad" element={<Privacidad />} />
               <Route path="/terminos" element={<Terminos />} />
