@@ -196,9 +196,17 @@ const Carrito = () => {
                       <span>${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Envío</span>
-                    <span className="text-primary">Por cotizar</span>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Envío</span>
+                      <span className="text-secondary font-medium">Flete no incluido</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Puedes obtener una estimación de precio con nuestro{' '}
+                      <Link to="/cotizador" className="text-primary hover:underline font-medium">
+                        Cotizador
+                      </Link>
+                    </p>
                   </div>
                   {hasItemsWithoutPrice && (
                     <div className="flex items-start gap-2 p-3 bg-secondary/10 rounded-lg">
