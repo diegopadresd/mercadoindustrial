@@ -84,9 +84,9 @@ export const NotificationBell = () => {
         aria-label="Notificaciones"
       >
         <Bell size={24} className="text-foreground" />
-        {unreadCount && unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-            {unreadCount > 99 ? '99+' : unreadCount}
+        {(unreadCount ?? 0) > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md border-2 border-background">
+            {unreadCount! > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
