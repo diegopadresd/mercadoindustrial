@@ -105,44 +105,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, profileData: Partial<Profile>) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-      },
-    });
-
-    if (error) return { error: error as Error };
-
-    // Create profile after signup
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        user_id: data.user.id,
-        email,
-        full_name: profileData.full_name || '',
-        phone: profileData.phone,
-        shipping_address: profileData.shipping_address,
-        shipping_city: profileData.shipping_city,
-        shipping_state: profileData.shipping_state,
-        shipping_postal_code: profileData.shipping_postal_code,
-        shipping_country: profileData.shipping_country || 'México',
-        rfc: profileData.rfc,
-        fiscal_document_url: profileData.fiscal_document_url,
+    try {
+      // Use custom edge function for signup with Resend emails
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName: profileData.full_name || '',
+          phone: profileData.phone,
+          shippingAddress: profileData.shipping_address,
+          shippingCity: profileData.shipping_city,
+          shippingState: profileData.shipping_state,
+          shippingPostalCode: profileData.shipping_postal_code,
+          rfc: profileData.rfc,
+          fiscalDocumentUrl: profileData.fiscal_document_url,
+          redirectUrl: window.location.origin,
+        }),
       });
 
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: new Error(data.error || 'Error al registrarse') };
       }
 
-      // Create default user role
-      await supabase.from('user_roles').insert({
-        user_id: data.user.id,
-        role: 'user',
-      });
+      return { error: null };
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { error: error as Error };
     }
-
-    return { error: null };
   };
 
   const signOut = async () => {
