@@ -12,15 +12,7 @@ import { useLocale } from '@/contexts/LocaleContext';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
 
-const navigation = [
-  { name: 'Inicio', href: '/' },
-  { name: 'Catálogo', href: '/catalogo' },
-  { name: 'Marcas', href: '/marcas' },
-  { name: 'Blog', href: '/blog' },
-  { name: 'Quiénes Somos', href: '/nosotros' },
-  { name: 'Vende con Nosotros', href: '/como-vender' },
-  { name: 'Publicaciones Recientes', href: '/recientes' },
-];
+// Navigation is defined inside component to use language
 
 const sectors = [
   'Industrial',
@@ -29,6 +21,15 @@ const sectors = [
   'Alimenticio',
   'Eléctrico',
   'Agroindustria',
+];
+
+const sectorsEn = [
+  'Industrial',
+  'Mining',
+  'Construction',
+  'Food',
+  'Electric',
+  'Agribusiness',
 ];
 
 export const Header = () => {
@@ -44,6 +45,27 @@ export const Header = () => {
   const { isVendedor } = useUserRole();
   const { itemCount } = useCart();
   const { language, currency, setLanguage, setCurrency, t } = useLocale();
+
+  // Navigation with translations
+  const navigation = language === 'es' ? [
+    { name: 'Inicio', href: '/' },
+    { name: 'Catálogo', href: '/catalogo' },
+    { name: 'Marcas', href: '/marcas' },
+    { name: 'Blog', href: '/blog' },
+    { name: 'Quiénes Somos', href: '/nosotros' },
+    { name: 'Vende con Nosotros', href: '/como-vender' },
+    { name: 'Publicaciones Recientes', href: '/recientes' },
+  ] : [
+    { name: 'Home', href: '/' },
+    { name: 'Catalog', href: '/catalogo' },
+    { name: 'Brands', href: '/marcas' },
+    { name: 'Blog', href: '/blog' },
+    { name: 'About Us', href: '/nosotros' },
+    { name: 'Sell with Us', href: '/como-vender' },
+    { name: 'Recent Posts', href: '/recientes' },
+  ];
+
+  const currentSectors = language === 'es' ? sectors : sectorsEn;
 
   // Refs for click outside detection
   const langDropdownRef = useRef<HTMLDivElement>(null);
@@ -220,14 +242,14 @@ export const Header = () => {
                       >
                         <button
                           onClick={() => {
-                            setSelectedSector('Todos los sectores');
+                            setSelectedSector(language === 'es' ? 'Todos los sectores' : 'All sectors');
                             setSectorDropdownOpen(false);
                           }}
                           className="w-full px-4 py-2 text-left text-sm hover:bg-muted transition-colors"
                         >
-                          Todos los sectores
+                          {language === 'es' ? 'Todos los sectores' : 'All sectors'}
                         </button>
-                        {sectors.map((sector) => (
+                        {currentSectors.map((sector) => (
                           <button
                             key={sector}
                             onClick={() => {
@@ -245,14 +267,14 @@ export const Header = () => {
                 </div>
                 <Input
                   type="text"
-                  placeholder="Buscar producto o marca..."
+                  placeholder={language === 'es' ? 'Buscar producto o marca...' : 'Search product or brand...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 <Button className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-none rounded-r-xl px-6">
                   <Search size={20} />
-                  <span className="ml-2 hidden xl:inline">Buscar</span>
+                  <span className="ml-2 hidden xl:inline">{language === 'es' ? 'Buscar' : 'Search'}</span>
                 </Button>
               </div>
             </div>
@@ -288,7 +310,7 @@ export const Header = () => {
                           className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors font-medium"
                         >
                           <User size={16} />
-                          Mi Cuenta
+                          {t('account.myAccount')}
                         </Link>
                         <hr className="my-1 border-border" />
                         {isVendedor && (
@@ -298,7 +320,7 @@ export const Header = () => {
                             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
                           >
                             <Package size={16} />
-                            Mis Publicaciones
+                            {t('account.publications')}
                           </Link>
                         )}
                         <Link
@@ -307,7 +329,7 @@ export const Header = () => {
                           className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
                         >
                           <ShoppingBag size={16} />
-                          Mis Compras
+                          {t('account.purchases')}
                         </Link>
                         <Link
                           to="/mi-cuenta/chats"
@@ -315,7 +337,7 @@ export const Header = () => {
                           className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
                         >
                           <MessageSquare size={16} />
-                          Chats
+                          {t('account.chats')}
                         </Link>
                         <Link
                           to={isVendedor ? "/mi-cuenta/publicar" : "/mi-cuenta/vender"}
@@ -323,7 +345,7 @@ export const Header = () => {
                           className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors text-primary"
                         >
                           <Store size={16} />
-                          {isVendedor ? 'Publicar Producto' : 'Vender'}
+                          {isVendedor ? (language === 'es' ? 'Publicar Producto' : 'Post Product') : (language === 'es' ? 'Vender' : 'Sell')}
                         </Link>
                         <hr className="my-1 border-border" />
                         <Link
@@ -332,7 +354,7 @@ export const Header = () => {
                           className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
                         >
                           <User size={16} />
-                          Mi Perfil
+                          {t('account.profile')}
                         </Link>
                         {isAdmin && (
                           <Link
@@ -341,7 +363,7 @@ export const Header = () => {
                             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors text-primary font-medium"
                           >
                             <User size={16} />
-                            Panel Admin
+                            {t('nav.admin')}
                           </Link>
                         )}
                         <hr className="my-1 border-border" />
@@ -353,7 +375,7 @@ export const Header = () => {
                           className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors w-full text-left text-destructive"
                         >
                           <LogOut size={16} />
-                          Cerrar Sesión
+                          {t('nav.logout')}
                         </button>
                       </motion.div>
                     )}
@@ -363,12 +385,12 @@ export const Header = () => {
                 <div className="hidden md:flex items-center gap-2">
                   <Link to="/auth">
                     <Button variant="ghost" size="sm">
-                      Iniciar Sesión
+                      {t('auth.login')}
                     </Button>
                   </Link>
                   <Link to="/auth?tab=register">
                     <Button size="sm">
-                      Crear Cuenta
+                      {t('auth.createAccount')}
                     </Button>
                   </Link>
                 </div>
@@ -497,7 +519,7 @@ export const Header = () => {
                     className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium bg-primary/5 hover:bg-muted transition-colors"
                   >
                     <User size={18} />
-                    Mi Cuenta
+                    {t('account.myAccount')}
                   </Link>
                   {isVendedor && (
                     <Link
@@ -506,7 +528,7 @@ export const Header = () => {
                       className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
                     >
                       <Package size={18} />
-                      Mis Publicaciones
+                      {t('account.publications')}
                     </Link>
                   )}
                   <Link
@@ -515,7 +537,7 @@ export const Header = () => {
                     className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
                   >
                     <ShoppingBag size={18} />
-                    Mis Compras
+                    {t('account.purchases')}
                   </Link>
                   <Link
                     to="/mi-cuenta/chats"
@@ -523,7 +545,7 @@ export const Header = () => {
                     className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
                   >
                     <MessageSquare size={18} />
-                    Chats
+                    {t('account.chats')}
                   </Link>
                   <Link
                     to={isVendedor ? "/mi-cuenta/publicar" : "/mi-cuenta/vender"}
@@ -531,7 +553,7 @@ export const Header = () => {
                     className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-muted transition-colors"
                   >
                     <Store size={18} />
-                    {isVendedor ? 'Publicar Producto' : 'Vender'}
+                    {isVendedor ? (language === 'es' ? 'Publicar Producto' : 'Post Product') : (language === 'es' ? 'Vender' : 'Sell')}
                   </Link>
                   <Link
                     to="/perfil"
@@ -539,7 +561,7 @@ export const Header = () => {
                     className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
                   >
                     <User size={18} />
-                    Mi Perfil
+                    {t('account.profile')}
                   </Link>
                   {isAdmin && (
                     <Link
@@ -548,7 +570,7 @@ export const Header = () => {
                       className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-muted transition-colors"
                     >
                       <User size={18} />
-                      Panel Admin
+                      {t('nav.admin')}
                     </Link>
                   )}
                   <button
@@ -559,7 +581,7 @@ export const Header = () => {
                     className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-muted transition-colors w-full"
                   >
                     <LogOut size={18} />
-                    Cerrar Sesión
+                    {t('nav.logout')}
                   </button>
                 </div>
               ) : (
