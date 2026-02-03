@@ -33,6 +33,9 @@ import Contacto from "./pages/Contacto";
 import Soporte from "./pages/Soporte";
 import CheckoutContraoferta from "./pages/CheckoutContraoferta";
 import Checkout from "./pages/Checkout";
+import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
+import CheckoutFailure from "./pages/checkout/CheckoutFailure";
+import CheckoutPending from "./pages/checkout/CheckoutPending";
 // Mi Cuenta pages
 import MiCuenta from "./pages/MiCuenta";
 import MisPublicaciones from "./pages/mi-cuenta/MisPublicaciones";
@@ -79,6 +82,9 @@ const App = () => (
               <Route path="/mi-cuenta/publicar" element={<PublicarProducto />} />
               {/* Checkout Routes */}
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout/success" element={<CheckoutSuccess />} />
+              <Route path="/checkout/failure" element={<CheckoutFailure />} />
+              <Route path="/checkout/pending" element={<CheckoutPending />} />
               <Route path="/checkout/contraoferta/:offerId" element={<CheckoutContraoferta />} />
               {/* Help & Info Pages */}
               <Route path="/faq" element={<FAQ />} />
