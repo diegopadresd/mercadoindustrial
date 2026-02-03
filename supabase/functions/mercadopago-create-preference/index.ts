@@ -65,9 +65,84 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
-
     const userId = claimsData.user.id;
-    const { items, shippingInfo, total }: CheckoutRequest = await req.json();
+    const body = await req.json();
+    
+    // Support both checkout formats: cart checkout and offer checkout
+    const isOfferCheckout = body.orderId && body.payer;
+    
+    if (isOfferCheckout) {
+      // Handle offer checkout (order already created)
+      const { items, orderId, payer } = body;
+      
+      const origin = req.headers.get('origin') || 'https://mercadoindustrial.lovable.app';
+      
+      const mpItems = items.map((item: any) => ({
+        id: item.id,
+        title: item.title.substring(0, 256),
+        description: `Producto`,
+        quantity: item.quantity || 1,
+        currency_id: 'MXN',
+        unit_price: item.unit_price || 0,
+      }));
+
+      const preferenceData = {
+        items: mpItems,
+        payer: {
+          name: payer?.name?.split(' ')[0] || 'Cliente',
+          surname: payer?.name?.split(' ').slice(1).join(' ') || '',
+          email: payer?.email || '',
+        },
+        back_urls: {
+          success: `${origin}/checkout/success?order_id=${orderId}`,
+          failure: `${origin}/checkout/failure?order_id=${orderId}`,
+          pending: `${origin}/checkout/pending?order_id=${orderId}`,
+        },
+        auto_return: 'approved',
+        external_reference: orderId,
+        notification_url: `${SUPABASE_URL}/functions/v1/mercadopago-webhook`,
+        statement_descriptor: 'MERCADO INDUSTRIAL',
+      };
+
+      console.log('Creating MercadoPago preference for offer:', JSON.stringify(preferenceData, null, 2));
+
+      const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${MERCADOPAGO_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(preferenceData),
+      });
+
+      if (!mpResponse.ok) {
+        const errorText = await mpResponse.text();
+        console.error('MercadoPago API error:', mpResponse.status, errorText);
+        throw new Error(`MercadoPago API error: ${mpResponse.status}`);
+      }
+
+      const mpData = await mpResponse.json();
+      console.log('MercadoPago preference created:', mpData.id);
+
+      // Update order with preference ID
+      await supabase
+        .from('orders')
+        .update({ mercadopago_preference_id: mpData.id })
+        .eq('id', orderId);
+
+      return new Response(JSON.stringify({
+        success: true,
+        preference_id: mpData.id,
+        init_point: mpData.init_point,
+        sandbox_init_point: mpData.sandbox_init_point,
+        order_id: orderId,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Handle cart checkout (original flow)
+    const { items, shippingInfo, total }: CheckoutRequest = body;
 
     // Create order first
     const orderNumber = `MI-${Date.now()}`;
