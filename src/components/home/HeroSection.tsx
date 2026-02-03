@@ -157,59 +157,62 @@ export const HeroSection = () => {
         transition={{ duration: 0.8, delay: 0.4 }}
         className="hidden lg:block absolute left-[3%] top-1/2 -translate-y-1/2"
       >
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-2xl">
-          <p className="text-white/70 text-xs font-medium mb-3 text-center">Nuestras Sedes</p>
-          <div className="relative w-60 h-44">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl w-[220px]">
+          <p className="text-white/70 text-sm font-medium mb-4 text-center">Nuestras Sedes</p>
+          <div className="relative w-full h-40">
             {/* Map Image */}
             <img 
               src={mapUsaMexico} 
               alt="Mapa USA y México" 
-              className="w-full h-full object-contain opacity-70"
+              className="w-full h-full object-contain opacity-80"
             />
             
             {/* Location Markers - positioned over the map */}
-            {/* Tijuana - Punta noroeste de Baja California en la frontera */}
-            <div className="absolute" style={{ left: '3%', top: '32%' }}>
+            {/* Tijuana - Punta noroeste de Baja California */}
+            <div className="absolute" style={{ left: '5%', top: '25%' }}>
               <div className="relative group">
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-white whitespace-nowrap">Tijuana</span>
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[7px] font-semibold text-white whitespace-nowrap">Tijuana</span>
                 <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" />
               </div>
             </div>
             
-            {/* Mexicali - Noreste de Baja California en la frontera */}
-            <div className="absolute" style={{ left: '12%', top: '30%' }}>
+            {/* Mexicali - Noreste de Baja California */}
+            <div className="absolute" style={{ left: '15%', top: '22%' }}>
               <div className="relative group">
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-white whitespace-nowrap">Mexicali</span>
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[7px] font-semibold text-white whitespace-nowrap">Mexicali</span>
                 <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.2s' }} />
               </div>
             </div>
             
             {/* Nogales - Frontera Arizona/Sonora */}
-            <div className="absolute" style={{ left: '22%', top: '33%' }}>
+            <div className="absolute" style={{ left: '28%', top: '25%' }}>
               <div className="relative group">
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-white whitespace-nowrap">Nogales</span>
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[7px] font-semibold text-white whitespace-nowrap">Nogales</span>
                 <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.4s' }} />
               </div>
             </div>
             
-            {/* Hermosillo - Capital de Sonora, al sur de Nogales */}
-            <div className="absolute" style={{ left: '18%', top: '45%' }}>
+            {/* Hermosillo - Capital de Sonora */}
+            <div className="absolute" style={{ left: '22%', top: '40%' }}>
               <div className="relative group">
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-white whitespace-nowrap">Hermosillo</span>
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[7px] font-semibold text-white whitespace-nowrap">Hermosillo</span>
                 <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.6s' }} />
               </div>
             </div>
             
-            {/* Santa Catarina - Cerca de Monterrey, Nuevo León */}
-            <div className="absolute" style={{ left: '52%', top: '52%' }}>
+            {/* Santa Catarina - Cerca de Monterrey */}
+            <div className="absolute" style={{ left: '55%', top: '48%' }}>
               <div className="relative group">
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-white whitespace-nowrap">Sta. Catarina</span>
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[7px] font-semibold text-white whitespace-nowrap">Sta. Catarina</span>
                 <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.8s' }} />
               </div>
             </div>
           </div>
-          <p className="text-primary text-xs font-bold text-center mt-2">5 Ubicaciones</p>
-          <p className="text-white/50 text-[10px] text-center">México y USA</p>
+          <div className="mt-4 pt-4 border-t border-white/20 text-center">
+            <span className="block text-3xl font-display font-black text-primary">5</span>
+            <span className="text-white/70 text-sm">Ubicaciones</span>
+            <p className="text-white/50 text-xs mt-1">México y USA</p>
+          </div>
         </div>
       </motion.div>
 
@@ -221,23 +224,18 @@ export const HeroSection = () => {
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
-        className="hidden lg:block absolute right-[5%] top-1/2 -translate-y-1/2"
+        className="hidden lg:block absolute right-[3%] top-1/2 -translate-y-1/2"
       >
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
-          <div className="space-y-6">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl w-[220px]">
+          <div className="space-y-5">
             <div className="text-center">
-              <span className="block text-5xl font-display font-black text-primary">+12,643</span>
+              <span className="block text-4xl font-display font-black text-primary">+12,643</span>
               <span className="text-white/70 text-sm">Productos</span>
             </div>
             <div className="w-full h-px bg-white/20" />
             <div className="text-center">
-              <span className="block text-5xl font-display font-black text-white">+500</span>
+              <span className="block text-4xl font-display font-black text-white">+500</span>
               <span className="text-white/70 text-sm">Marcas</span>
-            </div>
-            <div className="w-full h-px bg-white/20" />
-            <div className="text-center">
-              <span className="block text-5xl font-display font-black text-primary">5</span>
-              <span className="text-white/70 text-sm">Ubicaciones</span>
             </div>
           </div>
         </div>
