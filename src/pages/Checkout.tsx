@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
-import { CheckoutShippingQuote, ShippingQuoteResult } from '@/components/checkout/CheckoutShippingQuote';
 import {
   Package,
   MapPin,
@@ -25,7 +24,6 @@ import {
   User,
   Phone,
   Mail,
-  Truck,
   ShoppingCart,
 } from 'lucide-react';
 
@@ -60,7 +58,6 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'spei'>('spei');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [transferReference, setTransferReference] = useState('');
-  const [selectedShipping, setSelectedShipping] = useState<ShippingQuoteResult | null>(null);
   
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     fullName: '',
@@ -129,29 +126,13 @@ const Checkout = () => {
     return true;
   };
 
-  const handleContinueToShipping = () => {
+  const handleContinueToPayment = () => {
     if (validateShippingInfo()) {
       setCurrentStep(2);
     }
   };
 
-  const handleContinueToPayment = () => {
-    if (!selectedShipping) {
-      toast({
-        title: 'Selecciona envío',
-        description: 'Por favor selecciona una opción de envío',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setCurrentStep(3);
-  };
-
-  const handleShippingSelect = (quote: ShippingQuoteResult) => {
-    setSelectedShipping(quote);
-  };
-
-  const total = subtotal + (selectedShipping?.price || 0);
+  const total = subtotal;
 
   const handleMercadoPagoCheckout = async () => {
     setIsProcessing(true);
@@ -200,11 +181,11 @@ const Checkout = () => {
           shipping_postal_code: shippingInfo.postalCode,
           shipping_country: shippingInfo.country,
           subtotal: subtotal,
-          shipping_cost: selectedShipping?.price || 0,
+          shipping_cost: 0,
           total: total,
           status: 'pending',
           order_type: 'purchase',
-          notes: `Pago SPEI - Ref: ${transferReference} | Envío: ${selectedShipping?.carrier} ${selectedShipping?.service}`,
+          notes: `Pago SPEI - Ref: ${transferReference}`,
         })
         .select()
         .single();
@@ -271,8 +252,7 @@ const Checkout = () => {
         <div className="flex items-center justify-center gap-4 mb-8">
           {[
             { num: 1, label: 'Datos de envío' },
-            { num: 2, label: 'Cotizar flete' },
-            { num: 3, label: 'Pago' },
+            { num: 2, label: 'Pago' },
           ].map((step, idx) => (
             <div key={step.num} className="flex items-center">
               <div className={`flex items-center gap-2 ${currentStep >= step.num ? 'text-primary' : 'text-muted-foreground'}`}>
@@ -283,7 +263,7 @@ const Checkout = () => {
                 </div>
                 <span className="hidden sm:inline font-medium">{step.label}</span>
               </div>
-              {idx < 2 && <div className={`w-12 h-0.5 mx-2 ${currentStep > step.num ? 'bg-primary' : 'bg-muted'}`} />}
+              {idx < 1 && <div className={`w-12 h-0.5 mx-2 ${currentStep > step.num ? 'bg-primary' : 'bg-muted'}`} />}
             </div>
           ))}
         </div>
@@ -395,40 +375,16 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  <Button className="w-full btn-gold mt-6" onClick={handleContinueToShipping}>
-                    Continuar a cotizar envío
-                    <Truck size={18} className="ml-2" />
+                  <Button className="w-full btn-gold mt-6" onClick={handleContinueToPayment}>
+                    Continuar al pago
+                    <CreditCard size={18} className="ml-2" />
                   </Button>
                 </div>
               </motion.div>
             )}
 
-            {/* Step 2: Shipping Quote */}
+            {/* Step 2: Payment */}
             {currentStep === 2 && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
-                <CheckoutShippingQuote
-                  destinationZip={shippingInfo.postalCode}
-                  items={items}
-                  onSelect={handleShippingSelect}
-                  selectedQuote={selectedShipping}
-                />
-
-                <Button 
-                  className="w-full btn-gold mt-6" 
-                  onClick={handleContinueToPayment}
-                  disabled={!selectedShipping}
-                >
-                  Continuar al pago
-                  <CreditCard size={18} className="ml-2" />
-                </Button>
-              </motion.div>
-            )}
-
-            {/* Step 3: Payment */}
-            {currentStep === 3 && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -611,19 +567,6 @@ const Checkout = () => {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Envío</span>
-                  {selectedShipping ? (
-                    <span>${selectedShipping.price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-                  ) : (
-                    <span className="text-secondary">Por cotizar</span>
-                  )}
-                </div>
-                {selectedShipping && (
-                  <div className="text-xs text-muted-foreground">
-                    {selectedShipping.carrier} - {selectedShipping.service}
-                  </div>
-                )}
                 <Separator className="my-2" />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
