@@ -10,8 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable';
-import { 
+import {
   User, 
   Mail, 
   Lock, 
@@ -169,38 +168,10 @@ const Auth = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    try {
-      const { error, redirected } = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: window.location.origin,
-      });
-
-      if (redirected) {
-        return;
-      }
-
-      if (error) {
-        toast({
-          title: 'Error al iniciar sesión con Google',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: '¡Bienvenido!',
-          description: 'Has iniciado sesión con Google correctamente',
-        });
-        navigate('/mi-cuenta');
-      }
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Ocurrió un error al conectar con Google',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    toast({
+      title: 'Próximamente',
+      description: 'El inicio de sesión con Google estará disponible pronto',
+    });
   };
 
   return (
