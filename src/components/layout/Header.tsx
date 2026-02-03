@@ -305,7 +305,7 @@ export const Header = () => {
               ))}
             </ul>
             
-            {/* Venta Externa - Destacado */}
+            {/* Marketplace - Destacado */}
             <Link
               to="/venta-externa"
               className={`inline-flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
@@ -315,7 +315,7 @@ export const Header = () => {
               }`}
             >
               <Store size={18} />
-              Venta Externa
+              Marketplace
             </Link>
           </div>
         </div>
