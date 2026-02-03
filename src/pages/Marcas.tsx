@@ -7,22 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Search, ArrowRight } from 'lucide-react';
 
 const brands = [
-  { name: 'CATERPILLAR', products: 245, logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c5/Caterpillar_logo.svg/200px-Caterpillar_logo.svg.png' },
-  { name: 'MI COMPONENTS', products: 312, logo: '/logo-mercado-industrial.webp' },
-  { name: 'FLOWSERVE', products: 89, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Flowserve_logo.svg/200px-Flowserve_logo.svg.png' },
-  { name: 'GENIE', products: 67, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Genie_Industries_logo.svg/200px-Genie_Industries_logo.svg.png' },
-  { name: 'KUE-KEN CRUSHER', products: 34, logo: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=200&h=100&fit=crop&auto=format' },
-  { name: 'TEREX PEGSON', products: 28, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Terex_logo.svg/200px-Terex_logo.svg.png' },
-  { name: 'SAUER SUNDSTRAND', products: 56, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Danfoss_Logo.svg/200px-Danfoss_Logo.svg.png' },
-  { name: 'MERCEDES-BENZ', products: 23, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/200px-Mercedes-Logo.svg.png' },
-  { name: 'ALLIS-CHALMERS', products: 41, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/AGCO_logo.svg/200px-AGCO_logo.svg.png' },
-  { name: 'KOMATSU', products: 78, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Komatsu_company_logos.svg/200px-Komatsu_company_logos.svg.png' },
-  { name: 'JOHN DEERE', products: 52, logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/6/63/Deere_and_Company_logo.svg/200px-Deere_and_Company_logo.svg.png' },
-  { name: 'WEG', products: 134, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/WEG_Logo.svg/200px-WEG_Logo.svg.png' },
-  { name: 'SIEMENS', products: 98, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Siemens-logo.svg/200px-Siemens-logo.svg.png' },
-  { name: 'ABB', products: 67, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/ABB_logo.svg/200px-ABB_logo.svg.png' },
-  { name: 'LINCOLN ELECTRIC', products: 45, logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Lincoln_Electric_Company_logo.svg/200px-Lincoln_Electric_Company_logo.svg.png' },
-  { name: 'BOBCAT', products: 38, logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4b/Bobcat_Company_logo.svg/200px-Bobcat_Company_logo.svg.png' },
+  { name: 'CATERPILLAR', products: 245, logo: '/logo-mercado-industrial.webp', initials: 'CAT' },
+  { name: 'MI COMPONENTS', products: 312, logo: '/logo-mercado-industrial.webp', initials: 'MI' },
+  { name: 'FLOWSERVE', products: 89, logo: '/logo-mercado-industrial.webp', initials: 'FS' },
+  { name: 'GENIE', products: 67, logo: '/logo-mercado-industrial.webp', initials: 'GN' },
+  { name: 'KUE-KEN CRUSHER', products: 34, logo: '/logo-mercado-industrial.webp', initials: 'KK' },
+  { name: 'TEREX PEGSON', products: 28, logo: '/logo-mercado-industrial.webp', initials: 'TX' },
+  { name: 'SAUER SUNDSTRAND', products: 56, logo: '/logo-mercado-industrial.webp', initials: 'SS' },
+  { name: 'MERCEDES-BENZ', products: 23, logo: '/logo-mercado-industrial.webp', initials: 'MB' },
+  { name: 'ALLIS-CHALMERS', products: 41, logo: '/logo-mercado-industrial.webp', initials: 'AC' },
+  { name: 'KOMATSU', products: 78, logo: '/logo-mercado-industrial.webp', initials: 'KO' },
+  { name: 'JOHN DEERE', products: 52, logo: '/logo-mercado-industrial.webp', initials: 'JD' },
+  { name: 'WEG', products: 134, logo: '/logo-mercado-industrial.webp', initials: 'WEG' },
+  { name: 'SIEMENS', products: 98, logo: '/logo-mercado-industrial.webp', initials: 'SI' },
+  { name: 'ABB', products: 67, logo: '/logo-mercado-industrial.webp', initials: 'ABB' },
+  { name: 'LINCOLN ELECTRIC', products: 45, logo: '/logo-mercado-industrial.webp', initials: 'LE' },
+  { name: 'BOBCAT', products: 38, logo: '/logo-mercado-industrial.webp', initials: 'BC' },
 ];
 
 const Marcas = () => {
@@ -83,18 +83,10 @@ const Marcas = () => {
                 to={`/catalogo?marca=${encodeURIComponent(brand.name)}`}
                 className="group block bg-card rounded-2xl p-6 shadow-card hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/30"
               >
-                <div className="aspect-[3/2] flex items-center justify-center mb-4 bg-muted/30 rounded-xl p-4">
-                  {brand.logo ? (
-                    <img
-                      src={brand.logo}
-                      alt={brand.name}
-                      className="max-h-16 w-auto object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
-                    />
-                  ) : (
-                    <span className="text-2xl font-display font-bold text-muted-foreground group-hover:text-foreground transition-colors">
-                      {brand.name.split(' ')[0]}
-                    </span>
-                  )}
+                <div className="aspect-[3/2] flex items-center justify-center mb-4 bg-gradient-to-br from-muted/50 to-muted rounded-xl p-4">
+                  <span className="text-3xl font-display font-bold text-primary/70 group-hover:text-primary transition-colors tracking-wider">
+                    {brand.initials}
+                  </span>
                 </div>
                 <div className="text-center">
                   <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors mb-1">
