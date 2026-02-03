@@ -157,9 +157,9 @@ export const HeroSection = () => {
         transition={{ duration: 0.8, delay: 0.4 }}
         className="hidden lg:block absolute left-[5%] top-1/2 -translate-y-1/2"
       >
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
-          <p className="text-white/70 text-sm font-medium mb-4 text-center">Nuestras Sedes</p>
-          <div className="relative w-72 h-52">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl w-[200px] h-[280px] flex flex-col">
+          <p className="text-white/70 text-sm font-medium mb-2 text-center">Nuestras Sedes</p>
+          <div className="relative flex-1 mx-auto w-full">
             {/* Map Image */}
             <img 
               src={mapUsaMexico} 
@@ -167,78 +167,65 @@ export const HeroSection = () => {
               className="w-full h-full object-contain opacity-80"
             />
             
-            {/* Location Markers - positioned over the map */}
             {/* Tijuana - Extremo noroeste de Baja California */}
-            <div className="absolute" style={{ left: '5%', top: '42%' }}>
-              <div className="relative group">
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-white whitespace-nowrap">Tijuana</span>
-                <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" />
-              </div>
+            <div className="absolute" style={{ left: '4%', top: '40%' }}>
+              <span className="absolute top-3 left-1/2 -translate-x-1/2 text-[7px] font-semibold text-white whitespace-nowrap">Tijuana</span>
+              <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" />
             </div>
             
-            {/* Mexicali - Noreste de Baja California, en la frontera con California/Arizona */}
-            <div className="absolute" style={{ left: '14%', top: '38%' }}>
-              <div className="relative group">
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-white whitespace-nowrap">Mexicali</span>
-                <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.2s' }} />
-              </div>
+            {/* Mexicali - Al este de Tijuana en la frontera */}
+            <div className="absolute" style={{ left: '14%', top: '34%' }}>
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-semibold text-white whitespace-nowrap">Mexicali</span>
+              <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.2s' }} />
             </div>
             
-            {/* Nogales - Frontera Arizona/Sonora, más al este */}
-            <div className="absolute" style={{ left: '26%', top: '40%' }}>
-              <div className="relative group">
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-white whitespace-nowrap">Nogales</span>
-                <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.4s' }} />
-              </div>
+            {/* Nogales - Frontera Arizona/Sonora */}
+            <div className="absolute" style={{ left: '28%', top: '36%' }}>
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-semibold text-white whitespace-nowrap">Nogales</span>
+              <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.4s' }} />
             </div>
             
-            {/* Hermosillo - Capital de Sonora, sur de Nogales */}
-            <div className="absolute" style={{ left: '22%', top: '52%' }}>
-              <div className="relative group">
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-white whitespace-nowrap">Hermosillo</span>
-                <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.6s' }} />
-              </div>
+            {/* Hermosillo - Capital de Sonora, al sur */}
+            <div className="absolute" style={{ left: '22%', top: '50%' }}>
+              <span className="absolute top-3 left-1/2 -translate-x-1/2 text-[7px] font-semibold text-white whitespace-nowrap">Hermosillo</span>
+              <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.6s' }} />
             </div>
             
-            {/* Santa Catarina - Área metropolitana de Monterrey, Nuevo León (noreste de México) */}
-            <div className="absolute" style={{ left: '55%', top: '58%' }}>
-              <div className="relative group">
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-white whitespace-nowrap">Sta. Catarina</span>
-                <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.8s' }} />
-              </div>
+            {/* Santa Catarina - Nuevo León, noreste de México */}
+            <div className="absolute" style={{ left: '58%', top: '56%' }}>
+              <span className="absolute top-3 left-1/2 -translate-x-1/2 text-[7px] font-semibold text-white whitespace-nowrap">Sta. Catarina</span>
+              <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-lg" style={{ animationDelay: '0.8s' }} />
             </div>
           </div>
-          <p className="text-primary text-sm font-bold text-center mt-3">5 Ubicaciones</p>
-          <p className="text-white/60 text-xs text-center">México y USA</p>
+          <p className="text-primary text-sm font-bold text-center mt-2">5 Ubicaciones</p>
+          <p className="text-white/60 text-[11px] text-center">México y USA</p>
         </div>
       </motion.div>
 
     {/* Decorative Elements */}
     <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background to-transparent" />
       
-      {/* Floating Stats Card */}
+      {/* Floating Stats Card - Mismo tamaño exacto */}
       <motion.div
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
         className="hidden lg:block absolute right-[5%] top-1/2 -translate-y-1/2"
       >
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
-          <div className="space-y-6">
-            <div className="text-center">
-              <span className="block text-5xl font-display font-black text-primary">+12,643</span>
-              <span className="text-white/70 text-sm">Productos</span>
-            </div>
-            <div className="w-full h-px bg-white/20" />
-            <div className="text-center">
-              <span className="block text-5xl font-display font-black text-white">+500</span>
-              <span className="text-white/70 text-sm">Marcas</span>
-            </div>
-            <div className="w-full h-px bg-white/20" />
-            <div className="text-center">
-              <span className="block text-5xl font-display font-black text-primary">5</span>
-              <span className="text-white/70 text-sm">Ubicaciones</span>
-            </div>
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl w-[200px] h-[280px] flex flex-col justify-between">
+          <div className="text-center">
+            <span className="block text-4xl font-display font-black text-primary">+12,643</span>
+            <span className="text-white/70 text-sm">Productos</span>
+          </div>
+          <div className="w-full h-px bg-white/20" />
+          <div className="text-center">
+            <span className="block text-4xl font-display font-black text-white">+500</span>
+            <span className="text-white/70 text-sm">Marcas</span>
+          </div>
+          <div className="w-full h-px bg-white/20" />
+          <div className="text-center">
+            <span className="block text-4xl font-display font-black text-primary">5</span>
+            <span className="text-white/70 text-sm">Ubicaciones</span>
           </div>
         </div>
       </motion.div>
