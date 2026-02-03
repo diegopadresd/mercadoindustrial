@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import AccessDenied from '@/components/admin/AccessDenied';
+import AdminNotificationsBell from '@/components/admin/AdminNotificationsBell';
 import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
 
 // Admin sub-pages
@@ -155,10 +156,7 @@ const AdminDashboard = () => {
           />
           <span className="font-display font-bold">Admin</span>
         </div>
-        <button className="p-2 hover:bg-muted rounded-lg transition-colors relative">
-          <Bell size={20} />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
-        </button>
+        <AdminNotificationsBell />
       </header>
 
       <div className="flex">
@@ -333,16 +331,7 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="relative"
-                onClick={() => navigate('/mi-cuenta/ofertas')}
-                title="Notificaciones"
-              >
-                <Bell size={20} />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full" />
-              </Button>
+              <AdminNotificationsBell />
               {isAdmin && (
                 <Button 
                   variant="ghost" 
