@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { QuoteOptionsDialog } from '@/components/cart/QuoteOptionsDialog';
-import { PaymentOptionsDialog } from '@/components/cart/PaymentOptionsDialog';
-import { 
+import {
   ShoppingCart, 
   Trash2, 
   Plus, 
@@ -28,7 +27,6 @@ const Carrito = () => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const handleQuantityChange = async (productId: string, delta: number, currentQuantity: number) => {
     await updateQuantity(productId, currentQuantity + delta);
@@ -43,7 +41,7 @@ const Carrito = () => {
       navigate('/auth');
       return;
     }
-    setPaymentDialogOpen(true);
+    navigate('/checkout');
   };
 
   const handleQuoteRequest = () => {
@@ -294,14 +292,6 @@ const Carrito = () => {
         open={quoteDialogOpen} 
         onOpenChange={setQuoteDialogOpen}
         items={items}
-      />
-
-      {/* Payment Options Dialog */}
-      <PaymentOptionsDialog
-        open={paymentDialogOpen}
-        onOpenChange={setPaymentDialogOpen}
-        items={items}
-        subtotal={subtotal}
       />
     </div>
   );

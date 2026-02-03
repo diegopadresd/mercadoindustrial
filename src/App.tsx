@@ -32,6 +32,7 @@ import Terminos from "./pages/Terminos";
 import Contacto from "./pages/Contacto";
 import Soporte from "./pages/Soporte";
 import CheckoutContraoferta from "./pages/CheckoutContraoferta";
+import Checkout from "./pages/Checkout";
 // Mi Cuenta pages
 import MiCuenta from "./pages/MiCuenta";
 import MisPublicaciones from "./pages/mi-cuenta/MisPublicaciones";
@@ -77,6 +78,7 @@ const App = () => (
               <Route path="/mi-cuenta/vender" element={<ActivarVendedor />} />
               <Route path="/mi-cuenta/publicar" element={<PublicarProducto />} />
               {/* Checkout Routes */}
+              <Route path="/checkout" element={<Checkout />} />
               <Route path="/checkout/contraoferta/:offerId" element={<CheckoutContraoferta />} />
               {/* Help & Info Pages */}
               <Route path="/faq" element={<FAQ />} />
