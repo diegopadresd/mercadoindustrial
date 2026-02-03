@@ -142,7 +142,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 overflow-x-hidden">
       {/* Mobile Header */}
       <header className="lg:hidden bg-card/80 backdrop-blur-xl border-b border-border/50 p-4 flex items-center justify-between sticky top-0 z-50">
         <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-muted rounded-lg transition-colors">
@@ -312,7 +312,7 @@ const AdminDashboard = () => {
         </AnimatePresence>
 
         {/* Main Content */}
-        <main className="flex-1 min-h-screen">
+        <main className="flex-1 min-h-screen overflow-x-hidden">
           {/* Desktop Top Bar */}
           <header className="hidden lg:flex items-center justify-between p-6 border-b border-border/50 bg-card/30 backdrop-blur-sm sticky top-0 z-40">
             <div className="flex items-center gap-4">
