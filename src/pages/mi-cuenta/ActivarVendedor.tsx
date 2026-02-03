@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -6,10 +6,12 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Store, 
   ArrowLeft,
@@ -18,124 +20,136 @@ import {
   Package,
   DollarSign,
   Users,
+  Upload,
+  Clock,
+  AlertCircle,
+  Calendar,
+  Building2,
   FileText,
+  User,
 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const ActivarVendedor = () => {
   const { user, profile } = useAuth();
   const { isVendedor, isLoading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isActivating, setIsActivating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ineFile, setIneFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
+    full_name: profile?.full_name || '',
+    birth_date: '',
+    company_name: '',
+    items_description: '',
     rfc: profile?.rfc || '',
     phone: profile?.phone || '',
-    city: profile?.shipping_city || '',
-    postal_code: profile?.shipping_postal_code || '',
   });
-  const [rfcError, setRfcError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // RFC validation: 12-13 alphanumeric characters
-  const validateRFC = (rfc: string): boolean => {
-    const trimmedRFC = rfc.trim().toUpperCase();
-    // Mexican RFC: 12 characters for companies, 13 for individuals
-    const rfcRegex = /^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/;
-    return rfcRegex.test(trimmedRFC);
-  };
-
-  const handleActivate = async () => {
-    if (!user?.id) return;
-    
-    // Validate RFC
-    const trimmedRFC = formData.rfc.trim().toUpperCase();
-    if (!trimmedRFC) {
-      setRfcError('El RFC es obligatorio para activar tu cuenta de vendedor');
-      return;
-    }
-    if (!validateRFC(trimmedRFC)) {
-      setRfcError('El RFC no tiene un formato válido (12-13 caracteres alfanuméricos)');
-      return;
-    }
-    setRfcError('');
-    
-    setIsActivating(true);
-    try {
-      // Check if profile exists
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
+  // Check for existing application
+  const { data: existingApplication, isLoading: applicationLoading } = useQuery({
+    queryKey: ['seller-application', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('seller_applications')
+        .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
-      // Upsert profile with RFC (required by trigger before inserting role)
-      if (existingProfile) {
-        // Update existing profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            rfc: trimmedRFC,
-            phone: formData.phone || null,
-            shipping_city: formData.city || null,
-            shipping_postal_code: formData.postal_code || null,
-          })
-          .eq('user_id', user.id);
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = 'El nombre completo es obligatorio';
+    }
+    if (!formData.birth_date) {
+      newErrors.birth_date = 'La fecha de nacimiento es obligatoria';
+    }
+    if (!formData.items_description.trim()) {
+      newErrors.items_description = 'Describe los artículos que planeas vender';
+    }
+    if (!ineFile && !existingApplication?.ine_url) {
+      newErrors.ine = 'Debes subir una imagen de tu INE';
+    }
 
-        if (profileError) throw profileError;
-      } else {
-        // Create new profile with RFC
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: user.id,
-            email: user.email || '',
-            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
-            rfc: trimmedRFC,
-            phone: formData.phone || null,
-            shipping_city: formData.city || null,
-            shipping_postal_code: formData.postal_code || null,
-          });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-        if (profileError) throw profileError;
+  const handleSubmit = async () => {
+    if (!user?.id) return;
+    
+    if (!validateForm()) return;
+    
+    setIsSubmitting(true);
+    try {
+      let ineUrl = existingApplication?.ine_url || null;
+
+      // Upload INE if provided
+      if (ineFile) {
+        const fileExt = ineFile.name.split('.').pop();
+        const filePath = `${user.id}/ine-${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('seller-documents')
+          .upload(filePath, ineFile);
+
+        if (uploadError) throw uploadError;
+        
+        const { data: urlData } = supabase.storage
+          .from('seller-documents')
+          .getPublicUrl(filePath);
+        
+        ineUrl = filePath; // Store path, not public URL since bucket is private
       }
 
-      // Now add vendedor role to user_roles table
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
+      // Create seller application
+      const { error } = await supabase
+        .from('seller_applications')
+        .upsert({
           user_id: user.id,
-          role: 'vendedor',
+          full_name: formData.full_name.trim(),
+          ine_url: ineUrl,
+          birth_date: formData.birth_date,
+          company_name: formData.company_name.trim() || null,
+          items_description: formData.items_description.trim(),
+          rfc: formData.rfc.trim().toUpperCase() || null,
+          phone: formData.phone.trim() || null,
+          status: 'pending',
+        }, {
+          onConflict: 'user_id',
         });
 
-      if (roleError && roleError.code !== '23505') { // Ignore duplicate key error
-        throw roleError;
-      }
+      if (error) throw error;
 
       toast({
-        title: '¡Felicidades!',
-        description: 'Tu cuenta de vendedor ha sido activada. Ya puedes publicar productos.',
+        title: 'Solicitud enviada',
+        description: 'Tu solicitud será revisada por nuestro equipo. Te notificaremos cuando sea aprobada.',
       });
 
-      // Navigate to publish page
-      setTimeout(() => {
-        navigate('/mi-cuenta/publicar');
-      }, 1500);
+      // Reload page to show pending status
+      window.location.reload();
 
     } catch (error: any) {
-      console.error('Error activating seller:', error);
-      const message = error?.message?.includes('RFC requerido')
-        ? 'Debes ingresar un RFC válido para activar tu cuenta de vendedor.'
-        : 'No se pudo activar tu cuenta de vendedor. Intenta de nuevo.';
+      console.error('Error submitting application:', error);
       toast({
         title: 'Error',
-        description: message,
+        description: error.message || 'No se pudo enviar tu solicitud. Intenta de nuevo.',
         variant: 'destructive',
       });
     } finally {
-      setIsActivating(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (roleLoading) {
+  if (roleLoading || applicationLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -167,6 +181,84 @@ const ActivarVendedor = () => {
                 <Button variant="outline">Ver Mis Publicaciones</Button>
               </Link>
             </div>
+          </motion.div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Pending application
+  if (existingApplication?.status === 'pending') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-16 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-md mx-auto"
+          >
+            <div className="w-20 h-20 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto mb-6">
+              <Clock size={40} className="text-yellow-500" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Solicitud en Revisión</h1>
+            <p className="text-muted-foreground mb-6">
+              Tu solicitud para ser vendedor está siendo revisada por nuestro equipo. 
+              Te notificaremos por correo cuando sea aprobada.
+            </p>
+            <Alert className="text-left">
+              <Clock className="h-4 w-4" />
+              <AlertTitle>Estado: Pendiente de Aprobación</AlertTitle>
+              <AlertDescription>
+                Enviada el {new Date(existingApplication.created_at).toLocaleDateString('es-MX', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </AlertDescription>
+            </Alert>
+            <Link to="/mi-cuenta" className="mt-6 inline-block">
+              <Button variant="outline">Volver a Mi Cuenta</Button>
+            </Link>
+          </motion.div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Rejected application
+  if (existingApplication?.status === 'rejected') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-16 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-md mx-auto"
+          >
+            <div className="w-20 h-20 rounded-full bg-destructive/20 flex items-center justify-center mx-auto mb-6">
+              <AlertCircle size={40} className="text-destructive" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Solicitud Rechazada</h1>
+            <p className="text-muted-foreground mb-4">
+              Tu solicitud no fue aprobada. 
+            </p>
+            {existingApplication.admin_notes && (
+              <Alert variant="destructive" className="text-left mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Motivo</AlertTitle>
+                <AlertDescription>{existingApplication.admin_notes}</AlertDescription>
+              </Alert>
+            )}
+            <p className="text-sm text-muted-foreground mb-6">
+              Si crees que hubo un error, contacta a nuestro equipo de soporte.
+            </p>
+            <Link to="/contacto">
+              <Button variant="outline">Contactar Soporte</Button>
+            </Link>
           </motion.div>
         </main>
         <Footer />
@@ -215,7 +307,7 @@ const ActivarVendedor = () => {
             </div>
           </motion.div>
 
-          {/* Activation Form */}
+          {/* Application Form */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -227,35 +319,175 @@ const ActivarVendedor = () => {
                 <Store size={32} className="text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Activar Cuenta de Vendedor</h2>
-                <p className="text-muted-foreground">Completa tu información para empezar</p>
+                <h2 className="text-xl font-bold">Solicitud de Vendedor</h2>
+                <p className="text-muted-foreground">Completa tu información para revisión</p>
               </div>
             </div>
 
+            <Alert className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Proceso de Verificación</AlertTitle>
+              <AlertDescription>
+                Tu solicitud será revisada manualmente por nuestro equipo. Este proceso puede tomar de 1 a 3 días hábiles.
+              </AlertDescription>
+            </Alert>
+
             <div className="space-y-4 mb-6">
+              {/* Full Name */}
               <div>
-                <Label htmlFor="rfc" className="flex items-center gap-1">
-                  <FileText size={14} />
-                  RFC <span className="text-destructive">*</span>
+                <Label htmlFor="full_name" className="flex items-center gap-1">
+                  <User size={14} />
+                  Nombre Completo <span className="text-destructive">*</span>
                 </Label>
+                <Input
+                  id="full_name"
+                  placeholder="Ej: Juan Carlos Pérez López"
+                  value={formData.full_name}
+                  onChange={(e) => {
+                    setFormData({ ...formData, full_name: e.target.value });
+                    setErrors({ ...errors, full_name: '' });
+                  }}
+                  className={errors.full_name ? 'border-destructive' : ''}
+                />
+                {errors.full_name && (
+                  <p className="text-sm text-destructive mt-1">{errors.full_name}</p>
+                )}
+              </div>
+
+              {/* INE Upload */}
+              <div>
+                <Label htmlFor="ine" className="flex items-center gap-1">
+                  <FileText size={14} />
+                  INE (Identificación Oficial) <span className="text-destructive">*</span>
+                </Label>
+                <div className="mt-2">
+                  <label 
+                    htmlFor="ine-file"
+                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${
+                      errors.ine ? 'border-destructive' : 'border-border'
+                    } ${ineFile ? 'bg-green-500/10 border-green-500' : ''}`}
+                  >
+                    {ineFile ? (
+                      <div className="flex items-center gap-2 text-green-600">
+                        <CheckCircle size={24} />
+                        <span className="font-medium">{ineFile.name}</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-semibold">Haz clic para subir</span> o arrastra tu INE
+                        </p>
+                        <p className="text-xs text-muted-foreground">PNG, JPG o PDF (MAX. 5MB)</p>
+                      </div>
+                    )}
+                    <input
+                      id="ine-file"
+                      type="file"
+                      className="hidden"
+                      accept="image/*,.pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast({
+                              title: 'Archivo muy grande',
+                              description: 'El archivo debe ser menor a 5MB',
+                              variant: 'destructive',
+                            });
+                            return;
+                          }
+                          setIneFile(file);
+                          setErrors({ ...errors, ine: '' });
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                {errors.ine && (
+                  <p className="text-sm text-destructive mt-1">{errors.ine}</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tu INE será utilizada únicamente para verificar tu identidad
+                </p>
+              </div>
+
+              {/* Birth Date */}
+              <div>
+                <Label htmlFor="birth_date" className="flex items-center gap-1">
+                  <Calendar size={14} />
+                  Fecha de Nacimiento <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="birth_date"
+                  type="date"
+                  value={formData.birth_date}
+                  onChange={(e) => {
+                    setFormData({ ...formData, birth_date: e.target.value });
+                    setErrors({ ...errors, birth_date: '' });
+                  }}
+                  className={errors.birth_date ? 'border-destructive' : ''}
+                  max={new Date().toISOString().split('T')[0]}
+                />
+                {errors.birth_date && (
+                  <p className="text-sm text-destructive mt-1">{errors.birth_date}</p>
+                )}
+              </div>
+
+              {/* Company (Optional) */}
+              <div>
+                <Label htmlFor="company_name" className="flex items-center gap-1">
+                  <Building2 size={14} />
+                  Empresa (opcional)
+                </Label>
+                <Input
+                  id="company_name"
+                  placeholder="Ej: Mi Empresa S.A. de C.V."
+                  value={formData.company_name}
+                  onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Si vendes como empresa, ingresa el nombre de tu negocio
+                </p>
+              </div>
+
+              {/* Items Description */}
+              <div>
+                <Label htmlFor="items_description" className="flex items-center gap-1">
+                  <Package size={14} />
+                  Descripción de Artículos a Vender <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="items_description"
+                  placeholder="Describe el tipo de productos industriales que planeas vender. Ej: Maquinaria CNC usada, refacciones para tornos, herramientas de medición, etc."
+                  value={formData.items_description}
+                  onChange={(e) => {
+                    setFormData({ ...formData, items_description: e.target.value });
+                    setErrors({ ...errors, items_description: '' });
+                  }}
+                  className={`min-h-[100px] ${errors.items_description ? 'border-destructive' : ''}`}
+                />
+                {errors.items_description && (
+                  <p className="text-sm text-destructive mt-1">{errors.items_description}</p>
+                )}
+              </div>
+
+              {/* RFC (Optional) */}
+              <div>
+                <Label htmlFor="rfc">RFC (opcional)</Label>
                 <Input
                   id="rfc"
                   placeholder="Ej: XAXX010101000"
                   value={formData.rfc}
-                  onChange={(e) => {
-                    setFormData({ ...formData, rfc: e.target.value.toUpperCase() });
-                    setRfcError('');
-                  }}
-                  className={rfcError ? 'border-destructive' : ''}
+                  onChange={(e) => setFormData({ ...formData, rfc: e.target.value.toUpperCase() })}
                   maxLength={13}
                 />
-                {rfcError && (
-                  <p className="text-sm text-destructive mt-1">{rfcError}</p>
-                )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  Requerido para facturación y operaciones fiscales
+                  Requerido si necesitas facturación
                 </p>
               </div>
+
+              {/* Phone (Optional) */}
               <div>
                 <Label htmlFor="phone">Teléfono de contacto (opcional)</Label>
                 <Input
@@ -266,49 +498,29 @@ const ActivarVendedor = () => {
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">Ciudad (opcional)</Label>
-                  <Input
-                    id="city"
-                    placeholder="Ej: Hermosillo"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="postal_code">Código Postal (opcional)</Label>
-                  <Input
-                    id="postal_code"
-                    placeholder="Ej: 83000"
-                    value={formData.postal_code}
-                    onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                  />
-                </div>
-              </div>
             </div>
 
             <Button 
-              onClick={handleActivate}
-              disabled={isActivating}
+              onClick={handleSubmit}
+              disabled={isSubmitting}
               className="w-full btn-gold"
               size="lg"
             >
-              {isActivating ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="animate-spin mr-2" size={18} />
-                  Activando...
+                  Enviando solicitud...
                 </>
               ) : (
                 <>
                   <Store size={18} className="mr-2" />
-                  Activar cuenta de vendedor
+                  Enviar solicitud de vendedor
                 </>
               )}
             </Button>
 
             <p className="text-xs text-muted-foreground text-center mt-4">
-              Al activar tu cuenta aceptas nuestros términos y condiciones para vendedores.
+              Al enviar tu solicitud aceptas nuestros términos y condiciones para vendedores.
             </p>
           </motion.div>
         </div>

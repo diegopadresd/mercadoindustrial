@@ -17,12 +17,20 @@ import {
   X,
   Trash2,
   Eye,
-  EyeOff
+  EyeOff,
+  AlertCircle,
+  Building2,
+  Calendar,
+  Package,
+  FileText,
+  Phone,
+  ExternalLink,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
   TableBody,
@@ -64,6 +72,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AccessDenied from '@/components/admin/AccessDenied';
 
 interface UserWithRole {
@@ -78,6 +88,22 @@ interface UserWithRole {
   role: AppRole;
 }
 
+interface SellerApplication {
+  id: string;
+  user_id: string;
+  full_name: string;
+  ine_url: string | null;
+  birth_date: string;
+  company_name: string | null;
+  items_description: string;
+  rfc: string | null;
+  phone: string | null;
+  status: string;
+  admin_notes: string | null;
+  created_at: string;
+  user_email?: string;
+}
+
 const AdminUsuarios = () => {
   const { user } = useAuth();
   const { isAdmin, permissions, isLoading: roleLoading } = useUserRole();
@@ -86,7 +112,11 @@ const AdminUsuarios = () => {
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showApplicationDialog, setShowApplicationDialog] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<SellerApplication | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   const [newRole, setNewRole] = useState<AppRole>('vendedor');
   const [createFormData, setCreateFormData] = useState({
     email: '',
@@ -130,6 +160,37 @@ const AdminUsuarios = () => {
           role: (userRole?.role || 'user') as AppRole,
         };
       }) as UserWithRole[];
+    },
+    enabled: isAdmin,
+  });
+
+  // Fetch pending seller applications
+  const { data: pendingApplications, isLoading: applicationsLoading } = useQuery({
+    queryKey: ['seller-applications-pending'],
+    queryFn: async () => {
+      const { data: applications, error } = await supabase
+        .from('seller_applications')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Get emails for users
+      if (applications && applications.length > 0) {
+        const userIds = applications.map(a => a.user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, email')
+          .in('user_id', userIds);
+
+        return applications.map(app => ({
+          ...app,
+          user_email: profiles?.find(p => p.user_id === app.user_id)?.email || 'Sin correo',
+        })) as SellerApplication[];
+      }
+
+      return applications as SellerApplication[];
     },
     enabled: isAdmin,
   });
@@ -266,6 +327,118 @@ const AdminUsuarios = () => {
     },
   });
 
+  // Approve seller application mutation
+  const approveApplicationMutation = useMutation({
+    mutationFn: async (application: SellerApplication) => {
+      // Update profile with RFC if provided
+      if (application.rfc) {
+        await supabase
+          .from('profiles')
+          .update({ 
+            rfc: application.rfc,
+            phone: application.phone,
+          })
+          .eq('user_id', application.user_id);
+      }
+
+      // Add vendedor role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .upsert({
+          user_id: application.user_id,
+          role: 'vendedor',
+        }, { onConflict: 'user_id,role' });
+
+      if (roleError && roleError.code !== '23505') throw roleError;
+
+      // Update application status
+      const { error: appError } = await supabase
+        .from('seller_applications')
+        .update({
+          status: 'approved',
+          reviewed_by: user?.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq('id', application.id);
+
+      if (appError) throw appError;
+
+      // Create notification for user
+      await supabase.from('notifications').insert({
+        user_id: application.user_id,
+        type: 'seller_approved',
+        title: '¡Solicitud Aprobada!',
+        message: 'Tu solicitud de vendedor ha sido aprobada. Ya puedes publicar productos.',
+        action_url: '/mi-cuenta/publicar',
+      });
+
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller-applications-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast({
+        title: 'Solicitud aprobada',
+        description: 'El usuario ahora es vendedor y puede publicar productos.',
+      });
+      setShowApplicationDialog(false);
+      setSelectedApplication(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo aprobar la solicitud',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Reject seller application mutation
+  const rejectApplicationMutation = useMutation({
+    mutationFn: async ({ application, reason }: { application: SellerApplication; reason: string }) => {
+      const { error } = await supabase
+        .from('seller_applications')
+        .update({
+          status: 'rejected',
+          admin_notes: reason,
+          reviewed_by: user?.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq('id', application.id);
+
+      if (error) throw error;
+
+      // Create notification for user
+      await supabase.from('notifications').insert({
+        user_id: application.user_id,
+        type: 'seller_rejected',
+        title: 'Solicitud Rechazada',
+        message: `Tu solicitud de vendedor no fue aprobada. Motivo: ${reason}`,
+        action_url: '/mi-cuenta/vender',
+      });
+
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller-applications-pending'] });
+      toast({
+        title: 'Solicitud rechazada',
+        description: 'Se ha notificado al usuario.',
+      });
+      setShowRejectDialog(false);
+      setShowApplicationDialog(false);
+      setSelectedApplication(null);
+      setRejectReason('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo rechazar la solicitud',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!createFormData.email || !createFormData.password || !createFormData.full_name) {
@@ -306,6 +479,23 @@ const AdminUsuarios = () => {
     deleteUserMutation.mutate(selectedUser.user_id);
   };
 
+  const handleApproveApplication = () => {
+    if (!selectedApplication) return;
+    approveApplicationMutation.mutate(selectedApplication);
+  };
+
+  const handleRejectApplication = () => {
+    if (!selectedApplication || !rejectReason.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Debes proporcionar un motivo para el rechazo',
+        variant: 'destructive',
+      });
+      return;
+    }
+    rejectApplicationMutation.mutate({ application: selectedApplication, reason: rejectReason });
+  };
+
   const getRoleBadgeVariant = (role: AppRole) => {
     switch (role) {
       case 'admin': return 'destructive';
@@ -320,6 +510,12 @@ const AdminUsuarios = () => {
       return <Badge variant="outline" className="border-destructive text-destructive">Inactivo</Badge>;
     }
     return <Badge variant="outline" className="border-green-600 text-green-600">Activo</Badge>;
+  };
+
+  const getIneUrl = (inePath: string | null) => {
+    if (!inePath) return null;
+    const { data } = supabase.storage.from('seller-documents').getPublicUrl(inePath);
+    return data?.publicUrl;
   };
 
   if (roleLoading) {
@@ -347,7 +543,31 @@ const AdminUsuarios = () => {
           </p>
         </div>
         
-        <div className="flex flex-col md:flex-row gap-4">
+        <Button className="btn-gold" onClick={() => setShowCreateDialog(true)}>
+          <UserPlus size={18} className="mr-2" />
+          Crear Usuario
+        </Button>
+      </div>
+
+      <Tabs defaultValue="users" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <Users size={16} />
+            Usuarios
+          </TabsTrigger>
+          <TabsTrigger value="applications" className="flex items-center gap-2">
+            <Clock size={16} />
+            Solicitudes de Vendedor
+            {pendingApplications && pendingApplications.length > 0 && (
+              <Badge variant="destructive" className="ml-1">
+                {pendingApplications.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Users Tab */}
+        <TabsContent value="users" className="space-y-4">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input
@@ -358,121 +578,197 @@ const AdminUsuarios = () => {
             />
           </div>
 
-          <Button className="btn-gold" onClick={() => setShowCreateDialog(true)}>
-            <UserPlus size={18} className="mr-2" />
-            Crear Usuario
-          </Button>
-        </div>
-      </div>
-
-      {/* Users Table */}
-      <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
-        {usersLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          {/* Users Table */}
+          <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+            {usersLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Usuario</TableHead>
+                    <TableHead>Rol</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Fecha de Registro</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No se encontraron usuarios
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    users?.map((userData) => (
+                      <TableRow key={userData.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                              <Users size={18} className="text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{userData.full_name}</p>
+                              <p className="text-sm text-muted-foreground">{userData.email}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getRoleBadgeVariant(userData.role)}>
+                            {getRoleLabel(userData.role)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(userData.status)}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(userData.created_at).toLocaleDateString('es-MX')}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal size={18} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedUser(userData);
+                                  setNewRole(userData.role);
+                                  setShowRoleDialog(true);
+                                }}
+                              >
+                                <Shield size={16} className="mr-2" />
+                                Cambiar Rol
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {userData.status === 'inactive' ? (
+                                <DropdownMenuItem
+                                  onClick={() => handleReactivate(userData.user_id)}
+                                >
+                                  <CheckCircle size={16} className="mr-2 text-green-600" />
+                                  Reactivar Acceso
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedUser(userData);
+                                    setShowDeactivateDialog(true);
+                                  }}
+                                >
+                                  <Ban size={16} className="mr-2" />
+                                  Desactivar Acceso
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => {
+                                  setSelectedUser(userData);
+                                  setShowDeleteDialog(true);
+                                }}
+                                disabled={userData.user_id === user?.id}
+                              >
+                                <Trash2 size={16} className="mr-2" />
+                                Eliminar Cuenta
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Usuario</TableHead>
-                <TableHead>Rol</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Fecha de Registro</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No se encontraron usuarios
-                  </TableCell>
-                </TableRow>
-              ) : (
-                users?.map((userData) => (
-                  <TableRow key={userData.id}>
-                    <TableCell>
+        </TabsContent>
+
+        {/* Seller Applications Tab */}
+        <TabsContent value="applications" className="space-y-4">
+          {applicationsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : pendingApplications?.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <CheckCircle size={48} className="text-green-500 mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Sin solicitudes pendientes</h3>
+                <p className="text-muted-foreground text-center">
+                  Todas las solicitudes de vendedor han sido procesadas.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {pendingApplications?.map((application) => (
+                <Card key={application.id} className="border-yellow-500/50 bg-yellow-500/5">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                          <Users size={18} className="text-primary" />
+                        <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                          <Clock size={24} className="text-yellow-600" />
                         </div>
                         <div>
-                          <p className="font-medium">{userData.full_name}</p>
-                          <p className="text-sm text-muted-foreground">{userData.email}</p>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            {application.full_name}
+                            <Badge variant="outline" className="border-yellow-500 text-yellow-600 text-xs">
+                              Vendedor - Aprobación Requerida
+                            </Badge>
+                          </CardTitle>
+                          <CardDescription>{application.user_email}</CardDescription>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getRoleBadgeVariant(userData.role)}>
-                        {getRoleLabel(userData.role)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(userData.status)}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(userData.created_at).toLocaleDateString('es-MX')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal size={18} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedUser(userData);
-                              setNewRole(userData.role);
-                              setShowRoleDialog(true);
-                            }}
-                          >
-                            <Shield size={16} className="mr-2" />
-                            Cambiar Rol
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {userData.status === 'inactive' ? (
-                            <DropdownMenuItem
-                              onClick={() => handleReactivate(userData.user_id)}
-                            >
-                              <CheckCircle size={16} className="mr-2 text-green-600" />
-                              Reactivar Acceso
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedUser(userData);
-                                setShowDeactivateDialog(true);
-                              }}
-                            >
-                              <Ban size={16} className="mr-2" />
-                              Desactivar Acceso
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => {
-                              setSelectedUser(userData);
-                              setShowDeleteDialog(true);
-                            }}
-                            disabled={userData.user_id === user?.id}
-                          >
-                            <Trash2 size={16} className="mr-2" />
-                            Eliminar Cuenta
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+                      <Button 
+                        onClick={() => {
+                          setSelectedApplication(application);
+                          setShowApplicationDialog(true);
+                        }}
+                      >
+                        <Eye size={16} className="mr-2" />
+                        Revisar Solicitud
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-4 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Calendar size={16} className="text-muted-foreground" />
+                        <span>Nacimiento: {new Date(application.birth_date).toLocaleDateString('es-MX')}</span>
+                      </div>
+                      {application.company_name && (
+                        <div className="flex items-center gap-2">
+                          <Building2 size={16} className="text-muted-foreground" />
+                          <span>{application.company_name}</span>
+                        </div>
+                      )}
+                      {application.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone size={16} className="text-muted-foreground" />
+                          <span>{application.phone}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-muted-foreground" />
+                        <span>Solicitud: {new Date(application.created_at).toLocaleDateString('es-MX')}</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                      <p className="text-sm font-medium mb-1">Artículos a vender:</p>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{application.items_description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Create User Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
@@ -574,6 +870,156 @@ const AdminUsuarios = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Application Review Dialog */}
+      <Dialog open={showApplicationDialog} onOpenChange={setShowApplicationDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText size={20} className="text-primary" />
+              Solicitud de Vendedor
+            </DialogTitle>
+            <DialogDescription>
+              Revisa la información del solicitante antes de aprobar o rechazar.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedApplication && (
+            <div className="space-y-6">
+              {/* Personal Info */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Nombre Completo</Label>
+                  <p className="font-medium">{selectedApplication.full_name}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Correo Electrónico</Label>
+                  <p className="font-medium">{selectedApplication.user_email}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Fecha de Nacimiento</Label>
+                  <p className="font-medium">
+                    {new Date(selectedApplication.birth_date).toLocaleDateString('es-MX', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Teléfono</Label>
+                  <p className="font-medium">{selectedApplication.phone || 'No proporcionado'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Empresa</Label>
+                  <p className="font-medium">{selectedApplication.company_name || 'No proporcionado (Persona física)'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">RFC</Label>
+                  <p className="font-medium">{selectedApplication.rfc || 'No proporcionado'}</p>
+                </div>
+              </div>
+
+              {/* INE Document */}
+              {selectedApplication.ine_url && (
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-xs">INE (Identificación)</Label>
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        // Generate signed URL and open in new tab
+                        const url = getIneUrl(selectedApplication.ine_url);
+                        if (url) window.open(url, '_blank');
+                      }}
+                    >
+                      <ExternalLink size={16} className="mr-2" />
+                      Ver documento INE
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Items Description */}
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Descripción de Artículos a Vender</Label>
+                <div className="border rounded-lg p-4 bg-muted/30">
+                  <p className="whitespace-pre-wrap">{selectedApplication.items_description}</p>
+                </div>
+              </div>
+
+              {/* Submission Date */}
+              <div className="text-sm text-muted-foreground">
+                Solicitud enviada el {new Date(selectedApplication.created_at).toLocaleDateString('es-MX', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowApplicationDialog(false)}>
+              Cerrar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => setShowRejectDialog(true)}
+            >
+              <X size={16} className="mr-2" />
+              Rechazar
+            </Button>
+            <Button 
+              className="btn-gold"
+              onClick={handleApproveApplication}
+              disabled={approveApplicationMutation.isPending}
+            >
+              {approveApplicationMutation.isPending ? (
+                <Loader2 size={16} className="mr-2 animate-spin" />
+              ) : (
+                <CheckCircle size={16} className="mr-2" />
+              )}
+              Aprobar Vendedor
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Application Dialog */}
+      <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rechazar Solicitud</AlertDialogTitle>
+            <AlertDialogDescription>
+              Por favor proporciona un motivo para el rechazo. El usuario será notificado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="reject-reason">Motivo del rechazo *</Label>
+            <Textarea
+              id="reject-reason"
+              placeholder="Ej: La información proporcionada no es suficiente, falta documentación válida, etc."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setRejectReason('')}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRejectApplication}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={rejectApplicationMutation.isPending}
+            >
+              {rejectApplicationMutation.isPending && <Loader2 size={16} className="mr-2 animate-spin" />}
+              Rechazar Solicitud
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Change Role Dialog */}
       <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>

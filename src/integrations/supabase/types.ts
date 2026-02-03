@@ -760,6 +760,60 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_applications: {
+        Row: {
+          admin_notes: string | null
+          birth_date: string
+          company_name: string | null
+          created_at: string
+          full_name: string
+          id: string
+          ine_url: string | null
+          items_description: string
+          phone: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rfc: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          birth_date: string
+          company_name?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          ine_url?: string | null
+          items_description: string
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rfc?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          birth_date?: string
+          company_name?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          ine_url?: string | null
+          items_description?: string
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rfc?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           created_at: string
