@@ -45,7 +45,7 @@ export const HeroSection = () => {
 
   return (
     <>
-      <section className="relative min-h-[70vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[55vh] flex items-start pt-16 overflow-hidden pb-32">
         {/* Background Image */}
         <div className="absolute inset-0">
           <motion.img
