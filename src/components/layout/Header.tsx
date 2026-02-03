@@ -305,18 +305,30 @@ export const Header = () => {
               ))}
             </ul>
             
-            {/* Marketplace - Destacado */}
-            <Link
-              to="/venta-externa"
-              className={`inline-flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
-                location.pathname === '/venta-externa'
-                  ? 'bg-orange-500 text-white shadow-lg'
-                  : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-md hover:shadow-lg hover:scale-105'
-              }`}
-            >
-              <Store size={18} />
-              Marketplace
-            </Link>
+            {/* Marketplace & Subastas - Destacados */}
+            <div className="flex items-center gap-2">
+              <Link
+                to="/venta-externa"
+                className={`inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                  location.pathname === '/venta-externa'
+                    ? 'bg-orange-500 text-white shadow-lg'
+                    : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-md hover:shadow-lg hover:scale-105'
+                }`}
+              >
+                <Store size={18} />
+                Marketplace
+              </Link>
+              <Link
+                to="/subastas"
+                className={`inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                  location.pathname === '/subastas'
+                    ? 'bg-secondary text-primary shadow-lg'
+                    : 'bg-secondary text-white hover:bg-secondary/90 shadow-md hover:shadow-lg hover:scale-105'
+                }`}
+              >
+                🔨 Subastas
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
