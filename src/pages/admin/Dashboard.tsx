@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import AccessDenied from '@/components/admin/AccessDenied';
-import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.webp';
+import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
 
 // Admin sub-pages
 import AdminResumen from './AdminResumen';
