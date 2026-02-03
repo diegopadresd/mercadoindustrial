@@ -1,43 +1,24 @@
 import { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, Clock, ExternalLink } from 'lucide-react';
+import { Phone, Mail, MapPin } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 
 const locations = [
   {
-    city: 'Hermosillo, Sonora, México',
-    address: 'Héctor Acedo Valenzuela N° 2, Sector Industrial Presa, 83293',
-    hoursEs: 'Lun-Vie: 8am - 6pm | Sáb: 8am - 1pm',
-    hoursEn: 'Mon-Fri: 8am - 6pm | Sat: 8am - 1pm',
-    mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+Hermosillo/@29.0572594,-110.9295005,17z/data=!3m1!4b1!4m6!3m5!1s0x86ce85b40f79ef99:0xee634bca8042b1c4!8m2!3d29.0572547!4d-110.9269256!16s%2Fg%2F1tz965kx',
+    city: 'Hermosillo',
+    mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+Hermosillo/@29.0572594,-110.9295005,17z',
   },
   {
-    city: 'Mexicali, Baja California, México',
-    address: 'Carretera San Felipe Km 13, 21700',
-    hoursEs: 'Lun-Vie: 8am - 6pm | Sáb: 8am - 1pm',
-    hoursEn: 'Mon-Fri: 8am - 6pm | Sat: 8am - 1pm',
-    mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+Mexicali/@32.4908859,-115.3954778,17z/data=!3m1!4b1!4m6!3m5!1s0x80d79d9164f19ec5:0x21036e9e58c04bc2!8m2!3d32.4908814!4d-115.3929029!16s%2Fg%2F11q3_fsvvf',
+    city: 'Monterrey',
+    mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+Santa+Catarina/@25.7212736,-100.5028245,17z',
   },
   {
-    city: 'Santa Catarina, Nuevo León, México',
-    address: 'Blvd. Luis Donaldo Colosio, Parque Industrial, C.P. 66384',
-    hoursEs: 'Lun-Vie: 8am - 6pm | Sáb: 8am - 1pm',
-    hoursEn: 'Mon-Fri: 8am - 6pm | Sat: 8am - 1pm',
-    mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+Santa+Catarina/@25.7212736,-100.5028245,17z/data=!3m1!4b1!4m6!3m5!1s0x866299dbe0ce3615:0xf17d2e79426c8a1d!8m2!3d25.7212688!4d-100.4979536!16s%2Fg%2F11vjhrw6f8',
+    city: 'CDMX',
+    mapUrl: 'https://www.google.com/maps/place/Ciudad+de+M%C3%A9xico',
   },
   {
-    city: 'Tijuana, Baja California, México',
-    address: 'Calle And. Vecinal 17521, Río Tijuana 3a. Etapa, 22124',
-    hoursEs: 'Lun-Vie: 8am - 6pm | Sáb: 8am - 1pm',
-    hoursEn: 'Mon-Fri: 8am - 6pm | Sat: 8am - 1pm',
-    mapUrl: 'https://www.google.com/maps/place/Mercado+Industrial+%7C+Maquinaria+%7C+Equipos+Mineros/@32.4415176,-116.9032863,17z/data=!3m1!4b1!4m6!3m5!1s0x80d9393730e1ad99:0x7be3e8a5fbf32297!8m2!3d32.4415131!4d-116.9007114!16s%2Fg%2F11rs0ng1lx',
-  },
-  {
-    city: 'Nogales, Arizona, USA',
-    address: '1481 N Industrial Park Dr, Nogales, AZ 85621',
-    hoursEs: 'Lun-Vie: 8am - 5pm',
-    hoursEn: 'Mon-Fri: 8am - 5pm',
-    mapUrl: 'https://www.google.com/maps/place/1481+N+Industrial+Park+Dr+%234,+Nogales,+AZ+85621,+EE.+UU./@31.3598945,-110.9523053,17z/data=!3m1!4b1!4m6!3m5!1s0x86d6adab30a3ec1d:0x4596a00e3c7e8ee4!8m2!3d31.3598945!4d-110.9497304!16s%2Fg%2F11qz9hx6rw',
+    city: 'McAllen',
+    mapUrl: 'https://www.google.com/maps/place/McAllen,+TX',
   },
 ];
 
@@ -86,36 +67,21 @@ export const Footer = forwardRef<HTMLElement>((_, ref) => {
     <footer ref={ref} className="bg-secondary text-secondary-foreground">
       {/* Locations Section */}
       <div className="border-b border-secondary-foreground/10">
-        <div className="container mx-auto px-4 py-12">
-          <h3 className="section-title text-secondary-foreground mb-8">
-            {language === 'es' ? 'Nuestras Ubicaciones' : 'Our Locations'}
+        <div className="container mx-auto px-4 py-8">
+          <h3 className="font-display font-bold text-secondary-foreground mb-4">
+            {language === 'es' ? 'Nuestras ubicaciones' : 'Our Locations'}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {locations.map((location) => (
               <a
                 key={location.city}
                 href={location.mapUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-secondary-foreground/5 hover:bg-secondary-foreground/10 rounded-xl p-5 transition-all duration-300"
+                className="flex items-center gap-2 text-secondary-foreground/80 hover:text-primary transition-colors"
               >
-                <div className="flex items-start gap-3 mb-3">
-                  <MapPin className="text-primary shrink-0 mt-1" size={20} />
-                  <div>
-                    <h4 className="font-semibold text-secondary-foreground group-hover:text-primary transition-colors">
-                      {location.city}
-                    </h4>
-                    <p className="text-sm text-secondary-foreground/70 mt-1">{location.address}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-secondary-foreground/60">
-                  <Clock size={14} />
-                  <span>{language === 'es' ? location.hoursEs : location.hoursEn}</span>
-                </div>
-                <div className="flex items-center gap-1 text-primary text-sm mt-3 group-hover:underline">
-                  {language === 'es' ? 'Ver en mapa' : 'View on map'}
-                  <ExternalLink size={14} />
-                </div>
+                <MapPin className="text-primary shrink-0" size={16} />
+                <span>{location.city}</span>
               </a>
             ))}
           </div>
@@ -136,15 +102,18 @@ export const Footer = forwardRef<HTMLElement>((_, ref) => {
                 ? 'E-Business con atención personalizada. Tu marketplace de confianza para maquinaria y equipo industrial.'
                 : 'E-Business with personalized service. Your trusted marketplace for industrial machinery and equipment.'}
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 flex-wrap">
               <a
                 href="https://www.paypal.com/paypalme/mercadoindustrial"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-secondary-foreground/10 hover:bg-secondary-foreground/20 rounded-lg px-4 py-2 transition-colors"
+                className="bg-secondary-foreground/10 hover:bg-secondary-foreground/20 rounded-lg px-3 py-2 transition-colors"
               >
-                <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" className="h-6" />
+                <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" className="h-5" />
               </a>
+              <div className="bg-secondary-foreground/10 rounded-lg px-3 py-2">
+                <img src="https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/6.6.73/mercadopago/logo__large.png" alt="Mercado Pago" className="h-5" />
+              </div>
             </div>
           </div>
 
