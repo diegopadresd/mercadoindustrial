@@ -491,6 +491,33 @@ export const Header = () => {
                 <Search size={20} />
               </Button>
             </div>
+            {/* Marketplace & Subastas - Destacados Mobile */}
+            <div className="flex flex-col gap-2 mb-4">
+              <Link
+                to="/venta-externa"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+                  location.pathname === '/venta-externa'
+                    ? 'bg-orange-500 text-white shadow-lg'
+                    : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md'
+                }`}
+              >
+                <Store size={20} />
+                Marketplace
+              </Link>
+              <Link
+                to="/subastas"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+                  location.pathname === '/subastas'
+                    ? 'bg-secondary text-primary shadow-lg'
+                    : 'bg-secondary text-white shadow-md'
+                }`}
+              >
+                🔨 Subastas
+              </Link>
+            </div>
+            
             <ul className="space-y-1">
               {navigation.map((item) => (
                 <li key={item.name}>
