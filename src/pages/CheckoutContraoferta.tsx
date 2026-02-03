@@ -62,7 +62,13 @@ const CheckoutContraoferta = () => {
   const isCounterOffer = offer?.status === 'counter_offer';
 
   const handleAcceptAndPay = async () => {
-    if (!offer || !finalPrice || !product) return;
+    console.log('handleAcceptAndPay called', { offer, finalPrice, product });
+    
+    if (!offer || !finalPrice || !product) {
+      console.error('Missing data:', { offer: !!offer, finalPrice, product: !!product });
+      toast.error('Error: Datos incompletos para procesar el pago');
+      return;
+    }
 
     setIsProcessing(true);
     try {
