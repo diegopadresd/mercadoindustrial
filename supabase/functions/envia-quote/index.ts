@@ -187,14 +187,20 @@ serve(async (req) => {
       // Handle array response
       const ratesArray = Array.isArray(rawData) ? rawData : (rawData.rates || rawData.carriers || [rawData]);
       
-      for (const rate of ratesArray) {
+      for (let i = 0; i < ratesArray.length; i++) {
+        const rate = ratesArray[i];
         if (!rate || typeof rate !== 'object') continue;
         
+        // Generate a unique ID using carrier, service, price and index to ensure uniqueness
+        const serviceName = rate.service || rate.serviceName || rate.serviceDescription || 'Standard';
+        const price = parseFloat(rate.totalPrice || rate.total_price || rate.amount || rate.price || 0);
+        const uniqueId = `${result.carrier}-${serviceName}-${price}-${i}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+        
         quotes.push({
-          id: rate.carrierId || rate.serviceId || `${result.carrier}-${Math.random().toString(36).substr(2, 9)}`,
+          id: uniqueId,
           carrier: rate.carrierDescription || rate.carrier || result.carrier?.toUpperCase() || 'N/A',
-          service: rate.service || rate.serviceName || rate.serviceDescription || 'Standard',
-          price: parseFloat(rate.totalPrice || rate.total_price || rate.amount || rate.price || 0),
+          service: serviceName,
+          price: price,
           currency: rate.currency || 'MXN',
           deliveryDays: rate.deliveryEstimate || rate.deliveryDays || rate.delivery_days || rate.transitDays || rate.deliveryDate?.deliveryRangeMin || 'N/A',
           outOfArea: rate.outOfArea || rate.out_of_area || false,
