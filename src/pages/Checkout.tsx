@@ -135,12 +135,65 @@ const Checkout = () => {
   const total = subtotal;
 
   const handleMercadoPagoCheckout = async () => {
+    if (!user) {
+      toast({
+        title: 'Inicia sesión',
+        description: 'Debes iniciar sesión para continuar',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsProcessing(true);
-    toast({
-      title: 'Mercado Pago',
-      description: 'La integración con Mercado Pago está en proceso. Por favor, usa transferencia SPEI.',
-    });
-    setIsProcessing(false);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      if (!token) {
+        throw new Error('No session token');
+      }
+
+      const response = await supabase.functions.invoke('mercadopago-create-preference', {
+        body: {
+          items: items.map(item => ({
+            productId: item.productId,
+            title: item.title,
+            sku: item.sku,
+            quantity: item.quantity,
+            price: item.price,
+            image: item.image,
+          })),
+          shippingInfo,
+          total,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Error creating preference');
+      }
+
+      const data = response.data;
+
+      if (data.success && data.init_point) {
+        // Clear cart before redirecting
+        await clearCart();
+        // Redirect to MercadoPago
+        window.location.href = data.init_point;
+      } else {
+        throw new Error(data.error || 'Error creating payment');
+      }
+
+    } catch (error) {
+      console.error('MercadoPago checkout error:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo procesar el pago. Intenta de nuevo o usa SPEI.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSpeiConfirmation = async () => {
