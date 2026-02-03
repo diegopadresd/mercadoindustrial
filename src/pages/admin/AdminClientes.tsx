@@ -20,7 +20,11 @@ import {
   ShoppingBag,
   TrendingUp,
   X,
-  RotateCcw
+  RotateCcw,
+  Package,
+  DollarSign,
+  Loader2,
+  Receipt
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -57,9 +61,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 
 interface Filters {
@@ -640,36 +645,151 @@ const AdminClientes = () => {
       </motion.div>
 
       {/* Client Details Dialog */}
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-semibold text-primary text-lg">
-                {selectedClient?.full_name?.[0]?.toUpperCase() || 'U'}
-              </div>
-              <div>
-                <span className="block">{selectedClient?.full_name}</span>
-                <span className="text-sm font-normal text-muted-foreground">{selectedClient?.email}</span>
-              </div>
-            </DialogTitle>
-            <DialogDescription>
-              Información detallada del cliente
-            </DialogDescription>
-          </DialogHeader>
+      <ClientDetailsDialog
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        client={selectedClient}
+        orderStats={selectedClient ? clientOrders?.[selectedClient.user_id] : null}
+      />
+    </div>
+  );
+};
+
+// Separate component for client details with order history
+interface ClientDetailsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  client: any;
+  orderStats: { count: number; total: number } | null | undefined;
+}
+
+const ClientDetailsDialog = ({ open, onOpenChange, client, orderStats }: ClientDetailsDialogProps) => {
+  // Fetch orders for this specific client
+  const { data: clientOrdersData, isLoading: ordersLoading } = useQuery({
+    queryKey: ['client-orders-detail', client?.user_id],
+    queryFn: async () => {
+      if (!client?.user_id) return [];
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (*)
+        `)
+        .eq('user_id', client.user_id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!client?.user_id && open,
+  });
+
+  // Calculate purchased items aggregate
+  const purchasedItems = useMemo(() => {
+    if (!clientOrdersData) return [];
+    const itemsMap = new Map<string, { 
+      title: string; 
+      image: string; 
+      sku: string; 
+      quantity: number; 
+      totalSpent: number 
+    }>();
+    
+    clientOrdersData.forEach(order => {
+      order.order_items?.forEach((item: any) => {
+        const key = item.product_sku;
+        const existing = itemsMap.get(key);
+        if (existing) {
+          existing.quantity += item.quantity;
+          existing.totalSpent += item.total_price || (item.unit_price * item.quantity);
+        } else {
+          itemsMap.set(key, {
+            title: item.product_title,
+            image: item.product_image || '/placeholder.svg',
+            sku: item.product_sku,
+            quantity: item.quantity,
+            totalSpent: item.total_price || (item.unit_price * item.quantity) || 0
+          });
+        }
+      });
+    });
+    
+    return Array.from(itemsMap.values()).sort((a, b) => b.totalSpent - a.totalSpent);
+  }, [clientOrdersData]);
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; className: string }> = {
+      pending: { label: 'Pendiente', className: 'bg-yellow-500/20 text-yellow-600' },
+      paid: { label: 'Pagado', className: 'bg-green-500/20 text-green-600' },
+      processing: { label: 'Procesando', className: 'bg-blue-500/20 text-blue-600' },
+      shipped: { label: 'Enviado', className: 'bg-purple-500/20 text-purple-600' },
+      delivered: { label: 'Entregado', className: 'bg-green-500/20 text-green-600' },
+      cancelled: { label: 'Cancelado', className: 'bg-red-500/20 text-red-600' },
+    };
+    const config = statusConfig[status] || { label: status, className: 'bg-muted text-muted-foreground' };
+    return <Badge className={config.className}>{config.label}</Badge>;
+  };
+
+  if (!client) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-semibold text-primary text-lg">
+              {client.full_name?.[0]?.toUpperCase() || 'U'}
+            </div>
+            <div>
+              <span className="block">{client.full_name}</span>
+              <span className="text-sm font-normal text-muted-foreground">{client.email}</span>
+            </div>
+          </DialogTitle>
+          <DialogDescription>
+            Información detallada del cliente
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-3 gap-4 my-4">
+          <div className="bg-muted/50 rounded-lg p-4 text-center">
+            <DollarSign className="mx-auto text-green-500 mb-2" size={24} />
+            <p className="text-2xl font-bold text-green-600">
+              ${(orderStats?.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+            </p>
+            <p className="text-xs text-muted-foreground">Total gastado</p>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-4 text-center">
+            <Receipt className="mx-auto text-blue-500 mb-2" size={24} />
+            <p className="text-2xl font-bold">{orderStats?.count || 0}</p>
+            <p className="text-xs text-muted-foreground">Pedidos realizados</p>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-4 text-center">
+            <Package className="mx-auto text-purple-500 mb-2" size={24} />
+            <p className="text-2xl font-bold">{purchasedItems.length}</p>
+            <p className="text-xs text-muted-foreground">Productos únicos</p>
+          </div>
+        </div>
+        
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="info">Información</TabsTrigger>
+            <TabsTrigger value="orders">Historial de Pedidos</TabsTrigger>
+            <TabsTrigger value="products">Productos Comprados</TabsTrigger>
+          </TabsList>
           
-          {selectedClient && (
-            <div className="grid grid-cols-2 gap-6 mt-4">
+          <TabsContent value="info" className="mt-4">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-4">
                 <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Contacto</h4>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Mail size={16} className="text-muted-foreground" />
-                    <span>{selectedClient.email}</span>
+                    <span>{client.email}</span>
                   </div>
-                  {selectedClient.phone && (
+                  {client.phone && (
                     <div className="flex items-center gap-3">
                       <Phone size={16} className="text-muted-foreground" />
-                      <span>{selectedClient.phone}</span>
+                      <span>{client.phone}</span>
                     </div>
                   )}
                 </div>
@@ -678,27 +798,27 @@ const AdminClientes = () => {
               <div className="space-y-4">
                 <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Dirección de Envío</h4>
                 <div className="space-y-1 text-sm">
-                  {selectedClient.shipping_address && <p>{selectedClient.shipping_address}</p>}
+                  {client.shipping_address && <p>{client.shipping_address}</p>}
                   <p>
-                    {[selectedClient.shipping_city, selectedClient.shipping_state, selectedClient.shipping_postal_code]
+                    {[client.shipping_city, client.shipping_state, client.shipping_postal_code]
                       .filter(Boolean)
                       .join(', ')}
                   </p>
-                  {selectedClient.shipping_country && <p>{selectedClient.shipping_country}</p>}
+                  {client.shipping_country && <p>{client.shipping_country}</p>}
                 </div>
               </div>
               
               <div className="space-y-4">
                 <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Datos Fiscales</h4>
-                {selectedClient.rfc ? (
+                {client.rfc ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Building2 size={16} className="text-muted-foreground" />
-                      <span className="font-mono">{selectedClient.rfc}</span>
+                      <span className="font-mono">{client.rfc}</span>
                     </div>
-                    {selectedClient.fiscal_document_url && (
+                    {client.fiscal_document_url && (
                       <Button variant="outline" size="sm" asChild>
-                        <a href={selectedClient.fiscal_document_url} target="_blank" rel="noopener noreferrer">
+                        <a href={client.fiscal_document_url} target="_blank" rel="noopener noreferrer">
                           <FileText size={14} className="mr-2" />
                           Ver Constancia Fiscal
                         </a>
@@ -714,7 +834,7 @@ const AdminClientes = () => {
                 <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Registro</h4>
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar size={16} className="text-muted-foreground" />
-                  <span>{new Date(selectedClient.created_at).toLocaleDateString('es-MX', { 
+                  <span>{new Date(client.created_at).toLocaleDateString('es-MX', { 
                     year: 'numeric', 
                     month: 'long', 
                     day: 'numeric' 
@@ -722,10 +842,121 @@ const AdminClientes = () => {
                 </div>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+          </TabsContent>
+          
+          <TabsContent value="orders" className="mt-4">
+            <ScrollArea className="h-[400px]">
+              {ordersLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : !clientOrdersData || clientOrdersData.length === 0 ? (
+                <div className="text-center py-12">
+                  <ShoppingBag size={48} className="mx-auto text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground">Este cliente no tiene pedidos registrados</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {clientOrdersData.map((order: any) => (
+                    <div key={order.id} className="border border-border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="font-semibold">{order.order_number}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(order.created_at).toLocaleDateString('es-MX', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(order.status)}
+                          <Badge variant="outline" className="capitalize">
+                            {order.order_type === 'quote' ? 'Cotización' : 'Compra'}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      {/* Order Items Preview */}
+                      <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+                        {order.order_items?.slice(0, 4).map((item: any) => (
+                          <div key={item.id} className="flex-shrink-0">
+                            <img
+                              src={item.product_image || '/placeholder.svg'}
+                              alt={item.product_title}
+                              className="w-12 h-12 rounded object-cover"
+                            />
+                          </div>
+                        ))}
+                        {order.order_items && order.order_items.length > 4 && (
+                          <div className="w-12 h-12 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground flex-shrink-0">
+                            +{order.order_items.length - 4}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">
+                          {order.order_items?.length || 0} {order.order_items?.length === 1 ? 'producto' : 'productos'}
+                        </span>
+                        <span className="font-bold text-primary">
+                          ${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="products" className="mt-4">
+            <ScrollArea className="h-[400px]">
+              {ordersLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : purchasedItems.length === 0 ? (
+                <div className="text-center py-12">
+                  <Package size={48} className="mx-auto text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground">No hay productos comprados registrados</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {purchasedItems.map((item, index) => (
+                    <div key={item.sku} className="flex items-center gap-4 p-3 border border-border rounded-lg">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
+                        <div className="flex items-center gap-4 mt-1 text-sm">
+                          <span className="text-muted-foreground">
+                            Cantidad: <span className="font-medium text-foreground">{item.quantity}</span>
+                          </span>
+                          <span className="text-muted-foreground">
+                            Total: <span className="font-medium text-green-600">${item.totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                          </span>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="shrink-0">
+                        #{index + 1}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
   );
 };
 
