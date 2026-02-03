@@ -158,60 +158,68 @@ export const HeroSection = () => {
       >
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl">
           <p className="text-white/70 text-xs font-medium mb-3 text-center">Nuestras Sedes</p>
-          <div className="relative w-48 h-56">
-            {/* Mexico SVG Map */}
-            <svg viewBox="0 0 200 220" className="w-full h-full">
-              {/* Mexico shape simplified */}
+          <div className="relative w-52 h-44">
+            {/* Mexico SVG Map - Accurate shape */}
+            <svg viewBox="0 0 300 200" className="w-full h-full">
+              {/* Baja California Peninsula */}
               <path
-                d="M20,80 L30,60 L50,50 L80,45 L100,40 L130,45 L160,55 L180,70 L185,90 L180,110 L170,130 L155,145 L140,155 L120,165 L100,175 L85,185 L70,190 L55,185 L45,175 L35,160 L25,140 L20,120 L15,100 Z"
+                d="M25,25 L35,20 L45,25 L48,35 L45,50 L40,70 L35,85 L30,95 L28,80 L25,60 L22,40 Z"
                 fill="none"
                 stroke="hsl(var(--primary))"
                 strokeWidth="1.5"
-                className="opacity-60"
+                className="opacity-70"
               />
-              {/* Baja California */}
+              {/* Main Mexico territory */}
               <path
-                d="M15,45 L25,35 L35,40 L40,55 L35,75 L25,90 L20,80 L15,65 Z"
+                d="M48,35 L70,30 L95,28 L120,30 L145,35 L170,40 L190,48 L210,55 L225,65 L235,80 L240,95 L238,110 L230,125 L218,138 L200,148 L180,155 L160,158 L145,162 L130,168 L115,175 L100,178 L88,175 L78,168 L70,158 L65,145 L62,130 L58,115 L52,100 L48,85 L45,70 L42,55 L45,40 Z"
                 fill="none"
                 stroke="hsl(var(--primary))"
                 strokeWidth="1.5"
-                className="opacity-60"
+                className="opacity-70"
+              />
+              {/* Yucatan Peninsula */}
+              <path
+                d="M238,110 L255,105 L270,108 L280,118 L275,130 L262,138 L248,135 L238,125 L235,115 Z"
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="1.5"
+                className="opacity-70"
               />
               
-              {/* Location markers with pulse effect */}
+              {/* Location markers */}
               {/* Tijuana */}
-              <g className="cursor-pointer">
-                <circle cx="22" cy="42" r="8" fill="hsl(var(--primary))" className="opacity-20 animate-ping" />
-                <circle cx="22" cy="42" r="4" fill="hsl(var(--primary))" />
-                <text x="22" y="32" textAnchor="middle" className="fill-white text-[8px] font-medium">Tijuana</text>
+              <g>
+                <circle cx="30" cy="28" r="6" fill="hsl(var(--primary))" className="opacity-30 animate-pulse" />
+                <circle cx="30" cy="28" r="4" fill="hsl(var(--primary))" />
+                <text x="12" y="22" textAnchor="start" className="fill-white text-[9px] font-semibold">Tijuana</text>
               </g>
               
               {/* Mexicali */}
-              <g className="cursor-pointer">
-                <circle cx="35" cy="38" r="8" fill="hsl(var(--primary))" className="opacity-20 animate-ping" style={{ animationDelay: '0.2s' }} />
-                <circle cx="35" cy="38" r="4" fill="hsl(var(--primary))" />
-                <text x="48" y="35" textAnchor="start" className="fill-white text-[8px] font-medium">Mexicali</text>
+              <g>
+                <circle cx="48" cy="30" r="6" fill="hsl(var(--primary))" className="opacity-30 animate-pulse" style={{ animationDelay: '0.3s' }} />
+                <circle cx="48" cy="30" r="4" fill="hsl(var(--primary))" />
+                <text x="55" y="25" textAnchor="start" className="fill-white text-[9px] font-semibold">Mexicali</text>
               </g>
               
-              {/* Nogales (AZ - USA) */}
-              <g className="cursor-pointer">
-                <circle cx="55" cy="48" r="8" fill="hsl(var(--primary))" className="opacity-20 animate-ping" style={{ animationDelay: '0.4s' }} />
-                <circle cx="55" cy="48" r="4" fill="hsl(var(--primary))" />
-                <text x="55" y="62" textAnchor="middle" className="fill-white text-[8px] font-medium">Nogales</text>
+              {/* Nogales */}
+              <g>
+                <circle cx="72" cy="32" r="6" fill="hsl(var(--primary))" className="opacity-30 animate-pulse" style={{ animationDelay: '0.5s' }} />
+                <circle cx="72" cy="32" r="4" fill="hsl(var(--primary))" />
+                <text x="62" y="48" textAnchor="start" className="fill-white text-[9px] font-semibold">Nogales</text>
               </g>
               
               {/* Hermosillo */}
-              <g className="cursor-pointer">
-                <circle cx="50" cy="75" r="8" fill="hsl(var(--primary))" className="opacity-20 animate-ping" style={{ animationDelay: '0.6s' }} />
-                <circle cx="50" cy="75" r="4" fill="hsl(var(--primary))" />
-                <text x="65" y="78" textAnchor="start" className="fill-white text-[8px] font-medium">Hermosillo</text>
+              <g>
+                <circle cx="55" cy="62" r="6" fill="hsl(var(--primary))" className="opacity-30 animate-pulse" style={{ animationDelay: '0.7s' }} />
+                <circle cx="55" cy="62" r="4" fill="hsl(var(--primary))" />
+                <text x="62" y="66" textAnchor="start" className="fill-white text-[9px] font-semibold">Hermosillo</text>
               </g>
               
-              {/* Santa Catarina (Monterrey area) */}
-              <g className="cursor-pointer">
-                <circle cx="130" cy="105" r="8" fill="hsl(var(--primary))" className="opacity-20 animate-ping" style={{ animationDelay: '0.8s' }} />
-                <circle cx="130" cy="105" r="4" fill="hsl(var(--primary))" />
-                <text x="130" y="120" textAnchor="middle" className="fill-white text-[8px] font-medium">Sta. Catarina</text>
+              {/* Santa Catarina (Monterrey) */}
+              <g>
+                <circle cx="170" cy="75" r="6" fill="hsl(var(--primary))" className="opacity-30 animate-pulse" style={{ animationDelay: '0.9s' }} />
+                <circle cx="170" cy="75" r="4" fill="hsl(var(--primary))" />
+                <text x="178" y="72" textAnchor="start" className="fill-white text-[9px] font-semibold">Sta. Catarina</text>
               </g>
             </svg>
           </div>
