@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, Navigate, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -44,10 +45,12 @@ import {
   ShieldCheck,
   PhoneCall,
   Award,
+  HelpCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getProductById } from '@/data/products';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useCreateOffer } from '@/hooks/useOffers';
@@ -56,37 +59,6 @@ import { SellerProfileCard } from '@/components/product/SellerProfileCard';
 import { SellerReviews } from '@/components/product/SellerReviews';
 import { AuctionSection } from '@/components/product/AuctionSection';
 import { MakeOfferModal } from '@/components/product/MakeOfferModal';
-
-// Mock FAQ data
-const initialFaqs = [
-  {
-    id: '1',
-    question: '¿Cuál es el tamaño máximo de material que puede procesar este equipo?',
-    author: 'Carlos M.',
-    date: '2024-01-15',
-    answer: 'Por favor contáctanos directamente para obtener especificaciones detalladas sobre este producto.',
-    answeredBy: 'Mercado Industrial',
-    answeredDate: '2024-01-16',
-  },
-  {
-    id: '2',
-    question: '¿Incluye garantía el equipo?',
-    author: 'Roberto L.',
-    date: '2024-01-18',
-    answer: 'Sí, todos nuestros equipos incluyen garantía. Contáctanos para más detalles sobre las condiciones de garantía específicas.',
-    answeredBy: 'Mercado Industrial',
-    answeredDate: '2024-01-18',
-  },
-  {
-    id: '3',
-    question: '¿Pueden enviar a mi ciudad?',
-    author: 'Ana G.',
-    date: '2024-01-20',
-    answer: 'Realizamos envíos a toda la República Mexicana y también a Estados Unidos. El costo de envío se cotiza por separado según el destino.',
-    answeredBy: 'Mercado Industrial',
-    answeredDate: '2024-01-20',
-  },
-];
 
 // Mock Seller Data
 const mockSeller = {
@@ -155,10 +127,10 @@ const ProductoDetalle = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { addToCart } = useCart();
-  const { language, formatPrice, t } = useLocale();
+  const { formatPrice } = useLocale();
   const createOffer = useCreateOffer();
+  const queryClient = useQueryClient();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [faqs, setFaqs] = useState(initialFaqs);
   const [newQuestion, setNewQuestion] = useState('');
   const [offerAmount, setOfferAmount] = useState('');
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
@@ -174,6 +146,22 @@ const ProductoDetalle = () => {
   
   // Get product from static data as fallback
   const staticProduct = getProductById(id || '');
+
+  // Fetch product-specific questions from Supabase
+  const { data: productQuestions = [] } = useQuery({
+    queryKey: ['product-questions', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_questions')
+        .select('*')
+        .eq('product_id', id!)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
 
   // Combine product data: prefer database, fallback to static
   const productData = dbProduct ? {
@@ -194,7 +182,6 @@ const ProductoDetalle = () => {
     youtubeUrl: undefined,
     isNew: dbProduct.is_new ?? false,
     isFeatured: dbProduct.is_featured ?? false,
-    // Auction fields
     seller_id: (dbProduct as any).seller_id ?? null,
     is_auction: (dbProduct as any).is_auction ?? false,
     auction_min_price: (dbProduct as any).auction_min_price ?? null,
@@ -220,12 +207,10 @@ const ProductoDetalle = () => {
     );
   }
 
-  // If product not found in both sources, redirect to catalog
   if (!productData) {
     return <Navigate to="/catalogo" replace />;
   }
 
-  // Handler to navigate to quoter with product data
   const handleQuoteShipping = () => {
     navigate(`/cotizador?productoId=${id}`);
   };
@@ -242,22 +227,38 @@ const ProductoDetalle = () => {
     );
   };
 
-  const handleSubmitQuestion = () => {
+  const handleSubmitQuestion = async () => {
     if (!newQuestion.trim()) return;
     
-    const newFaq = {
-      id: Date.now().toString(),
+    if (!user || !profile) {
+      toast({
+        title: 'Inicia sesión',
+        description: 'Debes iniciar sesión para hacer una pregunta.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const { error } = await supabase.from('product_questions').insert({
+      product_id: id!,
       question: newQuestion,
-      author: 'Tú',
-      date: new Date().toISOString().split('T')[0],
-      answer: null,
-      answeredBy: null,
-      answeredDate: null,
-    };
-    
-    setFaqs([newFaq, ...faqs]);
+      customer_name: profile.full_name || 'Cliente',
+      customer_email: profile.email,
+      user_id: user.id,
+    });
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo enviar tu pregunta. Intenta de nuevo.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setNewQuestion('');
     setQuestionDialogOpen(false);
+    queryClient.invalidateQueries({ queryKey: ['product-questions', id] });
     toast({
       title: '¡Pregunta enviada!',
       description: 'Tu pregunta ha sido enviada. Recibirás una respuesta pronto.',
@@ -302,7 +303,6 @@ const ProductoDetalle = () => {
         console.error('Error sharing:', err);
       }
     } else {
-      // Fallback to WhatsApp
       window.open(
         `https://api.whatsapp.com/send?text=${encodeURIComponent(`${productData.title}\n${window.location.href}`)}`,
         '_blank'
@@ -310,10 +310,8 @@ const ProductoDetalle = () => {
     }
   };
 
-  // Handler for adding product to cart
   const handleAddToCart = async () => {
     if (!productData) return;
-    
     await addToCart({
       productId: productData.id,
       title: productData.title,
@@ -324,10 +322,8 @@ const ProductoDetalle = () => {
     });
   };
 
-  // Handler for buy now - adds to cart and navigates to cart
   const handleBuyNow = async () => {
     if (!productData) return;
-    
     await addToCart({
       productId: productData.id,
       title: productData.title,
@@ -336,14 +332,11 @@ const ProductoDetalle = () => {
       price: productData.price ?? null,
       image: productData.images?.[0] || '/placeholder.svg',
     });
-    
     navigate('/carrito');
   };
 
-  // Handler for quote request - adds to cart without price
   const handleQuoteRequest = async () => {
     if (!productData) return;
-    
     await addToCart({
       productId: productData.id,
       title: productData.title,
@@ -352,7 +345,6 @@ const ProductoDetalle = () => {
       price: null,
       image: productData.images?.[0] || '/placeholder.svg',
     });
-    
     navigate('/carrito');
   };
 
@@ -367,7 +359,7 @@ const ProductoDetalle = () => {
           className="inline-flex items-center gap-2 text-primary hover:underline mb-6"
         >
           <ArrowLeft size={18} />
-          {language === 'es' ? 'Regresar al catálogo' : 'Back to catalog'}
+          Regresar al catálogo
         </Link>
 
         <div className="grid lg:grid-cols-2 gap-12">
@@ -391,7 +383,6 @@ const ProductoDetalle = () => {
                 />
               </AnimatePresence>
               
-              {/* Navigation Arrows */}
               <button
                 onClick={prevImage}
                 className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 hover:bg-background rounded-full flex items-center justify-center shadow-lg transition-colors"
@@ -405,12 +396,10 @@ const ProductoDetalle = () => {
                 <ChevronRight size={24} />
               </button>
 
-              {/* Image Counter */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 px-3 py-1 rounded-full text-sm">
                 {currentImageIndex + 1} / {productData.images.length}
               </div>
 
-              {/* Share Button */}
               <button
                 onClick={shareProduct}
                 className="absolute top-4 right-4 w-10 h-10 bg-background/80 hover:bg-background rounded-full flex items-center justify-center shadow-lg transition-colors"
@@ -483,7 +472,6 @@ const ProductoDetalle = () => {
                 {productData.title}
               </h1>
               
-              {/* Categories */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {productData.categories.map((cat) => (
                   <Badge key={cat} className="bg-primary/10 text-primary hover:bg-primary/20">
@@ -496,30 +484,30 @@ const ProductoDetalle = () => {
             {/* General Info Card */}
             <div className="bg-card rounded-2xl p-6 shadow-card">
               <h2 className="font-display font-bold text-xl mb-4">
-                {language === 'es' ? 'Descripción general' : 'General Description'}
+                Descripción general
               </h2>
               
               <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">{t('product.sku')}</span>
+                  <span className="text-muted-foreground">SKU</span>
                   <span className="font-semibold">{productData.sku}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">{t('product.brand')}</span>
+                  <span className="text-muted-foreground">Marca</span>
                   <Link to={`/catalogo?marca=${productData.brand}`} className="font-semibold text-primary hover:underline">
                     {productData.brand}
                   </Link>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">{t('product.stock')}</span>
-                  <span className="font-semibold">{productData.stock ?? 1} {language === 'es' ? 'Disponible' : 'Available'}</span>
+                  <span className="text-muted-foreground">Stock</span>
+                  <span className="font-semibold">{productData.stock ?? 1} Disponible</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">{t('product.location')}</span>
+                  <span className="text-muted-foreground">Ubicación</span>
                   <span className="font-semibold">{productData.branch ?? productData.location}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground">{language === 'es' ? 'Sucursal' : 'Branch'}</span>
+                  <span className="text-muted-foreground">Sucursal</span>
                   <span className="font-semibold flex items-center gap-1">
                     <MapPin size={14} />
                     {productData.location}
@@ -531,7 +519,7 @@ const ProductoDetalle = () => {
               {productData.price && (
                 <div className="mt-6 pt-6 border-t border-border">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-muted-foreground">{t('product.price')}</span>
+                    <span className="text-muted-foreground">Precio</span>
                     <span className="text-3xl font-display font-bold text-primary">
                       {formatPrice(productData.price)}
                     </span>
@@ -546,10 +534,10 @@ const ProductoDetalle = () => {
                 className="w-full border-primary text-primary hover:bg-primary/10 mt-4"
               >
                 <Truck className="mr-2" size={18} />
-                {language === 'es' ? 'Cotizar envío' : 'Quote Shipping'}
+                Cotizar envío
               </Button>
 
-              {/* Auction Section (if product is in auction) */}
+              {/* Auction Section */}
               {(productData as any).is_auction && (
                 <AuctionSection 
                   product={{
@@ -564,27 +552,25 @@ const ProductoDetalle = () => {
                 />
               )}
 
-              {/* Action Buttons - Different based on product type */}
+              {/* Action Buttons */}
               <div className="mt-6 space-y-3">
-                {/* Normal product with price (not auction) */}
                 {!(productData as any).is_auction && productData.price && !(productData as any).contact_for_quote ? (
                   <>
                     <div className="flex gap-3">
                       <Button className="flex-1 btn-gold" onClick={handleAddToCart}>
                         <ShoppingCart className="mr-2" size={18} />
-                        {t('common.addToCart')}
+                        Agregar al carrito
                       </Button>
                       <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" onClick={handleBuyNow}>
-                        {t('common.buyNow')}
+                        Comprar ahora
                       </Button>
                     </div>
-                    {/* Make Offer button - for logged in users */}
                     <Button 
                       className="w-full btn-offer"
                       onClick={() => setOfferDialogOpen(true)}
                     >
                       <DollarSign size={18} className="mr-2" />
-                      {t('product.makeOffer')}
+                      Hacer una oferta
                     </Button>
                     <MakeOfferModal
                       open={offerDialogOpen}
@@ -598,24 +584,22 @@ const ProductoDetalle = () => {
                     />
                   </>
                 ) : !(productData as any).is_auction && ((productData as any).contact_for_quote || !productData.price) ? (
-                  /* Product requires quote - no price */
                   <div className="space-y-4">
                     <div className="flex gap-3">
                       <Button className="flex-1" variant="outline" onClick={handleAddToCart}>
                         <ShoppingCart className="mr-2" size={18} />
-                        {t('common.addToCart')}
+                        Agregar al carrito
                       </Button>
                       <Button className="flex-1 btn-gold" onClick={handleQuoteRequest}>
-                        {t('common.requestQuote')}
+                        Solicitar cotización
                       </Button>
                     </div>
-                    {/* Make Offer button - still available */}
                     <Button 
                       className="w-full btn-offer"
                       onClick={() => setOfferDialogOpen(true)}
                     >
                       <DollarSign size={18} className="mr-2" />
-                      {t('product.makeOffer')}
+                      Hacer una oferta
                     </Button>
                     <MakeOfferModal
                       open={offerDialogOpen}
@@ -629,20 +613,18 @@ const ProductoDetalle = () => {
                     />
                   </div>
                 ) : !(productData as any).is_auction ? (
-                  /* Fallback for normal products */
                   <div className="flex gap-3">
                     <Button className="flex-1" onClick={handleAddToCart}>
                       <ShoppingCart className="mr-2" size={18} />
-                      {t('common.addToCart')}
+                      Agregar al carrito
                     </Button>
                     <Button className="flex-1 btn-gold" onClick={handleQuoteRequest}>
                       <MessageCircle className="mr-2" size={18} />
-                      {t('common.requestQuote')}
+                      Solicitar cotización
                     </Button>
                   </div>
                 ) : null}
 
-                {/* For auction products - show make offer below auction section */}
                 {(productData as any).is_auction && (
                   <>
                     <Button 
@@ -650,7 +632,7 @@ const ProductoDetalle = () => {
                       onClick={() => setOfferDialogOpen(true)}
                     >
                       <DollarSign size={18} className="mr-2" />
-                      {language === 'es' ? 'Hacer una oferta directa' : 'Make a direct offer'}
+                      Hacer una oferta directa
                     </Button>
                     <MakeOfferModal
                       open={offerDialogOpen}
@@ -669,10 +651,9 @@ const ProductoDetalle = () => {
               {/* Compra con Confianza Section */}
               <div className="border-t border-border pt-6">
                 <h3 className="font-display font-bold text-lg mb-4">
-                  {language === 'es' ? 'Compra con confianza' : 'Buy with Confidence'}
+                  Compra con confianza
                 </h3>
                 <div className="space-y-4">
-                  {/* Publicación Oficial de Mercado Industrial - solo cuando seller_id es null */}
                   {!(productData as any).seller_id && (
                     <div className="flex gap-3 bg-primary/5 rounded-xl p-3 border border-primary/20">
                       <div className="shrink-0 w-10 h-10 bg-primary rounded-full flex items-center justify-center">
@@ -680,51 +661,47 @@ const ProductoDetalle = () => {
                       </div>
                       <div>
                         <p className="font-semibold text-foreground flex items-center gap-2">
-                          {language === 'es' ? 'Publicación Oficial de Mercado Industrial' : 'Official Mercado Industrial Listing'}
+                          Publicación Oficial de Mercado Industrial
                           <Badge className="bg-primary text-primary-foreground text-xs">
-                            {language === 'es' ? 'Certificada' : 'Certified'}
+                            Certificada
                           </Badge>
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {language === 'es' 
-                            ? 'Este producto es publicado directamente por Mercado Industrial, garantizando autenticidad, calidad y soporte directo.'
-                            : 'This product is published directly by Mercado Industrial, guaranteeing authenticity, quality, and direct support.'}
+                          Este producto es publicado directamente por Mercado Industrial, garantizando autenticidad, calidad y soporte directo.
                         </p>
                       </div>
                     </div>
                   )}
 
-                  {/* Programa de vendedor sobresaliente */}
                   <div className="flex gap-3">
                     <div className="shrink-0 w-10 h-10 bg-muted rounded-full flex items-center justify-center">
                       <BadgeCheck size={20} className="text-muted-foreground" />
                     </div>
                     <div>
                       <p className="font-semibold text-foreground">
-                        {language === 'es' ? 'Programa de vendedor Sobresaliente' : 'Outstanding Seller Program'}
+                        Programa de vendedor Sobresaliente
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {language === 'es' ? 'Vendedor confiable, envío rápido y devoluciones fáciles.' : 'Reliable seller, fast shipping and easy returns.'}{' '}
+                        Vendedor confiable, envío rápido y devoluciones fáciles.{' '}
                         <Link to="/como-comprar" className="text-foreground underline hover:text-primary">
-                          {language === 'es' ? 'Más información' : 'Learn more'}
+                          Más información
                         </Link>
                       </p>
                     </div>
                   </div>
 
-                  {/* Devolución de tu dinero */}
                   <div className="flex gap-3">
                     <div className="shrink-0 w-10 h-10 bg-muted rounded-full flex items-center justify-center">
                       <ShieldCheck size={20} className="text-muted-foreground" />
                     </div>
                     <div>
                       <p className="font-semibold text-foreground">
-                        {language === 'es' ? 'Devolución de tu dinero de Mercado Industrial' : 'Mercado Industrial Money Back Guarantee'}
+                        Devolución de tu dinero de Mercado Industrial
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {language === 'es' ? 'Recibe el artículo que pediste o te devolvemos tu dinero.' : 'Get the item you ordered or get your money back.'}{' '}
+                        Recibe el artículo que pediste o te devolvemos tu dinero.{' '}
                         <Link to="/politicas-de-pago" className="text-foreground underline hover:text-primary">
-                          {language === 'es' ? 'Más información' : 'Learn more'}
+                          Más información
                         </Link>
                       </p>
                     </div>
@@ -738,7 +715,7 @@ const ProductoDetalle = () => {
               <div className="bg-card rounded-2xl p-6 shadow-card">
                 <h2 className="font-display font-bold text-xl mb-4 flex items-center gap-2">
                   <Package size={20} className="text-primary" />
-                  {t('product.specifications')}
+                  Especificaciones
                 </h2>
                 
                 <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
@@ -749,7 +726,7 @@ const ProductoDetalle = () => {
           </motion.div>
         </div>
 
-        {/* FAQs Section */}
+        {/* FAQs Section - Product Specific */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -759,101 +736,121 @@ const ProductoDetalle = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="section-title mb-2">
-                {language === 'es' ? 'Preguntas y Respuestas' : 'Questions & Answers'}
+                Preguntas y Respuestas
               </h2>
               <p className="text-muted-foreground">
-                {faqs.length} {language === 'es' ? 'preguntas sobre este producto' : 'questions about this product'}
+                {productQuestions.length > 0 
+                  ? `${productQuestions.length} pregunta${productQuestions.length !== 1 ? 's' : ''} sobre este producto`
+                  : 'Preguntas sobre este producto'}
               </p>
             </div>
             <Dialog open={questionDialogOpen} onOpenChange={setQuestionDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="btn-gold">
                   <MessageCircle className="mr-2" size={18} />
-                  {t('product.askQuestion')}
+                  Hacer una pregunta
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{t('product.askQuestion')}</DialogTitle>
+                  <DialogTitle>Hacer una pregunta</DialogTitle>
                   <DialogDescription>
-                    {language === 'es' 
-                      ? 'Tu pregunta será respondida por el vendedor y quedará visible para otros compradores.'
-                      : 'Your question will be answered by the seller and will be visible to other buyers.'}
+                    Tu pregunta será respondida por el vendedor y quedará visible para otros compradores.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="question">{language === 'es' ? 'Tu pregunta' : 'Your question'}</Label>
+                    <Label htmlFor="question">Tu pregunta</Label>
                     <Textarea
                       id="question"
                       value={newQuestion}
                       onChange={(e) => setNewQuestion(e.target.value)}
-                      placeholder={language === 'es' ? 'Escribe tu pregunta sobre este producto...' : 'Write your question about this product...'}
+                      placeholder="Escribe tu pregunta sobre este producto..."
                       rows={4}
                     />
                   </div>
                   <Button onClick={handleSubmitQuestion} className="w-full btn-gold">
                     <Send size={18} className="mr-2" />
-                    {language === 'es' ? 'Enviar pregunta' : 'Send question'}
+                    Enviar pregunta
                   </Button>
                 </div>
               </DialogContent>
             </Dialog>
           </div>
 
-          {/* FAQ List */}
-          <div className="space-y-4">
-            {faqs.map((faq) => (
-              <motion.div
-                key={faq.id}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="bg-card rounded-xl p-6 shadow-card"
-              >
-                {/* Question */}
-                <div className="flex gap-4 mb-4">
-                  <div className="shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <User size={20} className="text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-foreground">{faq.author}</span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock size={12} />
-                        {faq.date}
-                      </span>
-                    </div>
-                    <p className="text-foreground">{faq.question}</p>
-                  </div>
+          {/* FAQ List or Empty State */}
+          {productQuestions.length === 0 ? (
+            <div className="bg-card rounded-2xl p-10 shadow-card text-center">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                  <HelpCircle size={32} className="text-primary" />
                 </div>
-
-                {/* Answer */}
-                {faq.answer ? (
-                  <div className="ml-14 pl-4 border-l-2 border-primary/30">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-primary">{faq.answeredBy}</span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock size={12} />
-                        {faq.answeredDate}
-                      </span>
+              </div>
+              <h3 className="font-display font-bold text-xl text-foreground mb-2">
+                ¡Aún no se han hecho preguntas!
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                ¿Tienes alguna duda sobre este producto? Pregunta ahora y te responderemos lo antes posible.
+              </p>
+              <Button className="btn-gold" onClick={() => setQuestionDialogOpen(true)}>
+                <MessageCircle className="mr-2" size={18} />
+                Pregunta ahora
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {productQuestions.map((faq) => (
+                <motion.div
+                  key={faq.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="bg-card rounded-xl p-6 shadow-card"
+                >
+                  {/* Question */}
+                  <div className="flex gap-4 mb-4">
+                    <div className="shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <User size={20} className="text-primary" />
                     </div>
-                    <p className="text-muted-foreground">{faq.answer}</p>
-                    <button className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mt-2 transition-colors">
-                      <ThumbsUp size={14} />
-                      Útil
-                    </button>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-foreground">{faq.customer_name}</span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock size={12} />
+                          {new Date(faq.created_at).toLocaleDateString('es-MX')}
+                        </span>
+                      </div>
+                      <p className="text-foreground">{faq.question}</p>
+                    </div>
                   </div>
-                ) : (
-                  <div className="ml-14 pl-4 border-l-2 border-muted">
-                    <p className="text-muted-foreground italic">
-                      {language === 'es' ? 'Esperando respuesta del vendedor...' : 'Waiting for seller response...'}
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
+
+                  {/* Answer */}
+                  {faq.answer ? (
+                    <div className="ml-14 pl-4 border-l-2 border-primary/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-primary">Mercado Industrial</span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock size={12} />
+                          {faq.answered_at ? new Date(faq.answered_at).toLocaleDateString('es-MX') : ''}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground">{faq.answer}</p>
+                      <button className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mt-2 transition-colors">
+                        <ThumbsUp size={14} />
+                        Útil
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="ml-14 pl-4 border-l-2 border-muted">
+                      <p className="text-muted-foreground italic">
+                        Esperando respuesta del vendedor...
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          )}
         </motion.section>
 
         {/* Seller Section */}
@@ -864,7 +861,7 @@ const ProductoDetalle = () => {
           className="mt-16"
         >
           <h2 className="section-title mb-8">
-            {language === 'es' ? 'Información del Vendedor' : 'Seller Information'}
+            Información del Vendedor
           </h2>
           <div className="grid lg:grid-cols-2 gap-8">
             <SellerProfileCard 
