@@ -53,6 +53,15 @@ const AdminResumen = () => {
     end: new Date().toISOString().split('T')[0],
   });
 
+  // Calculate previous period for comparison
+  const currentStart = new Date(dateRange.start);
+  const currentEnd = new Date(dateRange.end);
+  const periodMs = currentEnd.getTime() - currentStart.getTime();
+  const prevEnd = new Date(currentStart.getTime() - 1);
+  const prevStart = new Date(prevEnd.getTime() - periodMs);
+  const prevStartStr = prevStart.toISOString().split('T')[0];
+  const prevEndStr = prevEnd.toISOString().split('T')[0];
+
   // Fetch orders for stats
   const { data: orders } = useQuery({
     queryKey: ['admin-orders', dateRange],
@@ -65,6 +74,50 @@ const AdminResumen = () => {
       
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Fetch previous period orders
+  const { data: prevOrders } = useQuery({
+    queryKey: ['admin-orders-prev', prevStartStr, prevEndStr],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .gte('created_at', prevStartStr)
+        .lte('created_at', prevEndStr + 'T23:59:59');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch previous period clients
+  const { data: prevClientsCount } = useQuery({
+    queryKey: ['admin-clients-count-prev', prevEndStr],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .lte('created_at', prevEndStr + 'T23:59:59');
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch previous period products
+  const { data: prevProductsCount } = useQuery({
+    queryKey: ['admin-products-count-prev', prevEndStr],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true)
+        .lte('created_at', prevEndStr + 'T23:59:59');
+      
+      if (error) throw error;
+      return count || 0;
     },
   });
 
@@ -182,6 +235,24 @@ const AdminResumen = () => {
   const shippedOrders = orders?.filter(o => o.status === 'shipped').length || 0;
   const cancelledOrders = orders?.filter(o => o.status === 'cancelled').length || 0;
 
+  // Previous period metrics
+  const prevPaidOrdersData = prevOrders?.filter(o => paidStatuses.includes(o.status)) || [];
+  const prevTotalSales = prevPaidOrdersData.reduce((sum, order) => sum + Number(order.total), 0);
+  const prevTotalOrders = prevOrders?.length || 0;
+
+  const calcTrend = (current: number, previous: number): { trend: string; trendUp: boolean } => {
+    if (previous === 0 && current === 0) return { trend: '0%', trendUp: true };
+    if (previous === 0) return { trend: '+100%', trendUp: true };
+    const pct = ((current - previous) / previous) * 100;
+    const sign = pct >= 0 ? '+' : '';
+    return { trend: `${sign}${pct.toFixed(1)}%`, trendUp: pct >= 0 };
+  };
+
+  const salesTrend = calcTrend(totalSales, prevTotalSales);
+  const ordersTrend = calcTrend(totalOrders, prevTotalOrders);
+  const clientsTrend = calcTrend(clientsCount || 0, prevClientsCount || 0);
+  const productsTrend = calcTrend(productsCount || 0, prevProductsCount || 0);
+
   // Process data for charts - only include paid/completed orders
   const chartData = allOrders?.reduce((acc: any[], order) => {
     // Only include paid orders in sales chart
@@ -235,8 +306,7 @@ const AdminResumen = () => {
       label: 'Ventas Pagadas',
       value: `$${totalSales.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
       icon: DollarSign,
-      trend: '+12.5%',
-      trendUp: true,
+      ...salesTrend,
       gradient: 'from-emerald-500 to-teal-600',
       iconBg: 'bg-emerald-500/20',
       iconColor: 'text-emerald-500',
@@ -245,8 +315,7 @@ const AdminResumen = () => {
       label: 'Pedidos',
       value: totalOrders.toString(),
       icon: ShoppingCart,
-      trend: '+8.2%',
-      trendUp: true,
+      ...ordersTrend,
       gradient: 'from-blue-500 to-indigo-600',
       iconBg: 'bg-blue-500/20',
       iconColor: 'text-blue-500',
@@ -255,8 +324,7 @@ const AdminResumen = () => {
       label: 'Clientes',
       value: clientsCount?.toString() || '0',
       icon: Users,
-      trend: '+4.1%',
-      trendUp: true,
+      ...clientsTrend,
       gradient: 'from-violet-500 to-purple-600',
       iconBg: 'bg-violet-500/20',
       iconColor: 'text-violet-500',
@@ -265,8 +333,7 @@ const AdminResumen = () => {
       label: 'Productos',
       value: productsCount?.toString() || '0',
       icon: Package,
-      trend: '0%',
-      trendUp: true,
+      ...productsTrend,
       gradient: 'from-amber-500 to-orange-600',
       iconBg: 'bg-amber-500/20',
       iconColor: 'text-amber-500',
