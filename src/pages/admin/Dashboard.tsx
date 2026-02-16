@@ -21,7 +21,8 @@ import {
   Tag,
   UserCog,
   Ticket,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Brain
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,7 @@ import AdminUsuarios from './AdminUsuarios';
 import AdminAjustes from './AdminAjustes';
 import AdminAuditoriaEnlaces from './AdminAuditoriaEnlaces';
 import AdminSoporte from './AdminSoporte';
+import AdminExtraccionIA from './AdminExtraccionIA';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -66,6 +68,7 @@ const allSidebarItems: SidebarItem[] = [
   { icon: Ticket, label: 'Soporte', path: '/admin/soporte', description: 'Tickets de contacto', staffOnly: true },
   { icon: Settings, label: 'Ajustes', path: '/admin/ajustes', description: 'Configuración del sitio', adminOnly: true },
   { icon: LinkIcon, label: 'Auditoría Enlaces', path: '/admin/auditoria-enlaces', description: 'Verificación de rutas', adminOnly: true },
+  { icon: Brain, label: 'Extracción IA', path: '/admin/extraccion-ia', description: 'Extraer datos con IA', adminOnly: true },
 ];
 
 const AdminDashboard = () => {
@@ -379,6 +382,7 @@ const AdminDashboard = () => {
               } />
               <Route path="ajustes" element={<AdminAjustes />} />
               <Route path="auditoria-enlaces" element={<AdminAuditoriaEnlaces />} />
+              <Route path="extraccion-ia" element={<AdminExtraccionIA />} />
             </Routes>
           </div>
         </main>
