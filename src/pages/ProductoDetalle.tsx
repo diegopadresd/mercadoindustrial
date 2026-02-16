@@ -509,6 +509,121 @@ const ProductoDetalle = () => {
                 </div>
               </div>
             )}
+
+            {/* Q&A Section - In Left Column */}
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="font-display font-bold text-xl mb-1">
+                    Preguntas y Respuestas
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {productQuestions.length > 0 
+                      ? `${productQuestions.length} pregunta${productQuestions.length !== 1 ? 's' : ''} sobre este producto`
+                      : 'Preguntas sobre este producto'}
+                  </p>
+                </div>
+                <Dialog open={questionDialogOpen} onOpenChange={setQuestionDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="btn-gold">
+                      <MessageCircle className="mr-2" size={16} />
+                      Hacer una pregunta
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Hacer una pregunta</DialogTitle>
+                      <DialogDescription>
+                        Tu pregunta será respondida por el vendedor y quedará visible para otros compradores.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="question">Tu pregunta</Label>
+                        <Textarea
+                          id="question"
+                          value={newQuestion}
+                          onChange={(e) => setNewQuestion(e.target.value)}
+                          placeholder="Escribe tu pregunta sobre este producto..."
+                          rows={4}
+                        />
+                      </div>
+                      <Button onClick={handleSubmitQuestion} className="w-full btn-gold">
+                        <Send size={18} className="mr-2" />
+                        Enviar pregunta
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {productQuestions.length === 0 ? (
+                <div className="bg-card rounded-2xl p-8 shadow-card text-center">
+                  <div className="flex justify-center mb-3">
+                    <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center">
+                      <HelpCircle size={28} className="text-primary" />
+                    </div>
+                  </div>
+                  <h3 className="font-display font-bold text-lg text-foreground mb-2">
+                    ¡Aún no se han hecho preguntas!
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    ¿Tienes alguna duda? Pregunta ahora y te responderemos lo antes posible.
+                  </p>
+                  <Button size="sm" className="btn-gold" onClick={() => setQuestionDialogOpen(true)}>
+                    <MessageCircle className="mr-2" size={16} />
+                    Pregunta ahora
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {productQuestions.map((faq) => (
+                    <div
+                      key={faq.id}
+                      className="bg-card rounded-xl p-5 shadow-card"
+                    >
+                      <div className="flex gap-3 mb-3">
+                        <div className="shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                          <User size={16} className="text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm text-foreground">{faq.customer_name}</span>
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock size={10} />
+                              {new Date(faq.created_at).toLocaleDateString('es-MX')}
+                            </span>
+                          </div>
+                          <p className="text-sm text-foreground">{faq.question}</p>
+                        </div>
+                      </div>
+                      {faq.answer ? (
+                        <div className="ml-11 pl-3 border-l-2 border-primary/30">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm text-primary">Mercado Industrial</span>
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock size={10} />
+                              {faq.answered_at ? new Date(faq.answered_at).toLocaleDateString('es-MX') : ''}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{faq.answer}</p>
+                          <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-1 transition-colors">
+                            <ThumbsUp size={12} />
+                            Útil
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="ml-11 pl-3 border-l-2 border-muted">
+                          <p className="text-sm text-muted-foreground italic">
+                            Esperando respuesta del vendedor...
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </motion.div>
 
           {/* Product Info */}
@@ -768,132 +883,8 @@ const ProductoDetalle = () => {
           </motion.div>
         </div>
 
-        {/* FAQs Section - Product Specific */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-16"
-        >
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="section-title mb-2">
-                Preguntas y Respuestas
-              </h2>
-              <p className="text-muted-foreground">
-                {productQuestions.length > 0 
-                  ? `${productQuestions.length} pregunta${productQuestions.length !== 1 ? 's' : ''} sobre este producto`
-                  : 'Preguntas sobre este producto'}
-              </p>
-            </div>
-            <Dialog open={questionDialogOpen} onOpenChange={setQuestionDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="btn-gold">
-                  <MessageCircle className="mr-2" size={18} />
-                  Hacer una pregunta
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Hacer una pregunta</DialogTitle>
-                  <DialogDescription>
-                    Tu pregunta será respondida por el vendedor y quedará visible para otros compradores.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="question">Tu pregunta</Label>
-                    <Textarea
-                      id="question"
-                      value={newQuestion}
-                      onChange={(e) => setNewQuestion(e.target.value)}
-                      placeholder="Escribe tu pregunta sobre este producto..."
-                      rows={4}
-                    />
-                  </div>
-                  <Button onClick={handleSubmitQuestion} className="w-full btn-gold">
-                    <Send size={18} className="mr-2" />
-                    Enviar pregunta
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
 
-          {/* FAQ List or Empty State */}
-          {productQuestions.length === 0 ? (
-            <div className="bg-card rounded-2xl p-10 shadow-card text-center">
-              <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                  <HelpCircle size={32} className="text-primary" />
-                </div>
-              </div>
-              <h3 className="font-display font-bold text-xl text-foreground mb-2">
-                ¡Aún no se han hecho preguntas!
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                ¿Tienes alguna duda sobre este producto? Pregunta ahora y te responderemos lo antes posible.
-              </p>
-              <Button className="btn-gold" onClick={() => setQuestionDialogOpen(true)}>
-                <MessageCircle className="mr-2" size={18} />
-                Pregunta ahora
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {productQuestions.map((faq) => (
-                <motion.div
-                  key={faq.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="bg-card rounded-xl p-6 shadow-card"
-                >
-                  {/* Question */}
-                  <div className="flex gap-4 mb-4">
-                    <div className="shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <User size={20} className="text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-foreground">{faq.customer_name}</span>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock size={12} />
-                          {new Date(faq.created_at).toLocaleDateString('es-MX')}
-                        </span>
-                      </div>
-                      <p className="text-foreground">{faq.question}</p>
-                    </div>
-                  </div>
 
-                  {/* Answer */}
-                  {faq.answer ? (
-                    <div className="ml-14 pl-4 border-l-2 border-primary/30">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-primary">Mercado Industrial</span>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock size={12} />
-                          {faq.answered_at ? new Date(faq.answered_at).toLocaleDateString('es-MX') : ''}
-                        </span>
-                      </div>
-                      <p className="text-muted-foreground">{faq.answer}</p>
-                      <button className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mt-2 transition-colors">
-                        <ThumbsUp size={14} />
-                        Útil
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="ml-14 pl-4 border-l-2 border-muted">
-                      <p className="text-muted-foreground italic">
-                        Esperando respuesta del vendedor...
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </motion.section>
 
         {/* Seller Section */}
         <motion.section
