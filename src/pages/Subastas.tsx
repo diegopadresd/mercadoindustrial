@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
+import { generateProductUrl } from '@/lib/slugify';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 
@@ -189,7 +190,7 @@ const Subastas = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
                     >
-                      <Link to={`/productos/${auction.id}`}>
+                      <Link to={generateProductUrl(auction.title, auction.id)}>
                         <div className="bg-card rounded-2xl overflow-hidden border hover:shadow-xl transition-all duration-300 group">
                           {/* Image */}
                           <div className="relative aspect-video overflow-hidden">

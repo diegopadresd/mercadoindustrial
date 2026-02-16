@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useLocale } from '@/contexts/LocaleContext';
 import { Badge } from '@/components/ui/badge';
+import { generateProductUrl } from '@/lib/slugify';
 
 export interface ProductCardProps {
   id: string;
@@ -89,7 +90,7 @@ export const ProductCard = ({
       className="product-card group"
     >
       {/* Image Container */}
-      <Link to={`/productos/${id}`} className="block relative aspect-[4/3] overflow-hidden">
+      <Link to={generateProductUrl(title, id)} className="block relative aspect-[4/3] overflow-hidden">
         <img
           src={image}
           alt={title}
@@ -128,7 +129,7 @@ export const ProductCard = ({
 
       {/* Content */}
       <div className="p-4">
-        <Link to={`/productos/${id}`}>
+        <Link to={generateProductUrl(title, id)}>
           <h3 className="font-semibold text-foreground line-clamp-2 mb-3 group-hover:text-primary transition-colors">
             {title}
           </h3>
@@ -188,7 +189,7 @@ export const ProductCard = ({
               size="sm" 
               className="w-full btn-gold"
             >
-              <Link to={`/productos/${id}`}>
+              <Link to={generateProductUrl(title, id)}>
                 <Gavel size={16} className="mr-1" />
                 {t('auction.bidNow')}
               </Link>

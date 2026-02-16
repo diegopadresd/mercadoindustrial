@@ -172,8 +172,11 @@ const mockReviews = [
   },
 ];
 
+import { extractProductId } from '@/lib/slugify';
+
 const ProductoDetalle = () => {
-  const { id } = useParams();
+  const { id: slugParam } = useParams();
+  const id = extractProductId(slugParam || '');
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, profile } = useAuth();

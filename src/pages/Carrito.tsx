@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { QuoteOptionsDialog } from '@/components/cart/QuoteOptionsDialog';
+import { generateProductUrl } from '@/lib/slugify';
 import {
   ShoppingCart, 
   Trash2, 
@@ -110,7 +111,7 @@ const Carrito = () => {
                   transition={{ delay: index * 0.1 }}
                   className="bg-card rounded-2xl p-6 shadow-card flex flex-col sm:flex-row gap-6"
                 >
-                  <Link to={`/productos/${item.productId}`} className="shrink-0">
+                  <Link to={generateProductUrl(item.title, item.productId)} className="shrink-0">
                     <img
                       src={item.image}
                       alt={item.title}
@@ -118,7 +119,7 @@ const Carrito = () => {
                     />
                   </Link>
                   <div className="flex-1">
-                    <Link to={`/productos/${item.productId}`}>
+                    <Link to={generateProductUrl(item.title, item.productId)}>
                       <h3 className="font-semibold text-foreground hover:text-primary transition-colors line-clamp-2 mb-2">
                         {item.title}
                       </h3>

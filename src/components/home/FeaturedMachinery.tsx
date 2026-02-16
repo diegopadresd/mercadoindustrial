@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocale } from '@/contexts/LocaleContext';
+import { generateProductUrl } from '@/lib/slugify';
 
 export const FeaturedMachinery = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
@@ -143,7 +144,7 @@ export const FeaturedMachinery = () => {
                         {/* CTA - Always at bottom */}
                         <div className="mt-auto">
                           <Button asChild className="w-full bg-primary text-secondary hover:bg-primary/90">
-                            <Link to={`/productos/${product.id}`}>
+                            <Link to={generateProductUrl(product.title, product.id)}>
                               {language === 'es' ? 'Ver Detalles' : 'View Details'}
                             </Link>
                           </Button>

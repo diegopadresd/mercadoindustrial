@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ProductCard } from '@/components/products/ProductCard';
 
+
 const miComponentsProducts = [
   {
     id: 'rodillo-retorno-24',

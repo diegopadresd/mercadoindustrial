@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, MapPin, Tag, Loader2 } from 'lucide-react';
+import { generateProductUrl } from '@/lib/slugify';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -101,7 +102,7 @@ export const ProductsSection = () => {
                   transition={{ delay: index * 0.05 }}
                 >
                   <Link
-                    to={`/productos/${product.id}`}
+                    to={generateProductUrl(product.title, product.id)}
                     className="group block bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                   >
                     {/* Image */}
