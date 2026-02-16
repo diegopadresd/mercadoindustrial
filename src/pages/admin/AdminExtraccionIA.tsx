@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -16,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   Brain, Play, Pause, RotateCcw, CheckCircle2, XCircle, MinusCircle,
-  Loader2, AlertTriangle, Eye, ArrowRight,
+  Loader2, AlertTriangle, Eye, ArrowRight, BarChart3, Database,
 } from 'lucide-react';
 
 interface ExtractionResult {
@@ -68,8 +69,41 @@ const AdminExtraccionIA = () => {
   const [allResults, setAllResults] = useState<ExtractionResult[]>([]);
   const [stats, setStats] = useState({ updated: 0, noChanges: 0, errors: 0 });
   const [previewResult, setPreviewResult] = useState<ExtractionResult | null>(null);
+  const [fieldStats, setFieldStats] = useState<Record<string, { filled: number; total: number }> | null>(null);
+  const [loadingDiag, setLoadingDiag] = useState(false);
   const pauseRef = useRef(false);
   const abortRef = useRef(false);
+
+  const loadDiagnostics = async () => {
+    setLoadingDiag(true);
+    try {
+      const { count: totalCount } = await supabase
+        .from('products')
+        .select('id', { count: 'exact', head: true });
+
+      const fields = Object.keys(FIELD_LABELS);
+      const results: Record<string, { filled: number; total: number }> = {};
+
+      for (const field of fields) {
+        const { count } = await supabase
+          .from('products')
+          .select('id', { count: 'exact', head: true })
+          .not(field, 'is', null);
+
+        results[field] = { filled: count || 0, total: totalCount || 0 };
+      }
+
+      setFieldStats(results);
+    } catch (e) {
+      console.error('Error loading diagnostics:', e);
+    } finally {
+      setLoadingDiag(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDiagnostics();
+  }, []);
 
   const reset = () => {
     setIsRunning(false);
@@ -149,6 +183,7 @@ const AdminExtraccionIA = () => {
       if (!result.hasMore || result.processed === 0) {
         toast({ title: '✅ Extracción completada', description: 'Se procesaron todos los productos.' });
         setIsRunning(false);
+        loadDiagnostics();
         break;
       }
 
@@ -182,6 +217,74 @@ const AdminExtraccionIA = () => {
           Usa inteligencia artificial para extraer modelo, año, dimensiones y más desde las descripciones de productos.
         </p>
       </div>
+
+      {/* Diagnostics Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Diagnóstico de campos
+              </CardTitle>
+              <CardDescription>Estado actual de los 13 campos técnicos en todos los productos.</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadDiagnostics} disabled={loadingDiag} className="gap-2">
+              {loadingDiag ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Database className="h-3.5 w-3.5" />}
+              Actualizar
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!fieldStats ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Cargando diagnóstico...
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {Object.entries(FIELD_LABELS).map(([field, label]) => {
+                const stat = fieldStats[field];
+                if (!stat) return null;
+                const pct = stat.total > 0 ? Math.round((stat.filled / stat.total) * 100) : 0;
+                const isEmpty = stat.filled === 0;
+                const isComplete = pct === 100;
+                return (
+                  <div key={field} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">{label}</span>
+                      <span className={`text-xs ${isComplete ? 'text-green-600' : isEmpty ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {stat.filled} / {stat.total} ({pct}%)
+                      </span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${isComplete ? 'bg-green-500' : isEmpty ? 'bg-destructive' : 'bg-primary'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              <Separator className="my-3" />
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                  Completo
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                  Parcial
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-destructive" />
+                  Vacío
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Config Card */}
       <Card>
