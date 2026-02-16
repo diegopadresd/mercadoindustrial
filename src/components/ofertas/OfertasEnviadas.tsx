@@ -6,6 +6,7 @@ import { Loader2, Package, Clock, CheckCircle, XCircle, DollarSign } from 'lucid
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
+import { generateProductUrl } from '@/lib/slugify';
 
 interface OfertasEnviadasProps {
   userId?: string;
@@ -127,7 +128,7 @@ export const OfertasEnviadas = ({ userId }: OfertasEnviadasProps) => {
           <CardContent className="p-0">
             <div className="flex gap-4 p-4">
               {/* Product Image */}
-              <Link to={`/productos/${offer.product_id}`} className="shrink-0">
+              <Link to={generateProductUrl(offer.product?.title || 'producto', offer.product_id)} className="shrink-0">
                 <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted">
                   {offer.product?.images?.[0] ? (
                     <img
@@ -148,7 +149,7 @@ export const OfertasEnviadas = ({ userId }: OfertasEnviadasProps) => {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <Link 
-                      to={`/productos/${offer.product_id}`}
+                      to={generateProductUrl(offer.product?.title || 'producto', offer.product_id)}
                       className="font-semibold hover:text-primary line-clamp-1"
                     >
                       {offer.product?.title || 'Producto'}

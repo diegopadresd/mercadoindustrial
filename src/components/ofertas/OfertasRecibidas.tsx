@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { generateProductUrl } from '@/lib/slugify';
 
 interface OfertasRecibidasProps {
   sellerId?: string;
@@ -249,7 +250,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
             <CardContent className="p-0">
               <div className="flex gap-4 p-4">
                 {/* Product Image */}
-                <Link to={`/productos/${offer.product_id}`} className="shrink-0">
+                <Link to={generateProductUrl(offer.product?.title || 'producto', offer.product_id)} className="shrink-0">
                   <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted">
                     {offer.product?.images?.[0] ? (
                       <img
@@ -270,7 +271,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <Link 
-                        to={`/productos/${offer.product_id}`}
+                        to={generateProductUrl(offer.product?.title || 'producto', offer.product_id)}
                         className="font-semibold hover:text-primary line-clamp-1"
                       >
                         {offer.product?.title || 'Producto'}
