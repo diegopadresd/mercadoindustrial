@@ -202,11 +202,18 @@ REGLAS:
           }
         }
 
+        // Build current values for preview
+        const current: Record<string, any> = {};
+        for (const field of fields) {
+          current[field] = product[field as keyof typeof product];
+        }
+
         results.push({
           id: product.id,
           title: product.title,
           status: Object.keys(updates).length > 0 ? "updated" : "no_changes",
           extracted: updates,
+          current,
           fieldsUpdated: Object.keys(updates).length,
         });
       } catch (productError) {

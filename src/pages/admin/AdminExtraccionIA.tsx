@@ -9,23 +9,14 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Brain,
-  Play,
-  Pause,
-  RotateCcw,
-  CheckCircle2,
-  XCircle,
-  MinusCircle,
-  Loader2,
-  AlertTriangle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Brain, Play, Pause, RotateCcw, CheckCircle2, XCircle, MinusCircle,
+  Loader2, AlertTriangle, Eye, ArrowRight,
 } from 'lucide-react';
 
 interface ExtractionResult {
@@ -33,6 +24,7 @@ interface ExtractionResult {
   title: string;
   status: 'updated' | 'no_changes' | 'error';
   extracted?: Record<string, any>;
+  current?: Record<string, any>;
   fieldsUpdated?: number;
   error?: string;
 }
@@ -48,6 +40,22 @@ interface BatchResponse {
   error?: string;
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  model: 'Modelo',
+  year: 'Año',
+  hours_of_use: 'Horas de uso',
+  peso_aprox_kg: 'Peso (kg)',
+  largo_aprox_cm: 'Largo (cm)',
+  ancho_aprox_cm: 'Ancho (cm)',
+  alto_aprox_cm: 'Alto (cm)',
+  cp_origen: 'CP Origen',
+  is_functional: 'Funcional',
+  has_warranty: 'Garantía',
+  warranty_duration: 'Duración garantía',
+  warranty_conditions: 'Condiciones garantía',
+  contact_for_quote: 'Contactar para cotizar',
+};
+
 const AdminExtraccionIA = () => {
   const { toast } = useToast();
   const [batchSize, setBatchSize] = useState(5);
@@ -59,6 +67,7 @@ const AdminExtraccionIA = () => {
   const [currentOffset, setCurrentOffset] = useState(0);
   const [allResults, setAllResults] = useState<ExtractionResult[]>([]);
   const [stats, setStats] = useState({ updated: 0, noChanges: 0, errors: 0 });
+  const [previewResult, setPreviewResult] = useState<ExtractionResult | null>(null);
   const pauseRef = useRef(false);
   const abortRef = useRef(false);
 
@@ -95,24 +104,14 @@ const AdminExtraccionIA = () => {
     );
 
     if (response.status === 429) {
-      toast({
-        title: 'Rate limit',
-        description: 'Se alcanzó el límite. Esperando 60 segundos...',
-        variant: 'destructive',
-      });
+      toast({ title: 'Rate limit', description: 'Esperando 60 segundos...', variant: 'destructive' });
       await new Promise(r => setTimeout(r, 60000));
-      return runBatch(offset); // retry
+      return runBatch(offset);
     }
-
     if (response.status === 402) {
-      toast({
-        title: 'Créditos insuficientes',
-        description: 'Agrega créditos para continuar con la extracción.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Créditos insuficientes', description: 'Agrega créditos para continuar.', variant: 'destructive' });
       return null;
     }
-
     if (!response.ok) {
       const err = await response.json().catch(() => ({ error: 'Unknown error' }));
       toast({ title: 'Error', description: err.error, variant: 'destructive' });
@@ -127,22 +126,14 @@ const AdminExtraccionIA = () => {
     setIsPaused(false);
     pauseRef.current = false;
     abortRef.current = false;
-
     let offset = currentOffset;
 
     while (true) {
       if (abortRef.current) break;
-      if (pauseRef.current) {
-        setIsPaused(true);
-        break;
-      }
+      if (pauseRef.current) { setIsPaused(true); break; }
 
       const result = await runBatch(offset);
-      if (!result) {
-        setIsRunning(false);
-        break;
-      }
-
+      if (!result) { setIsRunning(false); break; }
       if (result.total !== undefined) setTotalProducts(result.total);
 
       if (result.results) {
@@ -156,23 +147,18 @@ const AdminExtraccionIA = () => {
       }
 
       if (!result.hasMore || result.processed === 0) {
-        toast({ title: '✅ Extracción completada', description: `Se procesaron todos los productos.` });
+        toast({ title: '✅ Extracción completada', description: 'Se procesaron todos los productos.' });
         setIsRunning(false);
         break;
       }
 
       offset = result.nextOffset;
       setCurrentOffset(offset);
-
-      // Small delay between batches
       await new Promise(r => setTimeout(r, 2000));
     }
   };
 
-  const pauseExtraction = () => {
-    pauseRef.current = true;
-  };
-
+  const pauseExtraction = () => { pauseRef.current = true; };
   const stopExtraction = () => {
     abortRef.current = true;
     pauseRef.current = true;
@@ -181,6 +167,12 @@ const AdminExtraccionIA = () => {
   };
 
   const progressPercent = totalProducts ? Math.round((processedCount / totalProducts) * 100) : 0;
+
+  const formatValue = (val: any): string => {
+    if (val === null || val === undefined) return '—';
+    if (typeof val === 'boolean') return val ? 'Sí' : 'No';
+    return String(val);
+  };
 
   return (
     <div className="space-y-6">
@@ -198,42 +190,23 @@ const AdminExtraccionIA = () => {
             <Brain className="h-5 w-5 text-primary" />
             Configuración
           </CardTitle>
-          <CardDescription>
-            Ajusta los parámetros antes de iniciar la extracción.
-          </CardDescription>
+          <CardDescription>Ajusta los parámetros antes de iniciar la extracción.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
             <Label>Tamaño de lote: {batchSize} productos por solicitud</Label>
-            <Slider
-              value={[batchSize]}
-              onValueChange={([v]) => setBatchSize(v)}
-              min={1}
-              max={20}
-              step={1}
-              disabled={isRunning}
-            />
-            <p className="text-xs text-muted-foreground">
-              Lotes más pequeños son más lentos pero menos propensos a errores de rate-limit.
-            </p>
+            <Slider value={[batchSize]} onValueChange={([v]) => setBatchSize(v)} min={1} max={20} step={1} disabled={isRunning} />
+            <p className="text-xs text-muted-foreground">Lotes más pequeños son más lentos pero menos propensos a errores de rate-limit.</p>
           </div>
-
           <div className="flex items-center gap-3">
-            <Switch
-              checked={dryRun}
-              onCheckedChange={setDryRun}
-              disabled={isRunning}
-            />
+            <Switch checked={dryRun} onCheckedChange={setDryRun} disabled={isRunning} />
             <div>
               <Label>Modo prueba (Dry Run)</Label>
               <p className="text-xs text-muted-foreground">
-                {dryRun
-                  ? '⚠️ Solo muestra lo que extraería, NO actualiza la base de datos.'
-                  : '🔴 Los productos se actualizarán en la base de datos.'}
+                {dryRun ? '⚠️ Solo muestra lo que extraería, NO actualiza la base de datos.' : '🔴 Los productos se actualizarán en la base de datos.'}
               </p>
             </div>
           </div>
-
           <div className="flex gap-3">
             {!isRunning ? (
               <Button onClick={startExtraction} className="gap-2">
@@ -265,16 +238,13 @@ const AdminExtraccionIA = () => {
       {/* Progress Card */}
       {(isRunning || processedCount > 0) && (
         <Card>
-          <CardHeader>
-            <CardTitle>Progreso</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Progreso</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between text-sm">
               <span>{processedCount} de {totalProducts ?? '?'} productos</span>
               <span>{progressPercent}%</span>
             </div>
             <Progress value={progressPercent} />
-
             {isRunning && !isPaused && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -287,7 +257,6 @@ const AdminExtraccionIA = () => {
                 En pausa. Presiona "Continuar" para reanudar.
               </div>
             )}
-
             <div className="flex gap-4 text-sm">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -302,7 +271,6 @@ const AdminExtraccionIA = () => {
                 <span>{stats.errors} errores</span>
               </div>
             </div>
-
             {dryRun && (
               <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
                 MODO PRUEBA — No se guardaron cambios
@@ -315,9 +283,7 @@ const AdminExtraccionIA = () => {
       {/* Results Table */}
       {allResults.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Resultados ({allResults.length})</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Resultados ({allResults.length})</CardTitle></CardHeader>
           <CardContent>
             <div className="rounded-md border max-h-[500px] overflow-auto">
               <Table>
@@ -327,24 +293,17 @@ const AdminExtraccionIA = () => {
                     <TableHead>Estado</TableHead>
                     <TableHead>Campos</TableHead>
                     <TableHead>Datos extraídos</TableHead>
+                    <TableHead className="w-[80px]">Vista previa</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {allResults.map((r, i) => (
                     <TableRow key={`${r.id}-${i}`}>
-                      <TableCell className="font-medium max-w-[300px] truncate" title={r.title}>
-                        {r.title}
-                      </TableCell>
+                      <TableCell className="font-medium max-w-[300px] truncate" title={r.title}>{r.title}</TableCell>
                       <TableCell>
-                        {r.status === 'updated' && (
-                          <Badge className="bg-green-500/10 text-green-600 border-green-500/30">Actualizado</Badge>
-                        )}
-                        {r.status === 'no_changes' && (
-                          <Badge variant="outline">Sin cambios</Badge>
-                        )}
-                        {r.status === 'error' && (
-                          <Badge variant="destructive">{r.error}</Badge>
-                        )}
+                        {r.status === 'updated' && <Badge className="bg-green-500/10 text-green-600 border-green-500/30">Actualizado</Badge>}
+                        {r.status === 'no_changes' && <Badge variant="outline">Sin cambios</Badge>}
+                        {r.status === 'error' && <Badge variant="destructive">{r.error}</Badge>}
                       </TableCell>
                       <TableCell>{r.fieldsUpdated ?? 0}</TableCell>
                       <TableCell className="max-w-[400px]">
@@ -352,13 +311,20 @@ const AdminExtraccionIA = () => {
                           <div className="text-xs space-y-0.5">
                             {Object.entries(r.extracted).map(([k, v]) => (
                               <div key={k}>
-                                <span className="font-medium">{k}:</span>{' '}
-                                <span className="text-muted-foreground">{String(v)}</span>
+                                <span className="font-medium">{FIELD_LABELS[k] || k}:</span>{' '}
+                                <span className="text-muted-foreground">{formatValue(v)}</span>
                               </div>
                             ))}
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {r.status === 'updated' && (
+                          <Button variant="ghost" size="icon" onClick={() => setPreviewResult(r)} title="Ver antes/después">
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
@@ -369,6 +335,51 @@ const AdminExtraccionIA = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewResult} onOpenChange={(open) => !open && setPreviewResult(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Vista previa del producto</DialogTitle>
+            <p className="text-sm text-muted-foreground truncate">{previewResult?.title}</p>
+          </DialogHeader>
+          {previewResult && (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[160px]">Campo</TableHead>
+                    <TableHead>Antes</TableHead>
+                    <TableHead className="w-[40px]"></TableHead>
+                    <TableHead>Después</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.keys(FIELD_LABELS).map((field) => {
+                    const before = previewResult.current?.[field];
+                    const extracted = previewResult.extracted?.[field];
+                    const after = extracted !== undefined && extracted !== null ? extracted : before;
+                    const changed = extracted !== undefined && extracted !== null && before === null;
+
+                    return (
+                      <TableRow key={field} className={changed ? 'bg-green-500/5' : ''}>
+                        <TableCell className="font-medium text-sm">{FIELD_LABELS[field]}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{formatValue(before)}</TableCell>
+                        <TableCell>
+                          {changed && <ArrowRight className="h-3.5 w-3.5 text-green-600" />}
+                        </TableCell>
+                        <TableCell className={`text-sm ${changed ? 'font-semibold text-green-700' : 'text-muted-foreground'}`}>
+                          {formatValue(after)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
