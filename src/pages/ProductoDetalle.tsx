@@ -60,6 +60,47 @@ import { SellerReviews } from '@/components/product/SellerReviews';
 import { AuctionSection } from '@/components/product/AuctionSection';
 import { MakeOfferModal } from '@/components/product/MakeOfferModal';
 
+// Expandable description component
+const ExpandableDescription = ({ description }: { description: string }) => {
+  const [expanded, setExpanded] = useState(false);
+  const MAX_HEIGHT = 300; // px
+
+  return (
+    <div className="bg-card rounded-2xl p-6 shadow-card">
+      <h2 className="font-display font-bold text-xl mb-4 flex items-center gap-2">
+        <Package size={20} className="text-primary" />
+        Especificaciones
+      </h2>
+      <div className="relative">
+        <div
+          className={`overflow-hidden transition-all duration-300 ${!expanded ? '' : ''}`}
+          style={!expanded ? { maxHeight: `${MAX_HEIGHT}px` } : undefined}
+        >
+          {description.includes('<') ? (
+            <div
+              className="prose prose-sm max-w-none text-muted-foreground [&_h6]:text-foreground [&_h6]:font-bold [&_h6]:mt-4 [&_h6]:mb-2 [&_strong]:text-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_li]:text-muted-foreground [&_p]:mb-2"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+          ) : (
+            <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
+              {description}
+            </div>
+          )}
+        </div>
+        {!expanded && (
+          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+        )}
+      </div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="mt-3 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+      >
+        {expanded ? '▲ Ver menos' : '▼ Ver más especificaciones'}
+      </button>
+    </div>
+  );
+};
+
 // Mock Seller Data
 const mockSeller = {
   id: 'mercado-industrial',
@@ -722,23 +763,7 @@ const ProductoDetalle = () => {
 
             {/* Specifications */}
             {productData.description && (
-              <div className="bg-card rounded-2xl p-6 shadow-card">
-                <h2 className="font-display font-bold text-xl mb-4 flex items-center gap-2">
-                  <Package size={20} className="text-primary" />
-                  Especificaciones
-                </h2>
-                
-                {productData.description.includes('<') ? (
-                  <div 
-                    className="prose prose-sm max-w-none text-muted-foreground [&_h6]:text-foreground [&_h6]:font-bold [&_h6]:mt-4 [&_h6]:mb-2 [&_strong]:text-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_li]:text-muted-foreground [&_p]:mb-2"
-                    dangerouslySetInnerHTML={{ __html: productData.description }}
-                  />
-                ) : (
-                  <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
-                    {productData.description}
-                  </div>
-                )}
-              </div>
+              <ExpandableDescription description={productData.description} />
             )}
           </motion.div>
         </div>
