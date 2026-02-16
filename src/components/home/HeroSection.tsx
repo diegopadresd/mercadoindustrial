@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import heroImage from '@/assets/hero-industrial-premium.jpg';
 import {
   Dialog,
@@ -54,6 +56,24 @@ export const HeroSection = () => {
   const statsRef = useRef(null);
   const isInView = useInView(statsRef, { once: true, margin: '-50px' });
   const { t, language } = useLocale();
+
+  // Fetch real-time stats
+  const { data: stats } = useQuery({
+    queryKey: ['hero-stats'],
+    queryFn: async () => {
+      const [productsRes, brandsRes] = await Promise.all([
+        supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('products').select('brand').eq('is_active', true),
+      ]);
+      const uniqueBrands = new Set(brandsRes.data?.map(p => p.brand?.toUpperCase().trim()).filter(Boolean));
+      return {
+        products: productsRes.count || 0,
+        brands: uniqueBrands.size,
+        locations: 5,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const sellingSchemes = language === 'es' ? [
     {
@@ -138,7 +158,7 @@ export const HeroSection = () => {
               >
                 <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                 <span className="text-primary font-medium text-sm">
-                  {language === 'es' ? '+12,643 productos disponibles' : '+12,643 products available'}
+                  {language === 'es' ? `+${(stats?.products || 0).toLocaleString('es-MX')} productos disponibles` : `+${(stats?.products || 0).toLocaleString('en-US')} products available`}
                 </span>
               </motion.div>
 
@@ -242,9 +262,9 @@ export const HeroSection = () => {
             >
               <div className="bg-secondary/80 backdrop-blur-md rounded-2xl p-8 text-right">
                 <div className="space-y-6">
-                  <AnimatedStat end={12643} label={t('home.stats.products')} prefix="+" delay={0} isInView={isInView} />
-                  <AnimatedStat end={500} label={t('home.stats.brands')} prefix="+" delay={200} isInView={isInView} />
-                  <AnimatedStat end={5} label={language === 'es' ? 'Ubicaciones' : 'Locations'} prefix="" delay={400} isInView={isInView} />
+                  <AnimatedStat end={stats?.products || 0} label={t('home.stats.products')} prefix="+" delay={0} isInView={isInView} />
+                  <AnimatedStat end={stats?.brands || 0} label={t('home.stats.brands')} prefix="+" delay={200} isInView={isInView} />
+                  <AnimatedStat end={stats?.locations || 5} label={language === 'es' ? 'Ubicaciones' : 'Locations'} prefix="" delay={400} isInView={isInView} />
                 </div>
               </div>
             </motion.div>
@@ -259,9 +279,9 @@ export const HeroSection = () => {
           >
             <div className="bg-secondary/80 backdrop-blur-md rounded-2xl p-6">
               <div className="grid grid-cols-3 gap-4">
-                <AnimatedStat end={12643} label={t('home.stats.products')} prefix="+" delay={600} isInView={isInView} size="sm" align="center" />
-                <AnimatedStat end={500} label={t('home.stats.brands')} prefix="+" delay={800} isInView={isInView} size="sm" align="center" />
-                <AnimatedStat end={5} label={language === 'es' ? 'Ubicaciones' : 'Locations'} prefix="" delay={1000} isInView={isInView} size="sm" align="center" />
+                <AnimatedStat end={stats?.products || 0} label={t('home.stats.products')} prefix="+" delay={600} isInView={isInView} size="sm" align="center" />
+                <AnimatedStat end={stats?.brands || 0} label={t('home.stats.brands')} prefix="+" delay={800} isInView={isInView} size="sm" align="center" />
+                <AnimatedStat end={stats?.locations || 5} label={language === 'es' ? 'Ubicaciones' : 'Locations'} prefix="" delay={1000} isInView={isInView} size="sm" align="center" />
               </div>
             </div>
           </motion.div>
