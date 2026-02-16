@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +19,12 @@ import {
   Send,
   CheckCircle,
   Clock,
-  Gavel
+  Gavel,
+  Filter,
+  DollarSign,
+  MapPin,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -69,6 +74,11 @@ const AdminInventario = () => {
   const { user } = useAuth();
   const { isVendedor, isStaff, sellerId, permissions } = useUserRole();
   const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'draft'>('all');
+  const [filterPrice, setFilterPrice] = useState<'all' | 'with_price' | 'no_price'>('all');
+  const [filterLocation, setFilterLocation] = useState<string>('all');
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 50;
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showAIConfirmDialog, setShowAIConfirmDialog] = useState(false);
@@ -114,21 +124,48 @@ const AdminInventario = () => {
     contact_for_quote: false,
   });
 
+  // Get total count
+  const { data: totalCount } = useQuery({
+    queryKey: ['admin-products-count', sellerId, isVendedor, isStaff],
+    queryFn: async () => {
+      let query = supabase.from('products').select('*', { count: 'exact', head: true });
+      if (isVendedor && !isStaff && sellerId) {
+        query = query.eq('seller_id', sellerId);
+      }
+      const { count } = await query;
+      return count || 0;
+    },
+  });
+
   const { data: products, isLoading } = useQuery({
-    queryKey: ['admin-products', search, sellerId],
+    queryKey: ['admin-products', search, sellerId, filterStatus, filterPrice, filterLocation, page],
     queryFn: async () => {
       let query = supabase
         .from('products')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-      // Vendors only see their own products
       if (isVendedor && !isStaff && sellerId) {
         query = query.eq('seller_id', sellerId);
       }
 
       if (search) {
         query = query.or(`title.ilike.%${search}%,sku.ilike.%${search}%,brand.ilike.%${search}%`);
+      }
+
+      if (filterStatus === 'active') query = query.eq('is_active', true);
+      if (filterStatus === 'draft') query = query.eq('is_active', false);
+
+      if (filterPrice === 'with_price') query = query.not('price', 'is', null);
+      if (filterPrice === 'no_price') query = query.is('price', null);
+
+      if (filterLocation !== 'all') {
+        if (filterLocation === 'none') {
+          query = query.is('location', null);
+        } else {
+          query = query.eq('location', filterLocation);
+        }
       }
 
       const { data, error } = await query;
@@ -496,8 +533,9 @@ const AdminInventario = () => {
             {isVendedor && !isStaff ? 'Mis Publicaciones' : 'Inventario'}
           </h1>
           <p className="text-muted-foreground">
-            {products?.length || 0} {isVendedor && !isStaff ? 'publicaciones' : 'productos'} 
+            {totalCount?.toLocaleString('es-MX') || 0} {isVendedor && !isStaff ? 'publicaciones' : 'productos'} 
             {isVendedor && !isStaff ? '' : ' en inventario'}
+            {products && products.length < (totalCount || 0) ? ` · Mostrando ${(page * PAGE_SIZE) + 1}-${Math.min((page + 1) * PAGE_SIZE, totalCount || 0)}` : ''}
           </p>
         </div>
         
@@ -508,7 +546,7 @@ const AdminInventario = () => {
             <Input
               placeholder="Buscar por título, SKU o marca..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
               className="pl-10"
             />
           </div>
@@ -936,6 +974,60 @@ const AdminInventario = () => {
           </Dialog>
         </div>
       </div>
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <Filter size={16} className="text-muted-foreground" />
+        
+        {/* Status filter */}
+        <select 
+          value={filterStatus} 
+          onChange={(e) => { setFilterStatus(e.target.value as any); setPage(0); }}
+          className="text-sm rounded-md border border-input bg-background px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="all">Todos los estados</option>
+          <option value="active">Publicados</option>
+          <option value="draft">Borradores</option>
+        </select>
+
+        {/* Price filter */}
+        <select 
+          value={filterPrice} 
+          onChange={(e) => { setFilterPrice(e.target.value as any); setPage(0); }}
+          className="text-sm rounded-md border border-input bg-background px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="all">Todos los precios</option>
+          <option value="with_price">Con precio</option>
+          <option value="no_price">Sin precio</option>
+        </select>
+
+        {/* Location filter */}
+        <select 
+          value={filterLocation} 
+          onChange={(e) => { setFilterLocation(e.target.value); setPage(0); }}
+          className="text-sm rounded-md border border-input bg-background px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="all">Todas las sucursales</option>
+          <option value="Hermosillo">Hermosillo</option>
+          <option value="Mexicali">Mexicali</option>
+          <option value="Santa Catarina">Santa Catarina</option>
+          <option value="Tijuana">Tijuana</option>
+          <option value="Nogales, AZ">Nogales, AZ</option>
+          <option value="Coahuila">Coahuila</option>
+          <option value="none">Sin sucursal</option>
+        </select>
+
+        {(filterStatus !== 'all' || filterPrice !== 'all' || filterLocation !== 'all') && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => { setFilterStatus('all'); setFilterPrice('all'); setFilterLocation('all'); setPage(0); }}
+            className="text-xs"
+          >
+            <X size={14} className="mr-1" />
+            Limpiar filtros
+          </Button>
+        )}
+      </div>
 
       {/* AI Confirmation Dialog */}
       <AlertDialog open={showAIConfirmDialog} onOpenChange={(open) => {
@@ -1231,6 +1323,35 @@ const AdminInventario = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {(totalCount || 0) > PAGE_SIZE && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Página {page + 1} de {Math.ceil((totalCount || 0) / PAGE_SIZE)}
+          </p>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              <ChevronLeft size={16} className="mr-1" />
+              Anterior
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setPage(p => p + 1)}
+              disabled={(page + 1) * PAGE_SIZE >= (totalCount || 0)}
+            >
+              Siguiente
+              <ChevronRight size={16} className="ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
