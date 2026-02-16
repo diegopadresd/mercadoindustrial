@@ -13,7 +13,12 @@ import {
   Clock,
   FileText,
   Send,
-  Loader2
+  Loader2,
+  MapPin,
+  Phone,
+  Mail,
+  X,
+  User
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -34,6 +39,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 
 const statusOptions = [
   { value: 'pending', label: 'Pendiente', color: 'bg-yellow-500/20 text-yellow-600' },
@@ -51,6 +63,10 @@ const AdminPedidos = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [viewOrder, setViewOrder] = useState<any>(null);
+  const [viewOrderItems, setViewOrderItems] = useState<any[]>([]);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [loadingItems, setLoadingItems] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -113,6 +129,28 @@ const AdminPedidos = () => {
   const handleOpenQuoteDialog = (order: any) => {
     setSelectedOrder(order);
     setQuoteDialogOpen(true);
+  };
+
+  const handleViewOrder = async (order: any) => {
+    setViewOrder(order);
+    setViewDialogOpen(true);
+    setLoadingItems(true);
+    try {
+      const { data, error } = await supabase
+        .from('order_items')
+        .select('*')
+        .eq('order_id', order.id);
+      if (error) throw error;
+      setViewOrderItems(data || []);
+    } catch {
+      setViewOrderItems([]);
+    } finally {
+      setLoadingItems(false);
+    }
+  };
+
+  const getStatusConfig = (status: string) => {
+    return statusOptions.find(s => s.value === status) || statusOptions[0];
   };
 
   // Dynamic labels based on role
@@ -287,7 +325,7 @@ const AdminPedidos = () => {
                           Editar
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm" className="text-xs">
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => handleViewOrder(order)}>
                         <Eye size={16} />
                         <span className="ml-1 hidden sm:inline">Ver</span>
                       </Button>
@@ -310,6 +348,151 @@ const AdminPedidos = () => {
           queryClient.invalidateQueries({ queryKey: ['admin-orders-list'] });
         }}
       />
+
+      {/* Order Detail Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Package size={20} className="text-primary" />
+              Pedido {viewOrder?.order_number}
+            </DialogTitle>
+          </DialogHeader>
+
+          {viewOrder && (
+            <div className="space-y-5">
+              {/* Status & Type */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusConfig(viewOrder.status).color}`}>
+                  {getStatusConfig(viewOrder.status).label}
+                </span>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  viewOrder.order_type === 'quote' ? 'bg-secondary/20 text-secondary' : 'bg-primary/20 text-primary'
+                }`}>
+                  {viewOrder.order_type === 'quote' ? 'Cotización' : 'Compra'}
+                </span>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {new Date(viewOrder.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+
+              <Separator />
+
+              {/* Customer Info */}
+              <div>
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <User size={16} className="text-muted-foreground" />
+                  Datos del Cliente
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <User size={14} className="text-muted-foreground" />
+                    <span>{viewOrder.customer_name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Mail size={14} className="text-muted-foreground" />
+                    <span className="truncate">{viewOrder.customer_email}</span>
+                  </div>
+                  {viewOrder.customer_phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone size={14} className="text-muted-foreground" />
+                      <span>{viewOrder.customer_phone}</span>
+                    </div>
+                  )}
+                  {viewOrder.rfc && (
+                    <div className="flex items-center gap-2">
+                      <FileText size={14} className="text-muted-foreground" />
+                      <span>RFC: {viewOrder.rfc}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Shipping */}
+              <div>
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <MapPin size={16} className="text-muted-foreground" />
+                  Dirección de Envío
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {viewOrder.shipping_address}
+                  {viewOrder.shipping_city && `, ${viewOrder.shipping_city}`}
+                  {viewOrder.shipping_state && `, ${viewOrder.shipping_state}`}
+                  {viewOrder.shipping_postal_code && ` C.P. ${viewOrder.shipping_postal_code}`}
+                  {viewOrder.shipping_country && `, ${viewOrder.shipping_country}`}
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* Order Items */}
+              <div>
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <ShoppingCart size={16} className="text-muted-foreground" />
+                  Productos
+                </h4>
+                {loadingItems ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="animate-spin text-muted-foreground" size={20} />
+                  </div>
+                ) : viewOrderItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sin productos registrados</p>
+                ) : (
+                  <div className="space-y-3">
+                    {viewOrderItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+                        {item.product_image && (
+                          <img src={item.product_image} alt={item.product_title} className="w-12 h-12 rounded-lg object-cover" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{item.product_title}</p>
+                          <p className="text-xs text-muted-foreground">SKU: {item.product_sku} · Cant: {item.quantity}</p>
+                        </div>
+                        <p className="text-sm font-semibold whitespace-nowrap">
+                          ${Number(item.total_price || item.unit_price * item.quantity).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Totals */}
+              <div className="bg-muted/50 rounded-xl p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span>${Number(viewOrder.subtotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                </div>
+                {viewOrder.shipping_cost > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Envío</span>
+                    <span>${Number(viewOrder.shipping_cost).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex justify-between font-semibold text-base">
+                  <span>Total</span>
+                  <span className="text-primary">
+                    ${Number(viewOrder.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {viewOrder.notes && (
+                <div className="bg-muted/30 rounded-xl p-4">
+                  <h4 className="text-sm font-semibold mb-1">Notas</h4>
+                  <p className="text-sm text-muted-foreground">{viewOrder.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
