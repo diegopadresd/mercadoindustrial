@@ -160,17 +160,9 @@ const Marcas = () => {
                     className="group block bg-card rounded-2xl p-6 shadow-card hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/30"
                   >
                     <div className="aspect-[3/2] flex items-center justify-center mb-4 bg-gradient-to-br from-muted/50 to-muted rounded-xl p-6">
-                      {brand.logo ? (
-                        <img
-                          src={brand.logo}
-                          alt={brand.name}
-                          className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
-                        />
-                      ) : (
-                        <span className="text-lg md:text-xl font-display font-bold text-primary/70 group-hover:text-primary transition-colors text-center leading-tight">
-                          {brand.name}
-                        </span>
-                      )}
+                      <span className="text-lg md:text-xl font-display font-bold text-primary/70 group-hover:text-primary transition-colors text-center leading-tight">
+                        {brand.name}
+                      </span>
                     </div>
                     <div className="text-center">
                       <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors mb-1 text-sm">
