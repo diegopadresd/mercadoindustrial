@@ -28,6 +28,16 @@ interface ExtractionResult {
   current?: Record<string, any>;
   fieldsUpdated?: number;
   error?: string;
+  productData?: {
+    description: string | null;
+    brand: string;
+    sku: string;
+    price: number | null;
+    images: string[];
+    categories: string[];
+    location: string | null;
+    stock: number | null;
+  };
 }
 
 interface BatchResponse {
@@ -424,8 +434,8 @@ const AdminExtraccionIA = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {r.status === 'updated' && (
-                          <Button variant="ghost" size="icon" onClick={() => setPreviewResult(r)} title="Ver antes/después">
+                        {r.productData && (
+                          <Button variant="ghost" size="icon" onClick={() => setPreviewResult(r)} title="Ver como página de producto">
                             <Eye className="h-4 w-4" />
                           </Button>
                         )}
@@ -439,48 +449,144 @@ const AdminExtraccionIA = () => {
         </Card>
       )}
 
-      {/* Preview Dialog */}
+      {/* Preview Dialog - Realistic Product Page */}
       <Dialog open={!!previewResult} onOpenChange={(open) => !open && setPreviewResult(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg">Vista previa del producto</DialogTitle>
-            <p className="text-sm text-muted-foreground truncate">{previewResult?.title}</p>
-          </DialogHeader>
-          {previewResult && (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[160px]">Campo</TableHead>
-                    <TableHead>Antes</TableHead>
-                    <TableHead className="w-[40px]"></TableHead>
-                    <TableHead>Después</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Object.keys(FIELD_LABELS).map((field) => {
-                    const before = previewResult.current?.[field];
-                    const extracted = previewResult.extracted?.[field];
-                    const after = extracted !== undefined && extracted !== null ? extracted : before;
-                    const changed = extracted !== undefined && extracted !== null && before === null;
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto p-0">
+          {previewResult && (() => {
+            const pd = previewResult.productData;
+            const merged = { ...previewResult.current, ...previewResult.extracted };
+            const images = pd?.images?.length ? pd.images : ['/placeholder.svg'];
 
-                    return (
-                      <TableRow key={field} className={changed ? 'bg-green-500/5' : ''}>
-                        <TableCell className="font-medium text-sm">{FIELD_LABELS[field]}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{formatValue(before)}</TableCell>
-                        <TableCell>
-                          {changed && <ArrowRight className="h-3.5 w-3.5 text-green-600" />}
-                        </TableCell>
-                        <TableCell className={`text-sm ${changed ? 'font-semibold text-green-700' : 'text-muted-foreground'}`}>
-                          {formatValue(after)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+            return (
+              <>
+                <DialogHeader className="p-6 pb-0">
+                  <DialogTitle className="text-lg flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-primary" />
+                    Vista previa — Así se vería en la página de producto
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="p-6 space-y-6">
+                  {/* Simulated product page */}
+                  <div className="rounded-xl border bg-card overflow-hidden">
+                    <div className="grid md:grid-cols-2 gap-0">
+                      {/* Image gallery */}
+                      <div className="bg-muted p-4">
+                        <div className="aspect-[4/3] rounded-lg overflow-hidden bg-background mb-2">
+                          <img
+                            src={images[0]}
+                            alt={previewResult.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+                          />
+                        </div>
+                        {images.length > 1 && (
+                          <div className="flex gap-1.5 overflow-x-auto">
+                            {images.slice(0, 5).map((img, i) => (
+                              <div key={i} className="shrink-0 w-14 h-14 rounded overflow-hidden border border-border">
+                                <img src={img} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }} />
+                              </div>
+                            ))}
+                            {images.length > 5 && (
+                              <div className="shrink-0 w-14 h-14 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                                +{images.length - 5}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Product info */}
+                      <div className="p-5 space-y-4">
+                        <div>
+                          <h2 className="text-xl font-display font-bold text-foreground leading-tight">
+                            {previewResult.title}
+                          </h2>
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {pd?.categories?.map((cat) => (
+                              <Badge key={cat} variant="secondary" className="text-xs">{cat}</Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Price */}
+                        <div className="bg-muted/50 rounded-lg p-3">
+                          {pd?.price ? (
+                            <span className="text-2xl font-display font-bold text-primary">
+                              ${Number(pd.price).toLocaleString('es-MX')} MXN
+                            </span>
+                          ) : (
+                            <span className="text-lg font-semibold text-muted-foreground">Contactar para cotizar</span>
+                          )}
+                        </div>
+
+                        {/* Key specs table */}
+                        <div className="space-y-1.5 text-sm">
+                          <div className="flex justify-between py-1.5 border-b border-border">
+                            <span className="text-muted-foreground">SKU</span>
+                            <span className="font-medium">{pd?.sku || '—'}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5 border-b border-border">
+                            <span className="text-muted-foreground">Marca</span>
+                            <span className="font-medium text-primary">{pd?.brand || '—'}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5 border-b border-border">
+                            <span className="text-muted-foreground">Stock</span>
+                            <span className="font-medium">{pd?.stock ?? 1} disponible</span>
+                          </div>
+                          <div className="flex justify-between py-1.5 border-b border-border">
+                            <span className="text-muted-foreground">Ubicación</span>
+                            <span className="font-medium">{pd?.location || '—'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="border-t border-border p-5">
+                      <h3 className="font-display font-bold mb-2">Descripción</h3>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line line-clamp-6">
+                        {pd?.description || 'Sin descripción'}
+                      </p>
+                    </div>
+
+                    {/* Technical specs - the extracted data */}
+                    <div className="border-t border-border p-5">
+                      <h3 className="font-display font-bold mb-3 flex items-center gap-2">
+                        Ficha técnica
+                        <Badge variant="outline" className="text-xs font-normal">Datos extraídos por IA</Badge>
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2 text-sm">
+                        {Object.entries(FIELD_LABELS).map(([field, label]) => {
+                          const value = merged[field];
+                          const isNew = previewResult.extracted?.[field] !== undefined && previewResult.extracted?.[field] !== null;
+                          return (
+                            <div key={field} className={`flex justify-between py-1.5 border-b border-border ${isNew ? 'bg-green-500/5 -mx-2 px-2 rounded' : ''}`}>
+                              <span className="text-muted-foreground">{label}</span>
+                              <span className={`font-medium ${isNew ? 'text-green-700' : ''}`}>
+                                {formatValue(value)}
+                                {isNew && <span className="ml-1 text-[10px] text-green-600">✨ nuevo</span>}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Link to real product page */}
+                  <div className="text-center">
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={`/productos/${previewResult.id}`} target="_blank" rel="noopener noreferrer" className="gap-2">
+                        <ArrowRight className="h-3.5 w-3.5" />
+                        Ver página real del producto
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
