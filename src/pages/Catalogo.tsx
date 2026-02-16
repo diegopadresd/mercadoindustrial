@@ -22,7 +22,8 @@ import {
 } from '@/components/ui/accordion';
 import { Filter, X, RotateCcw, Loader2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useProducts, useBrands, useCategories } from '@/hooks/useProducts';
+import { useBrands, useCategories } from '@/hooks/useProducts';
+import { useCatalogProducts } from '@/hooks/useCatalogProducts';
 
 
 // Mapeo de slugs URL a nombres de categorías
@@ -70,11 +71,40 @@ const Catalogo = () => {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  // Fetch ONLY official Mercado Industrial products from Supabase (seller_id IS NULL)
-  const { data: products = [], isLoading } = useProducts({ officialOnly: true });
+  // Build server-side category filter: merge selected categories + sector-mapped categories
+  const serverCategories = (() => {
+    const cats = [...selectedCategories];
+    selectedSectors.forEach(sector => {
+      const mapped = sectorCategoriesMap[sector];
+      if (mapped) cats.push(...mapped);
+    });
+    return cats.length > 0 ? [...new Set(cats)] : undefined;
+  })();
+
+  // Fetch ONLY the current page from the server
+  const { data, isLoading } = useCatalogProducts({
+    page: currentPage,
+    perPage: PRODUCTS_PER_PAGE,
+    search: debouncedSearch || undefined,
+    categories: serverCategories,
+    brands: selectedBrands.length > 0 ? selectedBrands : undefined,
+    locations: selectedLocations.length > 0 ? selectedLocations : undefined,
+    sortBy,
+    officialOnly: true,
+  });
+
+  const products = data?.products || [];
+  const totalCount = data?.count || 0;
+  const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE);
+
   const { data: brands = [] } = useBrands();
   const { data: allCategories = [] } = useCategories();
 
@@ -88,7 +118,7 @@ const Catalogo = () => {
     'agroindustria': 'Agroindustria',
   };
 
-  // Leer categoría, sector y marca de la URL al cargar
+  // Read category, sector and brand from URL on load
   useEffect(() => {
     const categorySlug = searchParams.get('categoria');
     if (categorySlug && categorySlugMap[categorySlug]) {
@@ -106,87 +136,10 @@ const Catalogo = () => {
     }
   }, [searchParams]);
 
-  // Filtrar productos basado en los filtros seleccionados
-  const filteredProducts = products.filter((product) => {
-    // Filtro por búsqueda de texto
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const matchesTitle = product.title.toLowerCase().includes(query);
-      const matchesSku = product.sku.toLowerCase().includes(query);
-      const matchesBrand = product.brand.toLowerCase().includes(query);
-      const matchesDescription = (product.description || '').toLowerCase().includes(query);
-      if (!matchesTitle && !matchesSku && !matchesBrand && !matchesDescription) return false;
-    }
-
-    // Filtro por sector (usando mapeo de categorías relacionadas)
-    if (selectedSectors.length > 0) {
-      const relatedCategories = selectedSectors.flatMap(sector => 
-        (sectorCategoriesMap[sector] || [sector]).map(c => c.toLowerCase())
-      );
-      const hasSector = (product.categories || []).some(cat => 
-        relatedCategories.some(related => 
-          cat.toLowerCase().includes(related) || related.includes(cat.toLowerCase())
-        )
-      );
-      if (!hasSector) return false;
-    }
-
-    // Filtro por categoría
-    if (selectedCategories.length > 0) {
-      const hasCategory = (product.categories || []).some(cat => 
-        selectedCategories.some(selected => 
-          cat.toLowerCase().includes(selected.toLowerCase()) || 
-          selected.toLowerCase().includes(cat.toLowerCase())
-        )
-      );
-      if (!hasCategory) return false;
-    }
-
-    // Filtro por marca
-    if (selectedBrands.length > 0) {
-      if (!selectedBrands.includes(product.brand)) return false;
-    }
-
-    // Filtro por ubicación
-    if (selectedLocations.length > 0) {
-      const hasLocation = selectedLocations.some(loc => 
-        (product.location || '').includes(loc) || loc.includes('Virtual') && product.location === 'Virtual'
-      );
-      if (!hasLocation) return false;
-    }
-
-    return true;
-  });
-
-  // Sort products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case 'recientes':
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      case 'destacados':
-        return (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0);
-      case 'precio-asc':
-        return (a.price || 0) - (b.price || 0);
-      case 'precio-desc':
-        return (b.price || 0) - (a.price || 0);
-      case 'nombre':
-        return a.title.localeCompare(b.title);
-      default:
-        return 0;
-    }
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(sortedProducts.length / PRODUCTS_PER_PAGE);
-  const paginatedProducts = sortedProducts.slice(
-    (currentPage - 1) * PRODUCTS_PER_PAGE,
-    currentPage * PRODUCTS_PER_PAGE
-  );
-
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedSectors, selectedCategories, selectedBrands, selectedLocations, searchQuery, sortBy]);
+  }, [selectedSectors, selectedCategories, selectedBrands, selectedLocations, debouncedSearch, sortBy]);
 
   const toggleFilter = (value: string, list: string[], setList: (v: string[]) => void) => {
     if (list.includes(value)) {
@@ -386,7 +339,7 @@ const Catalogo = () => {
 
               {/* Results Count */}
               <p className="text-sm text-muted-foreground hidden lg:block">
-                Mostrando {paginatedProducts.length} de {sortedProducts.length} productos
+                Mostrando {products.length} de {totalCount} productos
               </p>
 
               {/* Sort */}
@@ -446,7 +399,7 @@ const Catalogo = () => {
               <>
                 {/* Products Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {paginatedProducts.map((product) => (
+                  {products.map((product) => (
                     <ProductCard 
                       key={product.id} 
                       id={product.id}
@@ -467,7 +420,7 @@ const Catalogo = () => {
                   ))}
                 </div>
 
-                {sortedProducts.length === 0 && (
+                {totalCount === 0 && !isLoading && (
                   <div className="text-center py-20">
                     <p className="text-muted-foreground text-lg">
                       No se encontraron productos con los filtros seleccionados.
@@ -557,7 +510,7 @@ const Catalogo = () => {
                   className="btn-gold w-full"
                   onClick={() => setMobileFiltersOpen(false)}
                 >
-                  Ver {sortedProducts.length} resultados
+                  Ver {totalCount} resultados
                 </Button>
               </div>
             </motion.div>
