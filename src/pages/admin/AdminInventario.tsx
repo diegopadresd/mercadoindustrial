@@ -157,8 +157,8 @@ const AdminInventario = () => {
       if (filterStatus === 'active') query = query.eq('is_active', true);
       if (filterStatus === 'draft') query = query.eq('is_active', false);
 
-      if (filterPrice === 'with_price') query = query.not('price', 'is', null);
-      if (filterPrice === 'no_price') query = query.is('price', null);
+      if (filterPrice === 'with_price') query = query.not('price', 'is', null).gt('price', 0);
+      if (filterPrice === 'no_price') query = query.or('price.is.null,price.eq.0');
 
       if (filterLocation !== 'all') {
         if (filterLocation === 'none') {
