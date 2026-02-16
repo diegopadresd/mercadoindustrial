@@ -4,139 +4,47 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
-import { Clock, Filter } from 'lucide-react';
+import { Clock, Loader2 } from 'lucide-react';
+import { useProducts } from '@/hooks/useProducts';
 
-const recentProducts = [
-  {
-    id: 'plataforma-genie-s125',
-    title: 'Plataforma telescópica año 2007 modelo S125 marca GENIE',
-    sku: 'VEHI-024-NAV',
-    brand: 'GENIE',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/VEHI-024-NAV_PCV_7_med_thumb.webp',
-    location: 'Virtual',
-    categories: ['Plataforma Telescópica'],
-    isFeatured: true,
-    isNew: true,
-  },
-  {
-    id: 'tensor-banda-mercedes',
-    title: 'Tensor de banda parte A 906 200 67 70 marca MERCEDES-BENZ',
-    sku: 'PMN-2902',
-    brand: 'MERCEDES-BENZ',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2902_Refacciones_5_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Refacciones'],
-    isNew: true,
-  },
-  {
-    id: 'valvula-sauer-sundstrand',
-    title: 'Válvula de placa 3000 a 5000 PSI parte 9220991 marca SAUER SUNDSTRAND',
-    sku: 'PMN-2904',
-    brand: 'SAUER SUNDSTRAND',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2904_V%C3%A1lvulas_2_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Válvulas'],
-    isNew: true,
-  },
-  {
-    id: 'arandela-flowserve',
-    title: 'Arandela de seguridad 3" parte 690 marca FLOWSERVE',
-    sku: 'PMN-2901',
-    brand: 'FLOWSERVE',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2901_Refacciones_2_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Refacciones'],
-    isNew: true,
-  },
-  {
-    id: 'deflector-flowserve',
-    title: 'Deflector 1 7/8" parte 241-1 marca FLOWSERVE',
-    sku: 'PMN-2900',
-    brand: 'FLOWSERVE',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2900_Refacciones_1_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Refacciones'],
-    isNew: true,
-  },
-  {
-    id: 'anillo-desgaste-flowserve',
-    title: 'Anillo de desgaste 7 1/8" parte 207 marca FLOWSERVE',
-    sku: 'PMN-2899',
-    brand: 'FLOWSERVE',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/PMN-2899_Refacciones_1_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Refacciones'],
-    isNew: true,
-  },
-  {
-    id: 'rodillo-retorno-24',
-    title: 'Rodillo de retorno para banda de 24" marca MI COMPONENTS',
-    sku: 'ROD-097',
-    brand: 'MI COMPONENTS',
-    price: 1657.00,
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/09/ROD-097_Rodillo_2_a_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Equipos Nuevos'],
-    isNew: true,
-  },
-  {
-    id: 'mancuerna-rodillo-triple',
-    title: 'Mancuerna de rodillo triple para banda de 30" 20° marca MI COMPONENTS',
-    sku: 'ROD-094',
-    brand: 'MI COMPONENTS',
-    price: 3337.00,
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/09/ROD-094_Rodillo_1_a_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Equipos Nuevos'],
-    isNew: true,
-  },
-  {
-    id: 'banda-transportadora-36',
-    title: 'Banda transportadora tipo chapulín de 36" x 100 ft de largo marca MI COMPONENTS',
-    sku: 'BT-204',
-    brand: 'MI COMPONENTS',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/07/BT-204_NUEVAS_2_13_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Bandas transportadoras'],
-    isNew: true,
-  },
-  {
-    id: 'retroexcavadora-caterpillar-416d',
-    title: 'Retroexcavadora año 2001 modelo 416D marca CATERPILLAR',
-    sku: 'VEHI-017-NAV',
-    brand: 'CATERPILLAR',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/VEHI-017-NAV_4_med_thumb.webp',
-    location: 'Virtual',
-    categories: ['Maquinaria pesada'],
-    isFeatured: true,
-  },
-  {
-    id: 'excavadora-caterpillar-d6h',
-    title: 'Excavadora sobre orugas año 1986 modelo D6H marca CATERPILLAR',
-    sku: 'VEHI-018-NAV',
-    brand: 'CATERPILLAR',
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2026/01/VEHI-018-NAV_21_med_thumb.webp',
-    location: 'Virtual',
-    categories: ['Bulldozer'],
-    isFeatured: true,
-  },
-  {
-    id: 'reductor-flecha-hueca',
-    title: 'REDUCTOR MI COMPONENTS FLECHA HUECA TAMAÑO 6 Relación 25:1',
-    sku: 'RD-069',
-    brand: 'MI COMPONENTS',
-    price: 70510.00,
-    image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2023/11/SMRY6__25_4_med_thumb.webp',
-    location: 'Hermosillo, Sonora, México',
-    categories: ['Construcción'],
-    isFeatured: true,
-  },
-];
+const PRODUCTS_PER_PAGE = 24;
 
 const sectors = ['Todos', 'Industrial', 'Minería', 'Construcción', 'Alimenticio', 'Eléctrico', 'Agroindustria'];
 
+const sectorCategoriesMap: Record<string, string[]> = {
+  'Industrial': ['Industrial', 'Bombas', 'Válvulas', 'Compresores', 'Tanques', 'Bandas transportadoras', 'Reductores', 'Motorreductores', 'Blowers', 'Pistones neumáticos', 'Coples', 'Transmisiones', 'Tubería', 'Conexiones', 'Sellos', 'Baleros', 'Baleros y rodamientos', 'Chumaceras', 'Flechas', 'Bujes', 'Resortes', 'Rodillo', 'Rodillos', 'Soportes', 'Abrazaderas', 'Tornillería', 'Tuercas', 'Pernos', 'Bombas centrífugas', 'Bombas hidráulicas', 'Bombas de lodo', 'Ciclones', 'Secadores', 'Prensas', 'Hornos', 'Molinos', 'Transportadores', 'Tanque vertical', 'Tanques / Silos', 'Maquilador', 'Consumibles', 'Manómetro'],
+  'Minería': ['Minería', 'Equipo minero', 'Quebradores / Trituradores', 'Quebradores Trituradores', 'Cribas', 'Mallas para cribas', 'Filtros prensas', 'Bombas de lodo', 'Ciclones', 'Centrífugos', 'Tamices', 'Molinos', 'Maquinaria pesada'],
+  'Construcción': ['Construcción', 'Maquinaria pesada', 'Bulldozer', 'Excavadora', 'Compactador', 'Perforadoras', 'Plataforma Telescópica', 'Vehículos', 'Vehículos / Remolques', 'Pipas', 'Pipa para agua', 'Grúas', 'Retroexcavadora', 'Cargador frontal', 'Montacargas', 'Rodillo', 'Compactadores'],
+  'Alimenticio': ['Alimenticio', 'Equipos de acero inoxidable', 'Tanques de acero inoxidable', 'Bombas de acero inoxidable', 'Equipo de laboratorio', 'Equipos de laboratorio'],
+  'Eléctrico': ['Eléctrico', 'Equipos Eléctricos', 'Equipo eléctrico', 'Equipos electrónicos', 'Motores eléctricos', 'Interruptores', 'Fusibles', 'Contactores', 'Arrancadores', 'Transformadores', 'Transformadores de Control', 'Variadores de velocidad / Variadores de Frecuencia', 'Tableros de distribución', 'Tableros de control', 'Centros de Carga', 'Controles eléctricos', 'Controladores', 'Gabinetes', 'Sensores', 'Bobinas', 'Lámparas', 'Cables', 'Conectores', 'Clavijas', 'Botones', 'Tomacorrientes', 'Terminales', 'Placas', 'Relevadores de Sobrecarga', 'Reles/ Relevadores de sobrecarga', 'Elementos térmicos', 'Contadores', 'Medidor digital', 'Fuentes de poder', 'Servomotores (Actuadores)', 'Protectores Manuales', 'Capacitores', 'Tarjeta electrónica', 'Banda motriz'],
+  'Agroindustria': ['Agrícola', 'Agroindustria', 'Ganadero', 'Pesquero'],
+};
+
 const Recientes = () => {
   const [selectedSector, setSelectedSector] = useState('Todos');
+  const [visibleCount, setVisibleCount] = useState(PRODUCTS_PER_PAGE);
+
+  const { data: products = [], isLoading } = useProducts({ officialOnly: true });
+
+  // Sort by created_at descending (most recent first)
+  const sortedProducts = [...products].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  // Filter by sector
+  const filteredProducts = selectedSector === 'Todos'
+    ? sortedProducts
+    : sortedProducts.filter((product) => {
+        const relatedCategories = (sectorCategoriesMap[selectedSector] || [selectedSector]).map(c => c.toLowerCase());
+        return (product.categories || []).some(cat =>
+          relatedCategories.some(related =>
+            cat.toLowerCase().includes(related) || related.includes(cat.toLowerCase())
+          )
+        );
+      });
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredProducts.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -172,7 +80,10 @@ const Recientes = () => {
             <Button
               key={sector}
               variant={selectedSector === sector ? 'default' : 'outline'}
-              onClick={() => setSelectedSector(sector)}
+              onClick={() => {
+                setSelectedSector(sector);
+                setVisibleCount(PRODUCTS_PER_PAGE);
+              }}
               className={selectedSector === sector ? 'btn-gold' : ''}
             >
               {sector}
@@ -180,24 +91,70 @@ const Recientes = () => {
           ))}
         </motion.div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {recentProducts.map((product) => (
-            <ProductCard key={product.id} {...product} />
-          ))}
-        </div>
+        {/* Results count */}
+        {!isLoading && (
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Mostrando {visibleProducts.length} de {filteredProducts.length} productos
+          </p>
+        )}
 
-        {/* Load More */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-center mt-12"
-        >
-          <Button variant="outline" size="lg" className="px-12">
-            Cargar más productos
-          </Button>
-        </motion.div>
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Cargando productos...</span>
+          </div>
+        ) : (
+          <>
+            {/* Products Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {visibleProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  title={product.title}
+                  sku={product.sku}
+                  brand={product.brand}
+                  price={product.price}
+                  image={product.images?.[0] || '/placeholder.svg'}
+                  location={product.location || undefined}
+                  categories={product.categories || []}
+                  isNew={product.is_new || false}
+                  isFeatured={product.is_featured || false}
+                  isAuction={product.is_auction || false}
+                  auctionMinPrice={product.auction_min_price}
+                  auctionEnd={product.auction_end}
+                  contactForQuote={product.contact_for_quote || false}
+                />
+              ))}
+            </div>
+
+            {/* Load More */}
+            {hasMore && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-center mt-12"
+              >
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="px-12"
+                  onClick={() => setVisibleCount(prev => prev + PRODUCTS_PER_PAGE)}
+                >
+                  Cargar más productos
+                </Button>
+              </motion.div>
+            )}
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-20 text-muted-foreground">
+                No se encontraron productos en este sector.
+              </div>
+            )}
+          </>
+        )}
 
         {/* Info Section */}
         <motion.div
@@ -210,7 +167,7 @@ const Recientes = () => {
             ¿Buscas algo específico?
           </h2>
           <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-            Tenemos más de 12,000 productos en nuestro catálogo. Usa nuestro buscador 
+            Tenemos más de {filteredProducts.length > 0 ? filteredProducts.length.toLocaleString('es-MX') : '12,000'} productos en nuestro catálogo. Usa nuestro buscador
             avanzado o contacta a un asesor para encontrar exactamente lo que necesitas.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
