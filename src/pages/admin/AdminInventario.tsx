@@ -783,13 +783,29 @@ const AdminInventario = () => {
                   </div>
 
                   <div className="space-y-2 col-span-2">
-                    <Label htmlFor="description">Descripción</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      rows={4}
-                    />
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="description">Descripción</Label>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, _showRawHtml: !((formData as any)._showRawHtml) } as any)}
+                        className="text-xs text-muted-foreground hover:text-foreground underline"
+                      >
+                        {(formData as any)._showRawHtml ? 'Ver renderizado' : 'Editar HTML'}
+                      </button>
+                    </div>
+                    {(formData as any)._showRawHtml ? (
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        rows={6}
+                      />
+                    ) : (
+                      <div 
+                        className="min-h-[100px] max-h-[200px] overflow-auto rounded-md border border-input bg-background px-3 py-2 text-sm prose prose-sm max-w-none [&_h6]:font-bold [&_h6]:mt-3 [&_h6]:mb-1 [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-0.5 [&_p]:mb-1"
+                        dangerouslySetInnerHTML={{ __html: formData.description || '<span class="text-muted-foreground">Sin descripción</span>' }}
+                      />
+                    )}
                   </div>
 
                   {/* Shipping Data Section */}
