@@ -103,50 +103,7 @@ export const Header = () => {
             </a>
           </div>
           <div className="flex items-center gap-4 md:gap-6">
-            {/* Language Toggle */}
-            <div className="relative" ref={langDropdownRef}>
-              <button
-                onClick={() => {
-                  setLangDropdownOpen(!langDropdownOpen);
-                  setCurrencyDropdownOpen(false);
-                }}
-                className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-secondary-foreground/10 transition-colors"
-                title={t('common.language')}
-              >
-                <Globe size={14} />
-                <span className="font-medium">{language.toUpperCase()}</span>
-                <ChevronDown size={12} className={`transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              <AnimatePresence>
-                {langDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="absolute top-full right-0 mt-1 bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1 min-w-[100px] z-50"
-                  >
-                    <button
-                      onClick={() => {
-                        setLanguage('es');
-                        setLangDropdownOpen(false);
-                      }}
-                      className={`w-full px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 ${language === 'es' ? 'bg-muted font-medium' : ''}`}
-                    >
-                      🇲🇽 Español
-                    </button>
-                    <button
-                      onClick={() => {
-                        setLanguage('en');
-                        setLangDropdownOpen(false);
-                      }}
-                      className={`w-full px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 ${language === 'en' ? 'bg-muted font-medium' : ''}`}
-                    >
-                      🇺🇸 English
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* Language Toggle removed - Spanish only */}
 
             {/* Currency Toggle */}
             <div className="relative" ref={currencyDropdownRef}>
@@ -627,32 +584,8 @@ export const Header = () => {
               )}
             </div>
 
-            {/* Mobile Language & Currency */}
+            {/* Mobile Currency */}
             <div className="mt-4 pt-4 border-t border-border space-y-3">
-              <div className="flex items-center justify-between px-2">
-                <span className="text-sm font-medium flex items-center gap-2">
-                  <Globe size={16} />
-                  {t('common.language')}
-                </span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setLanguage('es')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                      language === 'es' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
-                    }`}
-                  >
-                    🇲🇽 ES
-                  </button>
-                  <button
-                    onClick={() => setLanguage('en')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                      language === 'en' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
-                    }`}
-                  >
-                    🇺🇸 EN
-                  </button>
-                </div>
-              </div>
               <div className="flex items-center justify-between px-2">
                 <span className="text-sm font-medium flex items-center gap-2">
                   <DollarSign size={16} />
