@@ -461,13 +461,13 @@ const AdminMigracion = () => {
                     className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                     onClick={() => setPreviewProduct(product)}
                   >
-                    {product.images[0] ? (
-                      <img src={product.images[0]} alt="" className="w-12 h-12 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }} />
-                    ) : (
-                      <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                    <div className="w-12 h-12 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {product.images[0] ? (
+                        <img src={product.images[0]} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
                         <Image className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    )}
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{product.title}</p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -524,10 +524,29 @@ const AdminMigracion = () => {
               <div>
                 <p className="font-medium mb-2">Imágenes ({previewProduct.images.length})</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {previewProduct.images.slice(0, 6).map((img, i) => (
-                    <img key={i} src={img} alt="" className="w-full aspect-square object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }} />
+                  {previewProduct.images.slice(0, 9).map((img, i) => (
+                    <a key={i} href={img} target="_blank" rel="noopener noreferrer" className="block group">
+                      <div className="w-full aspect-square rounded border overflow-hidden bg-muted relative">
+                        <img src={img} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }} />
+                        <div className="hidden absolute inset-0 flex flex-col items-center justify-center text-xs text-muted-foreground p-1">
+                          <Image className="h-5 w-5 mb-1" />
+                          <span className="truncate w-full text-center">Error al cargar</span>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground truncate mt-1 group-hover:text-primary">{img.split('/').pop()}</p>
+                    </a>
                   ))}
                 </div>
+                {previewProduct.images.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">URLs de imágenes:</p>
+                    <div className="bg-muted/50 rounded p-2 max-h-32 overflow-auto space-y-1">
+                      {previewProduct.images.map((img, i) => (
+                        <a key={i} href={img} target="_blank" rel="noopener noreferrer" className="block text-[11px] text-primary hover:underline truncate">{img}</a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             {previewProduct.description && (
