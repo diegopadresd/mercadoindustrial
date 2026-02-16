@@ -46,6 +46,16 @@ const categorySlugMap: Record<string, string> = {
 };
 
 const sectors = ['Industrial', 'Minería', 'Construcción', 'Alimenticio', 'Eléctrico', 'Agroindustria'];
+
+// Mapeo de sectores a categorías relacionadas
+const sectorCategoriesMap: Record<string, string[]> = {
+  'Industrial': ['Industrial', 'Bombas', 'Válvulas', 'Compresores', 'Tanques', 'Bandas transportadoras', 'Reductores', 'Motorreductores', 'Blowers', 'Pistones neumáticos', 'Coples', 'Transmisiones', 'Tubería', 'Conexiones', 'Sellos', 'Baleros', 'Baleros y rodamientos', 'Chumaceras', 'Flechas', 'Bujes', 'Resortes', 'Rodillo', 'Rodillos', 'Soportes', 'Abrazaderas', 'Tornillería', 'Tuercas', 'Pernos', 'Bombas centrífugas', 'Bombas hidráulicas', 'Bombas de lodo', 'Ciclones', 'Secadores', 'Prensas', 'Hornos', 'Molinos', 'Transportadores', 'Tanque vertical', 'Tanques / Silos', 'Maquilador', 'Consumibles', 'Manómetro'],
+  'Minería': ['Minería', 'Equipo minero', 'Quebradores / Trituradores', 'Quebradores Trituradores', 'Cribas', 'Mallas para cribas', 'Filtros prensas', 'Bombas de lodo', 'Ciclones', 'Centrífugos', 'Tamices', 'Molinos', 'Maquinaria pesada'],
+  'Construcción': ['Construcción', 'Maquinaria pesada', 'Bulldozer', 'Excavadora', 'Compactador', 'Perforadoras', 'Plataforma Telescópica', 'Vehículos', 'Vehículos / Remolques', 'Pipas', 'Pipa para agua', 'Grúas', 'Retroexcavadora', 'Cargador frontal', 'Montacargas', 'Rodillo', 'Compactadores'],
+  'Alimenticio': ['Alimenticio', 'Equipos de acero inoxidable', 'Tanques de acero inoxidable', 'Bombas de acero inoxidable', 'Equipo de laboratorio', 'Equipos de laboratorio'],
+  'Eléctrico': ['Eléctrico', 'Equipos Eléctricos', 'Equipo eléctrico', 'Equipos electrónicos', 'Motores eléctricos', 'Interruptores', 'Fusibles', 'Contactores', 'Arrancadores', 'Transformadores', 'Transformadores de Control', 'Variadores de velocidad / Variadores de Frecuencia', 'Tableros de distribución', 'Tableros de control', 'Centros de Carga', 'Controles eléctricos', 'Controladores', 'Gabinetes', 'Sensores', 'Bobinas', 'Lámparas', 'Cables', 'Conectores', 'Clavijas', 'Botones', 'Tomacorrientes', 'Terminales', 'Placas', 'Relevadores de Sobrecarga', 'Reles/ Relevadores de sobrecarga', 'Elementos térmicos', 'Contadores', 'Medidor digital', 'Fuentes de poder', 'Servomotores (Actuadores)', 'Protectores Manuales', 'Capacitores', 'Tarjeta electrónica', 'Banda motriz'],
+  'Agroindustria': ['Agrícola', 'Agroindustria', 'Ganadero', 'Pesquero'],
+};
 const locations = ['Hermosillo, Sonora', 'Mexicali, Baja California', 'Santa Catarina, Nuevo León', 'Tijuana, Baja California', 'Virtual'];
 
 const PRODUCTS_PER_PAGE = 12;
@@ -103,12 +113,14 @@ const Catalogo = () => {
       if (!matchesTitle && !matchesSku && !matchesBrand && !matchesDescription) return false;
     }
 
-    // Filtro por sector
+    // Filtro por sector (usando mapeo de categorías relacionadas)
     if (selectedSectors.length > 0) {
+      const relatedCategories = selectedSectors.flatMap(sector => 
+        (sectorCategoriesMap[sector] || [sector]).map(c => c.toLowerCase())
+      );
       const hasSector = (product.categories || []).some(cat => 
-        selectedSectors.some(selected => 
-          cat.toLowerCase().includes(selected.toLowerCase()) || 
-          selected.toLowerCase().includes(cat.toLowerCase())
+        relatedCategories.some(related => 
+          cat.toLowerCase().includes(related) || related.includes(cat.toLowerCase())
         )
       );
       if (!hasSector) return false;
