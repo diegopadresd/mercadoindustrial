@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Search, ArrowRight, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,8 +26,11 @@ const brandLogos: Record<string, string> = {
   'DANFOSS': '/brands/danfoss.svg',
 };
 
+const BRANDS_PER_PAGE = 50;
+
 const Marcas = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: brands = [], isLoading } = useQuery({
     queryKey: ['brands-with-count'],
@@ -74,6 +78,18 @@ const Marcas = () => {
     brand.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredBrands.length / BRANDS_PER_PAGE);
+  const paginatedBrands = filteredBrands.slice(
+    (currentPage - 1) * BRANDS_PER_PAGE,
+    currentPage * BRANDS_PER_PAGE
+  );
+
+  // Reset page when search changes
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -111,7 +127,7 @@ const Marcas = () => {
               type="text"
               placeholder="Buscar marca..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="pl-12 h-14 text-lg rounded-2xl"
             />
           </div>
@@ -124,9 +140,15 @@ const Marcas = () => {
           </div>
         ) : (
           <>
+            {/* Results info */}
+            <p className="text-sm text-muted-foreground mb-6 text-center">
+              Mostrando {paginatedBrands.length} de {filteredBrands.length} marcas
+              {totalPages > 1 && ` · Página ${currentPage} de ${totalPages}`}
+            </p>
+
             {/* Brands Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredBrands.map((brand, index) => (
+              {paginatedBrands.map((brand, index) => (
                 <motion.div
                   key={brand.name}
                   initial={{ opacity: 0, y: 20 }}
@@ -172,6 +194,47 @@ const Marcas = () => {
                 <p className="text-muted-foreground text-lg">
                   No se encontraron marcas con "{searchQuery}"
                 </p>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-10">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => { setCurrentPage(1); window.scrollTo(0, 0); }}
+                >
+                  Primera
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => { setCurrentPage(p => p - 1); window.scrollTo(0, 0); }}
+                >
+                  Anterior
+                </Button>
+                <span className="text-sm text-muted-foreground px-3">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() => { setCurrentPage(p => p + 1); window.scrollTo(0, 0); }}
+                >
+                  Siguiente
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() => { setCurrentPage(totalPages); window.scrollTo(0, 0); }}
+                >
+                  Última
+                </Button>
               </div>
             )}
           </>
