@@ -745,13 +745,30 @@ const AdminInventario = () => {
                     />
                   </div>
 
-                  <div className="space-y-2 col-span-2">
-                    <Label htmlFor="location">Ubicación</Label>
-                    <Input
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Sucursal (público)</Label>
+                    <select
                       id="location"
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="Ej: Hermosillo, Sonora"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="">Sin sucursal</option>
+                      <option value="Hermosillo">Hermosillo</option>
+                      <option value="Mexicali">Mexicali</option>
+                      <option value="Santa Catarina">Santa Catarina</option>
+                      <option value="Tijuana">Tijuana</option>
+                      <option value="Nogales, AZ">Nogales, AZ</option>
+                      <option value="Coahuila">Coahuila</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="warehouse_code">Código bodega (interno)</Label>
+                    <Input
+                      id="warehouse_code"
+                      value={(formData as any).warehouse_code || ''}
+                      onChange={(e) => setFormData({ ...formData, warehouse_code: e.target.value } as any)}
+                      placeholder="Ej: B1 RO8"
                     />
                   </div>
 
