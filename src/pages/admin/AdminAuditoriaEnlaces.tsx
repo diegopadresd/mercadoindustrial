@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -11,229 +12,272 @@ import {
   Plus,
   ArrowLeft,
   Clock,
-  FileText
+  FileText,
+  RefreshCw,
+  Loader2,
+  XCircle,
 } from 'lucide-react';
 import AccessDenied from '@/components/admin/AccessDenied';
 
-// Audit data - Last update: February 2026
-const auditData = {
-  lastUpdated: '1 de Febrero, 2026',
-  summary: {
-    pagesCreated: 7,
-    linksFixed: 12,
-    routesAdded: 9,
-  },
-  createdPages: [
-    { path: '/privacidad', name: 'Política de Privacidad', status: 'created' },
-    { path: '/terminos', name: 'Términos y Condiciones', status: 'created' },
-    { path: '/contacto', name: 'Página de Contacto', status: 'created' },
-    { path: '/soporte', name: 'Centro de Soporte', status: 'created' },
-    { path: '/faq', name: 'Preguntas Frecuentes', status: 'created' },
-    { path: '/como-vender', name: 'Cómo Vender', status: 'created' },
-    { path: '/como-comprar', name: 'Cómo Comprar', status: 'created' },
-    { path: '/subastas-y-ofertas', name: 'Subastas y Ofertas', status: 'created' },
-    { path: '/politicas-de-pago', name: 'Políticas de Pago', status: 'created' },
-  ],
-  fixedLinks: [
-    { location: 'Footer', original: '/privacidad', fixed: 'Página creada', type: 'broken' },
-    { location: 'Footer', original: '/terminos', fixed: 'Página creada', type: 'broken' },
-    { location: 'Footer - Ayuda', original: '/faq', fixed: 'Página creada', type: 'broken' },
-    { location: 'Footer - Ayuda', original: '/como-vender', fixed: 'Página creada', type: 'broken' },
-    { location: 'Footer - Ayuda', original: '/como-comprar', fixed: 'Página creada', type: 'broken' },
-    { location: 'Footer - Ayuda', original: '/subastas-y-ofertas', fixed: 'Página creada', type: 'broken' },
-    { location: 'Footer - Ayuda', original: '/politicas-de-pago', fixed: 'Página creada', type: 'broken' },
-    { location: 'Hero Section', original: 'Explorar catálogo', fixed: 'Comprar Maquinaria → /catalogo', type: 'updated' },
-    { location: 'Hero Section', original: 'WhatsApp externo', fixed: 'Vender Maquinaria → /auth', type: 'updated' },
-    { location: 'ProductoDetalle', original: 'Cotizar envío sin ruta', fixed: '/cotizador?productoId=ID', type: 'updated' },
-    { location: 'ProductoDetalle', original: 'Sin sección confianza', fixed: 'Agregada "Compra con confianza"', type: 'added' },
-    { location: 'ProductoDetalle', original: 'Sin info vendedor', fixed: 'Agregada sección vendedor', type: 'added' },
-  ],
-  verifiedRoutes: [
-    { path: '/', name: 'Inicio', status: 'ok' },
-    { path: '/catalogo', name: 'Catálogo', status: 'ok' },
-    { path: '/productos/:id', name: 'Detalle de Producto', status: 'ok' },
-    { path: '/marcas', name: 'Marcas', status: 'ok' },
-    { path: '/blog', name: 'Blog', status: 'ok' },
-    { path: '/nosotros', name: 'Quiénes Somos', status: 'ok' },
-    { path: '/como-vender', name: 'Vende con Nosotros', status: 'ok' },
-    { path: '/recientes', name: 'Publicaciones Recientes', status: 'ok' },
-    { path: '/carrito', name: 'Carrito', status: 'ok' },
-    { path: '/cotizador', name: 'Cotizador de Envío', status: 'ok' },
-    { path: '/auth', name: 'Autenticación', status: 'ok' },
-    { path: '/perfil', name: 'Mi Perfil', status: 'ok' },
-    { path: '/admin/*', name: 'Panel Admin', status: 'ok' },
-  ],
-  externalLinks: [
-    { location: 'Header', url: 'tel:956-321-8438', status: 'ok' },
-    { location: 'Header', url: 'tel:662-168-0047', status: 'ok' },
-    { location: 'Header', url: 'mailto:ventas@mercadoindustrial.mx', status: 'ok' },
-    { location: 'Footer', url: 'https://wa.me/526621680047', status: 'ok' },
-    { location: 'Footer', url: 'https://maps.app.goo.gl/*', status: 'ok' },
-    { location: 'Footer', url: 'PayPal link', status: 'ok' },
-  ],
-};
+// All known app routes to audit
+const appRoutes = [
+  { path: '/', name: 'Inicio' },
+  { path: '/catalogo', name: 'Catálogo' },
+  { path: '/marcas', name: 'Marcas' },
+  { path: '/blog', name: 'Blog' },
+  { path: '/nosotros', name: 'Quiénes Somos' },
+  { path: '/recientes', name: 'Publicaciones Recientes' },
+  { path: '/carrito', name: 'Carrito' },
+  { path: '/cotizador', name: 'Cotizador de Envío' },
+  { path: '/auth', name: 'Autenticación' },
+  { path: '/perfil', name: 'Mi Perfil' },
+  { path: '/mi-cuenta', name: 'Mi Cuenta' },
+  { path: '/mi-cuenta/mis-publicaciones', name: 'Mis Publicaciones' },
+  { path: '/mi-cuenta/mis-compras', name: 'Mis Compras' },
+  { path: '/mi-cuenta/mis-ofertas', name: 'Mis Ofertas' },
+  { path: '/mi-cuenta/chats', name: 'Chats' },
+  { path: '/mi-cuenta/vender', name: 'Activar Vendedor' },
+  { path: '/mi-cuenta/publicar', name: 'Publicar Producto' },
+  { path: '/checkout', name: 'Checkout' },
+  { path: '/checkout/success', name: 'Checkout Exitoso' },
+  { path: '/checkout/failure', name: 'Checkout Fallido' },
+  { path: '/checkout/pending', name: 'Checkout Pendiente' },
+  { path: '/faq', name: 'Preguntas Frecuentes' },
+  { path: '/como-vender', name: 'Cómo Vender' },
+  { path: '/como-comprar', name: 'Cómo Comprar' },
+  { path: '/subastas-y-ofertas', name: 'Subastas y Ofertas' },
+  { path: '/subastas', name: 'Subastas' },
+  { path: '/politicas-de-pago', name: 'Políticas de Pago' },
+  { path: '/privacidad', name: 'Privacidad' },
+  { path: '/terminos', name: 'Términos y Condiciones' },
+  { path: '/contacto', name: 'Contacto' },
+  { path: '/soporte', name: 'Soporte' },
+  { path: '/venta-externa', name: 'Venta Externa / Marketplace' },
+  { path: '/admin', name: 'Panel Admin' },
+];
+
+interface AuditResult {
+  path: string;
+  name: string;
+  status: 'ok' | 'error' | 'redirect';
+  statusCode?: number;
+  responseTime?: number;
+}
 
 const AdminAuditoriaEnlaces = () => {
   const { user } = useAuth();
   const { isAdmin } = useUserRole();
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [results, setResults] = useState<AuditResult[] | null>(null);
+  const [lastAuditDate, setLastAuditDate] = useState<string | null>(null);
+
+  const runAudit = useCallback(async () => {
+    setIsAuditing(true);
+    setResults(null);
+    const auditResults: AuditResult[] = [];
+
+    for (const route of appRoutes) {
+      const start = performance.now();
+      try {
+        const url = `${window.location.origin}${route.path}`;
+        const res = await fetch(url, { method: 'GET', redirect: 'follow' });
+        const elapsed = Math.round(performance.now() - start);
+        const text = await res.text();
+        
+        // Check if the page returned HTML with actual content (not a blank/error page)
+        const is404 = text.includes('404') && text.includes('NotFound');
+        
+        auditResults.push({
+          path: route.path,
+          name: route.name,
+          status: is404 ? 'error' : res.ok ? 'ok' : 'error',
+          statusCode: res.status,
+          responseTime: elapsed,
+        });
+      } catch {
+        auditResults.push({
+          path: route.path,
+          name: route.name,
+          status: 'error',
+          responseTime: 0,
+        });
+      }
+    }
+
+    setResults(auditResults);
+    setLastAuditDate(new Date().toLocaleString('es-MX', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }));
+    setIsAuditing(false);
+  }, []);
 
   if (!user || !isAdmin) {
     return <AccessDenied message="Solo los administradores pueden acceder a esta página." />;
   }
 
+  const okCount = results?.filter(r => r.status === 'ok').length || 0;
+  const errorCount = results?.filter(r => r.status === 'error').length || 0;
+  const totalRoutes = appRoutes.length;
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Auditoría de Enlaces</h1>
-          <p className="text-muted-foreground">Reporte de verificación y corrección de rutas</p>
+          <p className="text-muted-foreground">Verificación en tiempo real de todas las rutas del sitio</p>
         </div>
-        <Badge variant="outline" className="gap-2">
-          <Clock size={14} />
-          Actualizado: {auditData.lastUpdated}
-        </Badge>
+        <div className="flex items-center gap-3">
+          {lastAuditDate && (
+            <Badge variant="outline" className="gap-2">
+              <Clock size={14} />
+              {lastAuditDate}
+            </Badge>
+          )}
+          <Button 
+            className="btn-gold" 
+            onClick={runAudit} 
+            disabled={isAuditing}
+          >
+            {isAuditing ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                Auditando...
+              </>
+            ) : (
+              <>
+                <RefreshCw size={16} className="mr-2" />
+                Auditar
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-                <Plus className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{auditData.summary.pagesCreated}</p>
-                <p className="text-sm text-muted-foreground">Páginas creadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                <LinkIcon className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{auditData.summary.linksFixed}</p>
-                <p className="text-sm text-muted-foreground">Enlaces corregidos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-secondary/50 rounded-xl flex items-center justify-center">
-                <FileText className="w-6 h-6 text-secondary-foreground" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{auditData.summary.routesAdded}</p>
-                <p className="text-sm text-muted-foreground">Rutas agregadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Created Pages */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus size={20} className="text-green-600" />
-            Páginas Creadas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {auditData.createdPages.map((page, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 size={18} className="text-green-600" />
-                  <span className="font-medium">{page.name}</span>
+      {/* Summary Cards - only shown after audit */}
+      {results && (
+        <div className="grid sm:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <code className="text-sm bg-background px-2 py-1 rounded">{page.path}</code>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{totalRoutes}</p>
+                  <p className="text-sm text-muted-foreground">Rutas auditadas</p>
+                </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{okCount}</p>
+                  <p className="text-sm text-muted-foreground">Enlaces correctos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-destructive/10 rounded-xl flex items-center justify-center">
+                  <XCircle className="w-6 h-6 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{errorCount}</p>
+                  <p className="text-sm text-muted-foreground">Con problemas</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      {/* Fixed Links */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LinkIcon size={20} className="text-primary" />
-            Enlaces Corregidos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {auditData.fixedLinks.map((link, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  {link.type === 'broken' ? (
-                    <AlertCircle size={18} className="text-amber-500" />
-                  ) : (
-                    <CheckCircle2 size={18} className="text-primary" />
-                  )}
-                  <div>
-                    <span className="font-medium">{link.location}</span>
-                    <p className="text-sm text-muted-foreground">{link.original} → {link.fixed}</p>
+      {/* Audit in progress */}
+      {isAuditing && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Loader2 size={40} className="mx-auto mb-4 animate-spin text-primary" />
+            <p className="text-lg font-medium">Auditando {totalRoutes} rutas...</p>
+            <p className="text-sm text-muted-foreground">Esto puede tomar unos segundos</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No audit yet */}
+      {!results && !isAuditing && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <LinkIcon size={40} className="mx-auto mb-4 text-muted-foreground/40" />
+            <p className="text-lg font-medium text-foreground">Presiona "Auditar" para verificar los enlaces</p>
+            <p className="text-sm text-muted-foreground">Se revisarán {totalRoutes} rutas del sitio</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Results */}
+      {results && !isAuditing && (
+        <>
+          {/* Errors first */}
+          {errorCount > 0 && (
+            <Card className="border-destructive/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <AlertCircle size={20} />
+                  Rutas con Problemas ({errorCount})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {results.filter(r => r.status === 'error').map((r) => (
+                    <div key={r.path} className="flex items-center justify-between p-3 bg-destructive/5 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <XCircle size={18} className="text-destructive" />
+                        <div>
+                          <span className="font-medium">{r.name}</span>
+                          <p className="text-sm text-muted-foreground">{r.responseTime}ms</p>
+                        </div>
+                      </div>
+                      <code className="text-sm bg-background px-2 py-1 rounded">{r.path}</code>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* OK routes */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle2 size={20} className="text-green-600" />
+                Rutas Correctas ({okCount})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {results.filter(r => r.status === 'ok').map((r) => (
+                  <div key={r.path} className="flex items-center gap-2 p-2 bg-green-500/5 rounded-lg">
+                    <CheckCircle2 size={14} className="text-green-600 shrink-0" />
+                    <span className="text-sm truncate">{r.name}</span>
+                    <code className="text-xs text-muted-foreground ml-auto shrink-0">{r.path}</code>
                   </div>
-                </div>
-                <Badge variant={link.type === 'broken' ? 'secondary' : 'outline'}>
-                  {link.type === 'broken' ? 'Roto → Creado' : link.type === 'updated' ? 'Actualizado' : 'Agregado'}
-                </Badge>
+                ))}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Verified Routes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle2 size={20} className="text-green-600" />
-            Rutas Verificadas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {auditData.verifiedRoutes.map((route, index) => (
-              <div key={index} className="flex items-center gap-2 p-2 bg-green-500/5 rounded-lg">
-                <CheckCircle2 size={14} className="text-green-600 shrink-0" />
-                <span className="text-sm truncate">{route.name}</span>
-                <code className="text-xs text-muted-foreground ml-auto">{route.path}</code>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* External Links */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LinkIcon size={20} className="text-muted-foreground" />
-            Enlaces Externos Verificados
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 gap-2">
-            {auditData.externalLinks.map((link, index) => (
-              <div key={index} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
-                <CheckCircle2 size={14} className="text-green-600 shrink-0" />
-                <span className="text-sm">{link.location}</span>
-                <code className="text-xs text-muted-foreground truncate ml-auto max-w-[150px]">{link.url}</code>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {/* Back Button */}
       <div className="pt-4">
