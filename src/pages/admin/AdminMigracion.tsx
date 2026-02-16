@@ -78,7 +78,7 @@ interface MigrationProduct {
 
 const AdminMigracion = () => {
   const [files, setFiles] = useState<{ part1?: File; part2?: File; part3?: File }>({});
-  const [baseUrl, setBaseUrl] = useState('https://mercadoindustrial.com.mx/media/');
+  const [baseUrl, setBaseUrl] = useState('https://mercadoindustrial-files.s3.amazonaws.com/');
   const [parsing, setParsing] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
   const [migrationProducts, setMigrationProducts] = useState<MigrationProduct[]>([]);
