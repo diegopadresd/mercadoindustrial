@@ -86,6 +86,8 @@ const mockReviews = [
     timeAgo: 'Últimos 6 meses',
     comment: 'Excelente equipo, llegó en perfectas condiciones y muy bien embalado. La calidad es exactamente como se describe.',
     isVerified: true,
+    category: 'calidad',
+    rating: 'positive' as const,
   },
   {
     id: '2',
@@ -94,6 +96,8 @@ const mockReviews = [
     timeAgo: 'Mes pasado',
     comment: 'Transacción fluida, entrega rápida, artículo como se describe, buena relación calidad-precio y bien empaquetado. Vendedor de primera clase. Muchas gracias.',
     isVerified: true,
+    category: 'valor',
+    rating: 'positive' as const,
   },
   {
     id: '3',
@@ -102,6 +106,8 @@ const mockReviews = [
     timeAgo: 'Mes pasado',
     comment: 'Impresionante producto y muy bien embalado. Totalmente recomendado.',
     isVerified: true,
+    category: 'satisfaccion',
+    rating: 'positive' as const,
   },
   {
     id: '4',
@@ -110,6 +116,8 @@ const mockReviews = [
     timeAgo: 'Últimos 6 meses',
     comment: 'Impresionante vendedor y artículo. Todo perfecto.',
     isVerified: true,
+    category: 'aspecto',
+    rating: 'positive' as const,
   },
   {
     id: '5',
@@ -118,6 +126,8 @@ const mockReviews = [
     timeAgo: 'El año pasado',
     comment: 'Excelente por el precio, fácilmente uno de los artículos de mejor valor que he encontrado aquí. Resiste muy bien, lo uso a diario y funciona perfecto.',
     isVerified: true,
+    category: 'uso',
+    rating: 'positive' as const,
   },
 ];
 

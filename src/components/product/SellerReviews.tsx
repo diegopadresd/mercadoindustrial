@@ -18,6 +18,7 @@ interface Review {
   comment: string;
   isVerified: boolean;
   category?: string;
+  rating?: 'positive' | 'neutral' | 'negative';
 }
 
 interface SellerReviewsProps {
@@ -120,7 +121,19 @@ export const SellerReviews = ({
 
       {/* Reviews List */}
       <div className="space-y-6">
-        {reviews.map((review) => (
+        {reviews
+          .filter((review) => {
+            // Filter by category
+            if (activeCategory !== 'all' && review.category) {
+              if (review.category.toLowerCase() !== activeCategory.toLowerCase()) return false;
+            }
+            // Filter by rating type
+            if (selectedFilter === 'positivas' && review.rating !== 'positive') return false;
+            if (selectedFilter === 'neutras' && review.rating !== 'neutral') return false;
+            if (selectedFilter === 'negativas' && review.rating !== 'negative') return false;
+            return true;
+          })
+          .map((review) => (
           <div key={review.id} className="border-b border-border pb-6 last:border-0 last:pb-0">
             <div className="flex items-start justify-between gap-4 mb-2">
               <div className="flex items-center gap-2">
