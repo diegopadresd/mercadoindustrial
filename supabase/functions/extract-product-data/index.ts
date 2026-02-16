@@ -63,7 +63,7 @@ serve(async (req) => {
     // Get products that need extraction (missing model OR year OR dimensions)
     const { data: products, error: fetchError, count } = await supabaseAdmin
       .from("products")
-      .select("id, title, description, brand, model, year, hours_of_use, peso_aprox_kg, largo_aprox_cm, ancho_aprox_cm, alto_aprox_cm, cp_origen, is_functional, has_warranty, warranty_duration, warranty_conditions, contact_for_quote", { count: "exact" })
+      .select("id, title, description, brand, sku, price, images, categories, location, stock, model, year, hours_of_use, peso_aprox_kg, largo_aprox_cm, ancho_aprox_cm, alto_aprox_cm, cp_origen, is_functional, has_warranty, warranty_duration, warranty_conditions, contact_for_quote", { count: "exact" })
       .or("model.is.null,year.is.null,peso_aprox_kg.is.null,largo_aprox_cm.is.null")
       .order("created_at", { ascending: true })
       .range(offset, offset + batchSize - 1);
@@ -215,6 +215,16 @@ REGLAS:
           extracted: updates,
           current,
           fieldsUpdated: Object.keys(updates).length,
+          productData: {
+            description: product.description,
+            brand: product.brand,
+            sku: (product as any).sku,
+            price: (product as any).price,
+            images: (product as any).images || [],
+            categories: (product as any).categories || [],
+            location: (product as any).location,
+            stock: (product as any).stock,
+          },
         });
       } catch (productError) {
         console.error(`Error processing ${product.id}:`, productError);
