@@ -16,46 +16,63 @@ export const useProducts = (options?: {
   return useQuery({
     queryKey: ['products', options],
     queryFn: async () => {
-      let query = supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true);
+      const buildQuery = (from: number, to: number) => {
+        let query = supabase
+          .from('products')
+          .select('*')
+          .eq('is_active', true);
 
-      // Filter by seller type
-      if (options?.officialOnly) {
-        query = query.is('seller_id', null);
+        if (options?.officialOnly) {
+          query = query.is('seller_id', null);
+        }
+        if (options?.externalOnly) {
+          query = query.not('seller_id', 'is', null);
+        }
+        if (options?.category) {
+          query = query.contains('categories', [options.category]);
+        }
+        if (options?.brand) {
+          query = query.eq('brand', options.brand);
+        }
+        if (options?.featured) {
+          query = query.eq('is_featured', true);
+        }
+        if (options?.search) {
+          query = query.or(`title.ilike.%${options.search}%,sku.ilike.%${options.search}%,brand.ilike.%${options.search}%`);
+        }
+        if (options?.limit) {
+          query = query.limit(options.limit);
+        }
+
+        query = query.order('created_at', { ascending: false }).range(from, to);
+        return query;
+      };
+
+      // If a specific limit is set and <= 1000, single fetch is fine
+      if (options?.limit && options.limit <= 1000) {
+        const { data, error } = await buildQuery(0, options.limit - 1);
+        if (error) throw error;
+        return data as Product[];
       }
-      
-      if (options?.externalOnly) {
-        query = query.not('seller_id', 'is', null);
+
+      // Paginated fetch to get all products beyond 1000 limit
+      const PAGE_SIZE = 1000;
+      let allData: Product[] = [];
+      let from = 0;
+      let keepFetching = true;
+
+      while (keepFetching) {
+        const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
+        allData = allData.concat(data as Product[]);
+        if (!data || data.length < PAGE_SIZE) {
+          keepFetching = false;
+        } else {
+          from += PAGE_SIZE;
+        }
       }
 
-      if (options?.category) {
-        query = query.contains('categories', [options.category]);
-      }
-
-      if (options?.brand) {
-        query = query.eq('brand', options.brand);
-      }
-
-      if (options?.featured) {
-        query = query.eq('is_featured', true);
-      }
-
-      if (options?.search) {
-        query = query.or(`title.ilike.%${options.search}%,sku.ilike.%${options.search}%,brand.ilike.%${options.search}%`);
-      }
-
-      if (options?.limit) {
-        query = query.limit(options.limit);
-      }
-
-      query = query.order('created_at', { ascending: false });
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as Product[];
+      return allData;
     },
   });
 };
