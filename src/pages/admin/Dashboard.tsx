@@ -23,6 +23,7 @@ import {
   Ticket,
   Link as LinkIcon,
   Target,
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +47,7 @@ import AdminAuditoriaEnlaces from './AdminAuditoriaEnlaces';
 import AdminSoporte from './AdminSoporte';
 import AdminImportClients from './AdminImportClients';
 import VendorLeads from './VendorLeads';
+import AdminVendedores from './AdminVendedores';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -63,6 +65,7 @@ const allSidebarItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: 'Panel de Control', path: '/admin', description: 'Vista general', vendedorOficialAccess: true },
   { icon: UserCog, label: 'Usuarios', path: '/admin/usuarios', description: 'Gestión de usuarios', adminOnly: true },
   { icon: Users, label: 'Clientes', path: '/admin/clientes', description: 'Gestión de clientes', adminOnly: true },
+  { icon: TrendingUp, label: 'Vendedores', path: '/admin/vendedores', description: 'Rendimiento del equipo', adminOnly: true },
   { icon: Target, label: 'Mis Leads', path: '/admin/leads', description: 'Leads asignados', vendedorOficialOnly: true },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/pedidos', description: 'Órdenes y cotizaciones', vendedorOficialAccess: true },
   { icon: Tag, label: 'Ofertas', path: '/admin/ofertas', description: 'Negociación de precios', vendedorOficialAccess: true },
@@ -375,6 +378,9 @@ const AdminDashboard = () => {
               <Route path="usuarios" element={<AdminUsuarios />} />
               <Route path="clientes" element={
                 isAdmin ? <AdminClientes /> : <AccessDenied message="Solo los administradores pueden ver la lista de clientes." />
+              } />
+              <Route path="vendedores" element={
+                isAdmin ? <AdminVendedores /> : <AccessDenied message="Solo administradores pueden ver el rendimiento de vendedores." />
               } />
               <Route path="leads" element={
                 isVendedorOficial || isAdmin ? <VendorLeads /> : <AccessDenied message="Solo vendedores oficiales pueden ver leads." />
