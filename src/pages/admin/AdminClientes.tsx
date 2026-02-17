@@ -1,24 +1,22 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import * as XLSX from 'xlsx';
 import { 
-  Users, Search, Mail, Phone, MapPin, Calendar, Eye, FileText,
-  Download, Filter, UserPlus, MoreVertical, Building2,
-  X, RotateCcw, Tag
+  Users, Search, Mail, Phone, MapPin, Calendar, FileText,
+  Download, Filter, UserPlus, Building2,
+  X, RotateCcw, Tag, Pencil, Save, Plus, Trash2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 
 interface Filters {
@@ -39,7 +37,6 @@ const PAGE_SIZE = 50;
 
 async function fetchClients(page: number, search: string) {
   const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
 
   const session = await supabase.auth.getSession();
   const token = session.data.session?.access_token || '';
@@ -67,53 +64,119 @@ async function fetchClients(page: number, search: string) {
   return { data: data || [], totalCount };
 }
 
+async function fetchNewClientsCount() {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token || '';
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const resp = await fetch(
+    import.meta.env.VITE_SUPABASE_URL +
+      '/rest/v1/clients?select=id&created_at=gte.' + encodeURIComponent(thirtyDaysAgo),
+    {
+      headers: {
+        'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        'Authorization': 'Bearer ' + token,
+        'Prefer': 'count=exact',
+        'Range': '0-0',
+      },
+    }
+  );
+  const range = resp.headers.get('content-range') || '0-0/0';
+  return parseInt(range.split('/')[1] || '0');
+}
+
 function mapClient(c: any) {
   return {
     id: c.id,
     user_id: String(c.id),
+    first_name: c.first_name || '',
+    last_name: c.last_name || '',
     full_name: [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Sin nombre',
     email: c.email || '',
-    phone: c.phone || c.mobile || null,
-    company: c.company || null,
-    country: c.country || null,
-    region: c.region || null,
-    city: c.city || null,
-    address: c.address || null,
-    postal_code: c.postal_code || null,
-    vat: c.vat || null,
-    source: c.source || null,
+    phone: c.phone || '',
+    mobile: c.mobile || '',
+    company: c.company || '',
+    country: c.country || '',
+    region: c.region || '',
+    city: c.city || '',
+    address: c.address || '',
+    postal_code: c.postal_code || '',
+    vat: c.vat || '',
+    source: c.source || '',
     created_at: c.created_at,
-    marketing_emails: c.marketing_emails || null,
+    marketing_emails: c.marketing_emails || '',
     tags: c.tags || [],
-    custom_fields: c.custom_fields || null,
-    notes: c.notes || null,
-    contact_type: c.contact_type || null,
+    custom_fields: c.custom_fields || '',
+    notes: c.notes || '',
+    contact_type: c.contact_type || '',
+    website: c.website || '',
   };
 }
 
 const AdminClientes = () => {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState<any>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<any>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [page, setPage] = useState(1);
+  const [newTag, setNewTag] = useState('');
 
   const { data: result, isLoading } = useQuery({
     queryKey: ['admin-clients', search, page],
     queryFn: () => fetchClients(page, search),
   });
 
+  const { data: newClientsCount = 0 } = useQuery({
+    queryKey: ['admin-clients-new-count'],
+    queryFn: fetchNewClientsCount,
+    staleTime: 60_000,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (client: any) => {
+      const { error } = await supabase.from('clients').update({
+        first_name: client.first_name,
+        last_name: client.last_name,
+        email: client.email,
+        phone: client.phone,
+        mobile: client.mobile,
+        company: client.company,
+        country: client.country,
+        region: client.region,
+        city: client.city,
+        address: client.address,
+        postal_code: client.postal_code,
+        vat: client.vat,
+        source: client.source,
+        marketing_emails: client.marketing_emails,
+        tags: client.tags,
+        notes: client.notes,
+        website: client.website,
+        contact_type: client.contact_type,
+      }).eq('id', client.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: 'Cliente actualizado', description: 'Los cambios se guardaron correctamente' });
+      queryClient.invalidateQueries({ queryKey: ['admin-clients'] });
+      setEditOpen(false);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'No se pudo guardar los cambios', variant: 'destructive' });
+    },
+  });
+
   const rawClients = useMemo(() => (result?.data || []).map(mapClient), [result]);
   const totalCount = result?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-  // Apply client-side filters
   const filteredClients = useMemo(() => {
     return rawClients.filter(client => {
       const created = new Date(client.created_at);
       const now = new Date();
-      
       if (filters.dateRange !== 'all') {
         const daysDiff = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
         if (filters.dateRange === 'week' && daysDiff > 7) return false;
@@ -121,32 +184,50 @@ const AdminClientes = () => {
         if (filters.dateRange === '3months' && daysDiff > 90) return false;
         if (filters.dateRange === 'year' && daysDiff > 365) return false;
       }
-      
       if (filters.country !== 'all' && client.country !== filters.country) return false;
       if (filters.source !== 'all' && client.source !== filters.source) return false;
       if (filters.marketing !== 'all' && client.marketing_emails !== filters.marketing) return false;
-      
       return true;
     });
   }, [rawClients, filters]);
 
   const uniqueCountries = useMemo(() => {
-    const countries = rawClients.map(c => c.country).filter((s): s is string => !!s);
+    const countries = rawClients.map(c => c.country).filter(Boolean);
     return [...new Set(countries)].sort();
   }, [rawClients]);
 
   const uniqueSources = useMemo(() => {
-    const sources = rawClients.map(c => c.source).filter((s): s is string => !!s);
+    const sources = rawClients.map(c => c.source).filter(Boolean);
     return [...new Set(sources)].sort();
   }, [rawClients]);
 
   const activeFiltersCount = Object.values(filters).filter(v => v !== 'all').length;
   const resetFilters = () => setFilters(defaultFilters);
 
+  const openEdit = (client: any) => {
+    setSelectedClient(client);
+    setEditForm({ ...client });
+    setNewTag('');
+    setEditOpen(true);
+  };
+
+  const addTag = () => {
+    const tag = newTag.trim();
+    if (tag && !(editForm.tags || []).includes(tag)) {
+      setEditForm((f: any) => ({ ...f, tags: [...(f.tags || []), tag] }));
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setEditForm((f: any) => ({ ...f, tags: (f.tags || []).filter((t: string) => t !== tag) }));
+  };
+
   const stats = [
     { label: 'Total Clientes', value: totalCount.toLocaleString(), icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Nuevos (30 días)', value: newClientsCount.toLocaleString(), icon: UserPlus, color: 'text-green-600', bg: 'bg-green-100' },
     { label: 'En esta página', value: filteredClients.length, icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: 'Página', value: page + ' / ' + (totalPages || 1), icon: UserPlus, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Página', value: page + ' / ' + (totalPages || 1), icon: Calendar, color: 'text-primary', bg: 'bg-primary/10' },
   ];
 
   const exportToExcel = () => {
@@ -175,6 +256,10 @@ const AdminClientes = () => {
     toast({ title: "Exportación exitosa", description: 'Se exportaron ' + filteredClients.length + ' clientes' });
   };
 
+  const updateField = (field: string, value: any) => {
+    setEditForm((f: any) => ({ ...f, [field]: value }));
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -196,22 +281,22 @@ const AdminClientes = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-card rounded-xl p-5 border border-border/50 shadow-sm"
+            className="bg-card rounded-xl p-4 border border-border/50 shadow-sm"
           >
-            <div className="flex items-center gap-4">
-              <div className={'p-3 rounded-xl ' + stat.bg}>
-                <stat.icon size={22} className={stat.color} />
+            <div className="flex items-center gap-3">
+              <div className={'p-2.5 rounded-xl ' + stat.bg}>
+                <stat.icon size={20} className={stat.color} />
               </div>
               <div>
-                <p className="text-2xl font-display font-bold">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
+                <p className="text-xl font-display font-bold">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
               </div>
             </div>
           </motion.div>
@@ -336,146 +421,123 @@ const AdminClientes = () => {
         </div>
       )}
 
-      {/* Clients Table */}
+      {/* Clients Table - responsive, no horizontal scroll */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="bg-card rounded-2xl shadow-lg border border-border/50 overflow-hidden"
       >
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="font-semibold min-w-[200px]">Cliente</TableHead>
-                <TableHead className="font-semibold min-w-[150px]">Empresa</TableHead>
-                <TableHead className="font-semibold min-w-[120px] hidden sm:table-cell">Contacto</TableHead>
-                <TableHead className="font-semibold min-w-[150px] hidden md:table-cell">Ubicación</TableHead>
-                <TableHead className="font-semibold min-w-[100px] hidden lg:table-cell">Fuente</TableHead>
-                <TableHead className="font-semibold min-w-[100px] hidden lg:table-cell">Tags</TableHead>
-                <TableHead className="font-semibold min-w-[100px] hidden lg:table-cell">Registro</TableHead>
-                <TableHead className="text-right font-semibold min-w-[80px]">Acciones</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableHead className="font-semibold">Cliente</TableHead>
+              <TableHead className="font-semibold hidden sm:table-cell">Empresa</TableHead>
+              <TableHead className="font-semibold hidden md:table-cell">Contacto</TableHead>
+              <TableHead className="font-semibold hidden lg:table-cell">Ubicación</TableHead>
+              <TableHead className="font-semibold hidden xl:table-cell">Tags</TableHead>
+              <TableHead className="text-right font-semibold w-[80px]">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-muted-foreground">Cargando clientes...</p>
+                  </div>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      <p className="text-muted-foreground">Cargando clientes...</p>
+            ) : filteredClients.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                      <Users className="text-muted-foreground" size={32} />
+                    </div>
+                    <p className="font-medium">No se encontraron clientes</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredClients.map((client, index) => (
+                <motion.tr
+                  key={client.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: Math.min(index * 0.02, 0.5) }}
+                  className="group hover:bg-muted/30 transition-colors border-b"
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-semibold text-primary text-sm shrink-0">
+                        {client.full_name?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{client.full_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{client.email}</p>
+                      </div>
                     </div>
                   </TableCell>
-                </TableRow>
-              ) : filteredClients.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                        <Users className="text-muted-foreground" size={32} />
+                  <TableCell className="hidden sm:table-cell">
+                    {client.company ? (
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <Building2 size={14} className="text-muted-foreground shrink-0" />
+                        <span className="truncate max-w-[140px]">{client.company}</span>
                       </div>
-                      <p className="font-medium">No se encontraron clientes</p>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {client.phone ? (
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <Phone size={14} className="text-muted-foreground shrink-0" />
+                        <span className="truncate max-w-[130px]">{client.phone}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {client.city || client.country ? (
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <MapPin size={14} className="text-muted-foreground shrink-0" />
+                        <span className="truncate max-w-[140px]">{[client.city, client.country].filter(Boolean).join(', ')}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell">
+                    <div className="flex flex-wrap gap-1">
+                      {(client.tags || []).slice(0, 2).map((tag: string) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                      ))}
+                      {(client.tags || []).length > 2 && (
+                        <Badge variant="secondary" className="text-xs">+{client.tags.length - 2}</Badge>
+                      )}
+                      {(!client.tags || client.tags.length === 0) && (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </div>
                   </TableCell>
-                </TableRow>
-              ) : (
-                filteredClients.map((client, index) => (
-                  <motion.tr
-                    key={client.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: Math.min(index * 0.02, 0.5) }}
-                    className="group hover:bg-muted/30 transition-colors"
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-semibold text-primary">
-                          {client.full_name?.[0]?.toUpperCase() || 'U'}
-                        </div>
-                        <div>
-                          <p className="font-medium">{client.full_name}</p>
-                          <p className="text-sm text-muted-foreground">{client.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {client.company ? (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Building2 size={14} className="text-muted-foreground" />
-                          <span className="truncate max-w-[150px]">{client.company}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {client.phone ? (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone size={14} className="text-muted-foreground" />
-                          <span>{client.phone}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {client.city || client.country ? (
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin size={14} className="text-muted-foreground" />
-                          <span>{[client.city, client.country].filter(Boolean).join(', ')}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {client.source ? (
-                        <Badge variant="outline" className="text-xs">{client.source}</Badge>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <div className="flex flex-wrap gap-1">
-                        {(client.tags || []).slice(0, 2).map((tag: string) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
-                        ))}
-                        {(client.tags || []).length > 2 && (
-                          <Badge variant="secondary" className="text-xs">+{client.tags.length - 2}</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar size={14} />
-                        <span>{new Date(client.created_at).toLocaleDateString('es-MX')}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MoreVertical size={16} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => { setSelectedClient(client); setDetailsOpen(true); }}>
-                            <Eye size={14} className="mr-2" />
-                            Ver detalles
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Mail size={14} className="mr-2" />
-                            Enviar correo
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </motion.tr>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                      onClick={() => openEdit(client)}
+                    >
+                      <Pencil size={15} />
+                    </Button>
+                  </TableCell>
+                </motion.tr>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </motion.div>
 
       {/* Pagination */}
@@ -496,100 +558,159 @@ const AdminClientes = () => {
         </div>
       )}
 
-      {/* Client Details Dialog */}
-      {selectedClient && (
-        <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh]">
+      {/* Edit Client Dialog */}
+      {editForm && (
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-semibold text-primary text-lg">
-                  {selectedClient.full_name?.[0]?.toUpperCase() || 'U'}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-semibold text-primary">
+                  {editForm.first_name?.[0]?.toUpperCase() || 'U'}
                 </div>
-                <div>
-                  <span className="block">{selectedClient.full_name}</span>
-                  <span className="text-sm font-normal text-muted-foreground">{selectedClient.email}</span>
-                </div>
+                Editar Cliente
               </DialogTitle>
-              <DialogDescription>Información del cliente</DialogDescription>
+              <DialogDescription>Modifica la información del cliente</DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-6 mt-4">
-              <div className="space-y-4">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Contacto</h4>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-3">
-                    <Mail size={16} className="text-muted-foreground" />
-                    <span>{selectedClient.email}</span>
+
+            <div className="space-y-6 py-2">
+              {/* Personal Info */}
+              <div>
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">Información Personal</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Nombre</Label>
+                    <Input value={editForm.first_name} onChange={e => updateField('first_name', e.target.value)} />
                   </div>
-                  {selectedClient.phone && (
-                    <div className="flex items-center gap-3">
-                      <Phone size={16} className="text-muted-foreground" />
-                      <span>{selectedClient.phone}</span>
-                    </div>
-                  )}
-                  {selectedClient.company && (
-                    <div className="flex items-center gap-3">
-                      <Building2 size={16} className="text-muted-foreground" />
-                      <span>{selectedClient.company}</span>
-                    </div>
-                  )}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Apellido</Label>
+                    <Input value={editForm.last_name} onChange={e => updateField('last_name', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Email</Label>
+                    <Input type="email" value={editForm.email} onChange={e => updateField('email', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Empresa</Label>
+                    <Input value={editForm.company} onChange={e => updateField('company', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Teléfono</Label>
+                    <Input value={editForm.phone} onChange={e => updateField('phone', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Celular</Label>
+                    <Input value={editForm.mobile} onChange={e => updateField('mobile', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Sitio Web</Label>
+                    <Input value={editForm.website} onChange={e => updateField('website', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">RFC/VAT</Label>
+                    <Input value={editForm.vat} onChange={e => updateField('vat', e.target.value)} />
+                  </div>
                 </div>
               </div>
-              <div className="space-y-4">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Ubicación</h4>
-                <div className="space-y-1 text-sm">
-                  {selectedClient.address && <p>{selectedClient.address}</p>}
-                  <p>{[selectedClient.city, selectedClient.region].filter(Boolean).join(', ')}</p>
-                  {selectedClient.country && <p>{selectedClient.country}</p>}
-                  {selectedClient.postal_code && <p>CP: {selectedClient.postal_code}</p>}
+
+              {/* Location */}
+              <div>
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">Ubicación</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-xs">Dirección</Label>
+                    <Input value={editForm.address} onChange={e => updateField('address', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Ciudad</Label>
+                    <Input value={editForm.city} onChange={e => updateField('city', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Región/Estado</Label>
+                    <Input value={editForm.region} onChange={e => updateField('region', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">País</Label>
+                    <Input value={editForm.country} onChange={e => updateField('country', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Código Postal</Label>
+                    <Input value={editForm.postal_code} onChange={e => updateField('postal_code', e.target.value)} />
+                  </div>
                 </div>
               </div>
-              <div className="space-y-4">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Datos Adicionales</h4>
-                <div className="space-y-2 text-sm">
-                  {selectedClient.vat && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">RFC/VAT:</span>
-                      <span className="font-mono">{selectedClient.vat}</span>
-                    </div>
-                  )}
-                  {selectedClient.source && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Fuente:</span>
-                      <Badge variant="outline">{selectedClient.source}</Badge>
-                    </div>
-                  )}
-                  {selectedClient.marketing_emails && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Marketing:</span>
-                      <Badge variant="secondary">{selectedClient.marketing_emails}</Badge>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-4">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Tags</h4>
-                <div className="flex flex-wrap gap-1">
-                  {(selectedClient.tags || []).map((tag: string) => (
-                    <Badge key={tag} variant="secondary">{tag}</Badge>
+
+              {/* Tags */}
+              <div>
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">
+                  <Tag size={14} className="inline mr-1" />
+                  Tags
+                </h4>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {(editForm.tags || []).map((tag: string) => (
+                    <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                      {tag}
+                      <button onClick={() => removeTag(tag)} className="ml-0.5 hover:text-destructive">
+                        <X size={12} />
+                      </button>
+                    </Badge>
                   ))}
-                  {(!selectedClient.tags || selectedClient.tags.length === 0) && (
+                  {(!editForm.tags || editForm.tags.length === 0) && (
                     <span className="text-sm text-muted-foreground">Sin tags</span>
                   )}
                 </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Agregar tag..."
+                    value={newTag}
+                    onChange={e => setNewTag(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+                    className="flex-1"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={addTag} disabled={!newTag.trim()}>
+                    <Plus size={14} className="mr-1" /> Agregar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Additional */}
+              <div>
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">Adicional</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Fuente</Label>
+                    <Input value={editForm.source} onChange={e => updateField('source', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Tipo de Contacto</Label>
+                    <Input value={editForm.contact_type} onChange={e => updateField('contact_type', e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Marketing</Label>
+                    <Select value={editForm.marketing_emails || 'none'} onValueChange={v => updateField('marketing_emails', v === 'none' ? '' : v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Sin estado</SelectItem>
+                        <SelectItem value="subscribed">Subscrito</SelectItem>
+                        <SelectItem value="unsubscribed">Desuscrito</SelectItem>
+                        <SelectItem value="bounced">Rebotado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1.5 mt-3">
+                  <Label className="text-xs">Notas</Label>
+                  <Textarea value={editForm.notes} onChange={e => updateField('notes', e.target.value)} rows={3} />
+                </div>
               </div>
             </div>
-            {selectedClient.notes && (
-              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-2">Notas</h4>
-                <p className="text-sm">{selectedClient.notes}</p>
-              </div>
-            )}
-            {selectedClient.custom_fields && (
-              <div className="mt-2 p-3 bg-muted/50 rounded-lg">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-2">Campos Personalizados</h4>
-                <p className="text-sm">{selectedClient.custom_fields}</p>
-              </div>
-            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
+              <Button onClick={() => updateMutation.mutate(editForm)} disabled={updateMutation.isPending}>
+                <Save size={14} className="mr-2" />
+                {updateMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
