@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import * as XLSX from 'xlsx';
 import { 
   Users, Search, Mail, Phone, MapPin, Calendar, FileText,
-  Download, Filter, UserPlus, Building2,
-  X, RotateCcw, Tag, Pencil, Save, Plus, Trash2
+  Filter, UserPlus, Building2,
+  X, RotateCcw, Tag, Pencil, Save, Plus
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -123,6 +123,7 @@ const AdminClientes = () => {
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [page, setPage] = useState(1);
   const [newTag, setNewTag] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
   const { data: result, isLoading } = useQuery({
     queryKey: ['admin-clients', search, page],
@@ -204,9 +205,59 @@ const AdminClientes = () => {
   const activeFiltersCount = Object.values(filters).filter(v => v !== 'all').length;
   const resetFilters = () => setFilters(defaultFilters);
 
+  const createMutation = useMutation({
+    mutationFn: async (client: any) => {
+      const { error } = await supabase.from('clients').insert({
+        id: Date.now(),
+        first_name: client.first_name || null,
+        last_name: client.last_name || null,
+        email: client.email || null,
+        phone: client.phone || null,
+        mobile: client.mobile || null,
+        company: client.company || null,
+        country: client.country || null,
+        region: client.region || null,
+        city: client.city || null,
+        address: client.address || null,
+        postal_code: client.postal_code || null,
+        vat: client.vat || null,
+        source: client.source || null,
+        marketing_emails: client.marketing_emails || null,
+        tags: client.tags?.length ? client.tags : null,
+        notes: client.notes || null,
+        website: client.website || null,
+        contact_type: client.contact_type || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: 'Cliente creado', description: 'El cliente se agregó correctamente' });
+      queryClient.invalidateQueries({ queryKey: ['admin-clients'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-clients-new-count'] });
+      setEditOpen(false);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'No se pudo crear el cliente', variant: 'destructive' });
+    },
+  });
+
   const openEdit = (client: any) => {
+    setIsCreating(false);
     setSelectedClient(client);
     setEditForm({ ...client });
+    setNewTag('');
+    setEditOpen(true);
+  };
+
+  const openCreate = () => {
+    setIsCreating(true);
+    setSelectedClient(null);
+    setEditForm({
+      first_name: '', last_name: '', email: '', phone: '', mobile: '',
+      company: '', country: '', region: '', city: '', address: '',
+      postal_code: '', vat: '', source: '', marketing_emails: '',
+      tags: [], notes: '', website: '', contact_type: '',
+    });
     setNewTag('');
     setEditOpen(true);
   };
@@ -268,14 +319,11 @@ const AdminClientes = () => {
           <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             Clientes
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Base de datos de clientes importados ({totalCount.toLocaleString()} registros)
-          </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={exportToExcel}>
-            <Download size={16} className="mr-2" />
-            Exportar Excel
+          <Button size="sm" onClick={openCreate}>
+            <Plus size={16} className="mr-2" />
+            Agregar Cliente
           </Button>
         </div>
       </div>
@@ -565,11 +613,11 @@ const AdminClientes = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-semibold text-primary">
-                  {editForm.first_name?.[0]?.toUpperCase() || 'U'}
+                  {editForm.first_name?.[0]?.toUpperCase() || (isCreating ? '+' : 'U')}
                 </div>
-                Editar Cliente
+                {isCreating ? 'Agregar Cliente' : 'Editar Cliente'}
               </DialogTitle>
-              <DialogDescription>Modifica la información del cliente</DialogDescription>
+              <DialogDescription>{isCreating ? 'Completa la información del nuevo cliente' : 'Modifica la información del cliente'}</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-6 py-2">
@@ -706,10 +754,17 @@ const AdminClientes = () => {
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
-              <Button onClick={() => updateMutation.mutate(editForm)} disabled={updateMutation.isPending}>
-                <Save size={14} className="mr-2" />
-                {updateMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
-              </Button>
+              {isCreating ? (
+                <Button onClick={() => createMutation.mutate(editForm)} disabled={createMutation.isPending}>
+                  <Plus size={14} className="mr-2" />
+                  {createMutation.isPending ? 'Creando...' : 'Crear Cliente'}
+                </Button>
+              ) : (
+                <Button onClick={() => updateMutation.mutate(editForm)} disabled={updateMutation.isPending}>
+                  <Save size={14} className="mr-2" />
+                  {updateMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
+                </Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
