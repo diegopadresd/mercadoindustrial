@@ -61,6 +61,7 @@ interface SidebarItem {
   vendedorOficialOnly?: boolean;
   vendedorOficialAccess?: boolean;
   operadorAccess?: boolean;
+  manejoAccess?: boolean;
 }
 
 const allSidebarItems: SidebarItem[] = [
@@ -77,12 +78,12 @@ const allSidebarItems: SidebarItem[] = [
   { icon: Ticket, label: 'Soporte', path: '/admin/soporte', description: 'Tickets de contacto', staffOnly: true, vendedorOficialAccess: true, operadorAccess: false },
   { icon: Settings, label: 'Ajustes', path: '/admin/ajustes', description: 'Configuración del sitio', adminOnly: true },
   { icon: LinkIcon, label: 'Auditoría Enlaces', path: '/admin/auditoria-enlaces', description: 'Verificación de rutas', adminOnly: true },
-  { icon: LayoutDashboard, label: 'Panel de Manejo', path: '/admin/manejo', description: 'Control administrativo', adminOnly: true },
+  { icon: LayoutDashboard, label: 'Panel de Manejo', path: '/admin/manejo', description: 'Control administrativo', adminOnly: false, manejoAccess: true },
 ];
 
 const AdminDashboard = () => {
   const { user, profile, isLoading: authLoading, signOut } = useAuth();
-  const { role, isAdmin, isOperador, isVendedor, isVendedorOficial, isStaff, permissions, isLoading: roleLoading } = useUserRole();
+  const { role, isAdmin, isOperador, isVendedor, isVendedorOficial, isManejo, isStaff, permissions, isLoading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -108,7 +109,7 @@ const AdminDashboard = () => {
   }
 
   // Check if user has any admin role (admin, operador, vendedor, or vendedor_oficial)
-  const hasAccess = isAdmin || isOperador || isVendedor || isVendedorOficial;
+  const hasAccess = isAdmin || isOperador || isVendedor || isVendedorOficial || isManejo;
   
   if (!hasAccess) {
     return (
@@ -122,6 +123,11 @@ const AdminDashboard = () => {
   const sidebarItems = allSidebarItems.filter(item => {
     if (item.adminOnly && !isAdmin) return false;
     if (item.vendedorOficialOnly && !isVendedorOficial) return false;
+    
+    // Manejo role: only show Panel de Manejo
+    if (isManejo && !isAdmin) {
+      return item.manejoAccess === true;
+    }
     
     // Operator: only show items explicitly marked with operadorAccess
     if (isOperador && !isAdmin) {
@@ -157,6 +163,7 @@ const AdminDashboard = () => {
   const getRoleBadgeColor = () => {
     switch (role) {
       case 'admin': return 'bg-red-500/10 text-red-500';
+      case 'manejo': return 'bg-purple-500/10 text-purple-500';
       case 'operador': return 'bg-blue-500/10 text-blue-500';
       case 'vendedor_oficial': return 'bg-emerald-500/10 text-emerald-500';
       case 'vendedor': return 'bg-amber-500/10 text-amber-500';
@@ -412,7 +419,7 @@ const AdminDashboard = () => {
                 isAdmin ? <AdminImportClients /> : <AccessDenied message="Solo administradores pueden importar clientes." />
               } />
               <Route path="manejo" element={
-                isAdmin ? <AdminManejo /> : <AccessDenied message="Solo administradores pueden acceder al panel de manejo." />
+                (isAdmin || isManejo) ? <AdminManejo /> : <AccessDenied message="Solo administradores y personal de manejo pueden acceder al panel de manejo." />
               } />
             </Routes>
           </div>
