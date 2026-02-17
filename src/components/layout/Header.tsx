@@ -43,7 +43,7 @@ export const Header = () => {
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
   const location = useLocation();
   const { user, profile, isAdmin, signOut } = useAuth();
-  const { isVendedor, isVendedorOficial, isStaff, isAdmin: isAdminRole } = useUserRole();
+  const { isVendedor, isVendedorOficial, isManejo, isStaff, isOperador, isAdmin: isAdminRole } = useUserRole();
   const { itemCount } = useCart();
   const { language, currency, setLanguage, setCurrency, t } = useLocale();
 
@@ -314,14 +314,14 @@ export const Header = () => {
                           <User size={16} />
                           {t('account.profile')}
                         </Link>
-                        {(isAdmin || isAdminRole || isStaff || isVendedorOficial) && (
+                        {(isAdmin || isAdminRole || isStaff || isVendedorOficial || isManejo || isOperador) && (
                           <Link
                             to="/admin"
                             onClick={() => setUserMenuOpen(false)}
                             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors text-primary font-medium"
                           >
                             <LayoutDashboard size={16} />
-                            {isVendedorOficial ? 'Panel de Ventas' : isStaff ? 'Panel Operador' : t('nav.admin')}
+                            {isManejo ? 'Panel de Manejo' : isVendedorOficial ? 'Panel de Ventas' : isOperador ? 'Panel Operador' : t('nav.admin')}
                           </Link>
                         )}
                         <hr className="my-1 border-border" />
