@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type AppRole = 'admin' | 'operador' | 'vendedor' | 'user';
+export type AppRole = 'admin' | 'operador' | 'vendedor' | 'vendedor_oficial' | 'user';
 
 export interface UserRoleInfo {
   role: AppRole;
   isAdmin: boolean;
   isOperador: boolean;
   isVendedor: boolean;
+  isVendedorOficial: boolean;
   isStaff: boolean; // admin or operador
   sellerId: string | null;
   companyId: string | null;
@@ -62,6 +63,21 @@ export const getRolePermissions = (role: AppRole): RolePermissions => {
         canViewClients: false,
         canViewConfig: false,
       };
+    case 'vendedor_oficial':
+      return {
+        canViewUsers: false,
+        canManageUsers: false,
+        canInviteUsers: false,
+        canViewAllProducts: true,
+        canPublishProducts: false,
+        canViewOrders: true,
+        canViewAllOrders: false,
+        canViewInvoices: false,
+        canViewQuestions: true,
+        canViewOffers: true,
+        canViewClients: true,
+        canViewConfig: false,
+      };
     case 'vendedor':
       return {
         canViewUsers: false,
@@ -99,6 +115,7 @@ export const getRoleLabel = (role: AppRole): string => {
   const labels: Record<AppRole, string> = {
     admin: 'Administrador',
     operador: 'Operador',
+    vendedor_oficial: 'Vendedor Oficial',
     vendedor: 'Vendedor',
     user: 'Usuario',
   };
@@ -140,7 +157,7 @@ export const useUserRole = (): UserRoleInfo & { permissions: RolePermissions } =
         // Determine the highest priority role
         let highestRole: AppRole = 'user';
         if (roles && roles.length > 0) {
-          const roleHierarchy: AppRole[] = ['admin', 'operador', 'vendedor', 'user'];
+          const roleHierarchy: AppRole[] = ['admin', 'operador', 'vendedor_oficial', 'vendedor', 'user'];
           for (const r of roleHierarchy) {
             if (roles.some(ur => ur.role === r)) {
               highestRole = r;
@@ -185,6 +202,7 @@ export const useUserRole = (): UserRoleInfo & { permissions: RolePermissions } =
     isAdmin: role === 'admin',
     isOperador: role === 'operador',
     isVendedor: role === 'vendedor',
+    isVendedorOficial: role === 'vendedor_oficial',
     isStaff: role === 'admin' || role === 'operador',
     sellerId: roleData.sellerId,
     companyId: roleData.companyId,

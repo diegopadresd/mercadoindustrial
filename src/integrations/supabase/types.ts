@@ -328,6 +328,69 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          client_company: string | null
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          id: string
+          last_contacted_at: string | null
+          notes: string | null
+          offer_id: string | null
+          product_id: string | null
+          status: Database["public"]["Enums"]["lead_status"]
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          client_company?: string | null
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          id?: string
+          last_contacted_at?: string | null
+          notes?: string | null
+          offer_id?: string | null
+          product_id?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          client_company?: string | null
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          id?: string
+          last_contacted_at?: string | null
+          notes?: string | null
+          offer_id?: string | null
+          product_id?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -420,6 +483,7 @@ export type Database = {
       offers: {
         Row: {
           admin_notes: string | null
+          assigned_vendor_id: string | null
           counter_offer_price: number | null
           created_at: string
           customer_email: string
@@ -437,6 +501,7 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          assigned_vendor_id?: string | null
           counter_offer_price?: number | null
           created_at?: string
           customer_email: string
@@ -454,6 +519,7 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          assigned_vendor_id?: string | null
           counter_offer_price?: number | null
           created_at?: string
           customer_email?: string
@@ -536,6 +602,7 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          created_by_vendor: string | null
           customer_email: string
           customer_name: string
           customer_phone: string | null
@@ -562,6 +629,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by_vendor?: string | null
           customer_email: string
           customer_name: string
           customer_phone?: string | null
@@ -588,6 +656,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by_vendor?: string | null
           customer_email?: string
           customer_name?: string
           customer_phone?: string | null
@@ -1011,7 +1080,14 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "operador" | "vendedor"
+      app_role: "admin" | "user" | "operador" | "vendedor" | "vendedor_oficial"
+      lead_status:
+        | "nuevo"
+        | "contactado"
+        | "cotizacion_enviada"
+        | "espera_pago"
+        | "pagado"
+        | "perdido"
       order_status:
         | "pending"
         | "paid"
@@ -1147,7 +1223,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "operador", "vendedor"],
+      app_role: ["admin", "user", "operador", "vendedor", "vendedor_oficial"],
+      lead_status: [
+        "nuevo",
+        "contactado",
+        "cotizacion_enviada",
+        "espera_pago",
+        "pagado",
+        "perdido",
+      ],
       order_status: [
         "pending",
         "paid",
