@@ -310,9 +310,6 @@ const AdminPedidos = () => {
                       </TableCell>
                     )}
                     <TableCell className="hidden md:table-cell">
-                    {isOperadorOnly ? (
-                      getStatusBadge(order.status)
-                    ) : (
                     <Select
                       value={order.status}
                       onValueChange={(value) => updateStatusMutation.mutate({ orderId: order.id, status: value as 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled' })}
@@ -328,7 +325,6 @@ const AdminPedidos = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    )}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <div className="text-sm">
