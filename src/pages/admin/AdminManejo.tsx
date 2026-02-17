@@ -103,24 +103,25 @@ const ManejoOrders = () => {
     <div className="space-y-6">
       {/* Alert for overdue */}
       {overdueOrders.length > 0 && (
-        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 flex items-start gap-3">
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 flex flex-col sm:flex-row items-start gap-3">
           <AlertTriangle className="text-destructive mt-0.5 shrink-0" size={20} />
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="font-semibold text-destructive">
               {overdueOrders.length} pedido(s) con más de 3 días sin atención
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1 break-words">
               Los siguientes pedidos requieren atención inmediata: {overdueOrders.map(o => o.order_number).join(', ')}
             </p>
           </div>
           <Button
             size="sm"
             variant="destructive"
+            className="w-full sm:w-auto shrink-0"
             onClick={() => overdueOrders.forEach(o => sendReminderMutation.mutate(o))}
             disabled={sendReminderMutation.isPending}
           >
             <Bell size={14} className="mr-1" />
-            Notificar Operadores
+            Notificar
           </Button>
         </div>
       )}
@@ -151,8 +152,45 @@ const ManejoOrders = () => {
         <Input placeholder="Buscar por número o cliente..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
       </div>
 
-      {/* Table */}
-      <div className="bg-card rounded-xl shadow-sm overflow-hidden">
+      {/* Orders - Card layout on mobile, table on desktop */}
+      <div className="space-y-3 md:hidden">
+        {isLoading ? (
+          <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+        ) : filteredOrders.length === 0 ? (
+          <p className="text-center py-8 text-muted-foreground">No hay pedidos</p>
+        ) : filteredOrders.map(order => {
+          const days = getDaysSinceCreation(order.created_at);
+          const hours = getHoursSinceCreation(order.created_at);
+          const isOverdue = days >= 3 && ['pending', 'paid', 'processing'].includes(order.status);
+          const sl = statusLabels[order.status] || statusLabels.pending;
+          return (
+            <div key={order.id} className={`bg-card rounded-xl border border-border p-4 space-y-2 ${isOverdue ? 'border-destructive/30 bg-destructive/5' : ''}`}>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-sm font-medium">{order.order_number}</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${sl.color}`}>{sl.label}</span>
+              </div>
+              <p className="font-medium text-sm">{order.customer_name}</p>
+              <p className="text-xs text-muted-foreground">{order.customer_email}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <Clock size={14} className={isOverdue ? 'text-destructive' : 'text-muted-foreground'} />
+                  <span className={`text-sm ${isOverdue ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                    {days > 0 ? `${days}d` : `${hours}h`}
+                  </span>
+                </div>
+                <span className="font-semibold">${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+              </div>
+              {isOverdue && (
+                <Button size="sm" variant="destructive" className="w-full" onClick={() => sendReminderMutation.mutate(order)} disabled={sendReminderMutation.isPending}>
+                  <Bell size={14} className="mr-1" /> Recordar
+                </Button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden md:block bg-card rounded-xl shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -174,7 +212,6 @@ const ManejoOrders = () => {
               const hours = getHoursSinceCreation(order.created_at);
               const isOverdue = days >= 3 && ['pending', 'paid', 'processing'].includes(order.status);
               const sl = statusLabels[order.status] || statusLabels.pending;
-
               return (
                 <TableRow key={order.id} className={isOverdue ? 'bg-destructive/5' : ''}>
                   <TableCell><span className="font-mono text-sm">{order.order_number}</span></TableCell>
@@ -182,32 +219,18 @@ const ManejoOrders = () => {
                     <p className="font-medium text-sm">{order.customer_name}</p>
                     <p className="text-xs text-muted-foreground">{order.customer_email}</p>
                   </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${sl.color}`}>{sl.label}</span>
-                  </TableCell>
+                  <TableCell><span className={`px-2 py-1 rounded-full text-xs font-medium ${sl.color}`}>{sl.label}</span></TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Clock size={14} className={isOverdue ? 'text-destructive' : 'text-muted-foreground'} />
-                      <span className={`text-sm ${isOverdue ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
-                        {days > 0 ? `${days}d` : `${hours}h`}
-                      </span>
-                      {isOverdue && <AlertTriangle size={14} className="text-destructive" />}
+                      <span className={`text-sm ${isOverdue ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>{days > 0 ? `${days}d` : `${hours}h`}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <span className="font-semibold text-sm">${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-                  </TableCell>
+                  <TableCell><span className="font-semibold text-sm">${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span></TableCell>
                   <TableCell className="text-right">
                     {isOverdue && (
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="mr-2"
-                        onClick={() => sendReminderMutation.mutate(order)}
-                        disabled={sendReminderMutation.isPending}
-                      >
-                        <Bell size={14} className="mr-1" />
-                        Recordar
+                      <Button size="sm" variant="destructive" onClick={() => sendReminderMutation.mutate(order)} disabled={sendReminderMutation.isPending}>
+                        <Bell size={14} className="mr-1" /> Recordar
                       </Button>
                     )}
                   </TableCell>
@@ -268,7 +291,33 @@ const ManejoInventario = () => {
         <Input placeholder="Buscar productos..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
       </div>
 
-      <div className="bg-card rounded-xl shadow-sm overflow-hidden">
+      {/* Card layout on mobile */}
+      <div className="space-y-3 md:hidden">
+        {isLoading ? (
+          <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+        ) : filtered.length === 0 ? (
+          <p className="text-center py-8 text-muted-foreground">No hay productos</p>
+        ) : filtered.map(p => (
+          <div key={p.id} className="bg-card rounded-xl border border-border p-4">
+            <div className="flex items-start gap-3">
+              {p.images?.[0] && <img src={p.images[0]} alt="" className="w-12 h-12 rounded object-cover shrink-0" />}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">{p.title}</p>
+                <p className="text-xs text-muted-foreground">SKU: {p.sku} · {p.brand}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-sm font-semibold">{p.price ? `$${Number(p.price).toLocaleString('es-MX')}` : '-'}</span>
+                  <span className="text-xs text-muted-foreground">Stock: {p.stock}</span>
+                  <Badge variant={p.is_active ? 'default' : 'secondary'} className="text-xs">
+                    {p.is_active ? 'Activo' : 'Borrador'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden md:block bg-card rounded-xl shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -298,9 +347,7 @@ const ManejoInventario = () => {
                 <TableCell className="text-sm">{p.price ? `$${Number(p.price).toLocaleString('es-MX')}` : '-'}</TableCell>
                 <TableCell className="text-sm">{p.stock}</TableCell>
                 <TableCell>
-                  <Badge variant={p.is_active ? 'default' : 'secondary'}>
-                    {p.is_active ? 'Activo' : 'Borrador'}
-                  </Badge>
+                  <Badge variant={p.is_active ? 'default' : 'secondary'}>{p.is_active ? 'Activo' : 'Borrador'}</Badge>
                 </TableCell>
               </TableRow>
             ))}
@@ -752,7 +799,7 @@ const ManejoLeads = () => {
             <DialogDescription>Ingresa los datos del cliente y asígnalo a un vendedor</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nombre *</Label>
                 <Input value={newLead.client_name} onChange={e => setNewLead(p => ({ ...p, client_name: e.target.value }))} />
@@ -762,7 +809,7 @@ const ManejoLeads = () => {
                 <Input value={newLead.client_company} onChange={e => setNewLead(p => ({ ...p, client_company: e.target.value }))} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Email</Label>
                 <Input type="email" value={newLead.client_email} onChange={e => setNewLead(p => ({ ...p, client_email: e.target.value }))} />
@@ -1069,8 +1116,61 @@ const ManejoFacturacion = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-card rounded-xl shadow-sm overflow-hidden">
+      {/* Card layout on mobile */}
+      <div className="space-y-3 md:hidden">
+        {loadingOrders || loadingInvoices ? (
+          <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+        ) : displayOrders.length === 0 ? (
+          <p className="text-center py-8 text-muted-foreground">
+            {filterTab === 'pending' ? 'No hay facturas pendientes' : 'No hay facturas procesadas'}
+          </p>
+        ) : displayOrders.map(order => {
+          const inv = getInvoiceForOrder(order.id);
+          const isIssued = inv?.status === 'issued';
+          return (
+            <div key={order.id} className="bg-card rounded-xl border border-border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-sm font-medium">{order.order_number}</span>
+                {isIssued ? (
+                  <Badge className="bg-green-500/20 text-green-600"><CheckCircle size={12} className="mr-1" /> Procesada</Badge>
+                ) : (
+                  <Badge className="bg-yellow-500/20 text-yellow-600">Pendiente</Badge>
+                )}
+              </div>
+              <div>
+                <p className="font-medium text-sm">{order.customer_name}</p>
+                <p className="text-xs text-muted-foreground">{order.customer_email}</p>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">RFC: {order.rfc || '-'}</span>
+                <span className="font-semibold">${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {order.fiscal_document_url && (
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => window.open(order.fiscal_document_url!, '_blank')}>
+                    <Eye size={14} className="mr-1" /> Constancia
+                  </Button>
+                )}
+                {isIssued && inv?.pdf_url && (
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => window.open(inv.pdf_url!, '_blank')}>
+                    <FileText size={14} className="mr-1" /> Factura
+                  </Button>
+                )}
+                <Button size="sm" className="flex-1" onClick={() => handleUploadClick(order.id)} disabled={isUploading && uploadingOrderId === order.id}>
+                  {isUploading && uploadingOrderId === order.id ? (
+                    <><Loader2 size={14} className="mr-1 animate-spin" /> Subiendo...</>
+                  ) : (
+                    <><Upload size={14} className="mr-1" /> {isIssued ? 'Resubir' : 'Subir Factura'}</>
+                  )}
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Table on desktop */}
+      <div className="hidden md:block bg-card rounded-xl shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -1125,11 +1225,7 @@ const ManejoFacturacion = () => {
                           <FileText size={14} className="mr-1" /> Ver Factura
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        onClick={() => handleUploadClick(order.id)}
-                        disabled={isUploading && uploadingOrderId === order.id}
-                      >
+                      <Button size="sm" onClick={() => handleUploadClick(order.id)} disabled={isUploading && uploadingOrderId === order.id}>
                         {isUploading && uploadingOrderId === order.id ? (
                           <><Loader2 size={14} className="mr-1 animate-spin" /> Subiendo...</>
                         ) : isIssued ? (
@@ -1160,28 +1256,30 @@ const AdminManejo = () => {
       </div>
 
       <Tabs defaultValue="pedidos" className="space-y-6">
-        <TabsList className="grid grid-cols-5 w-full max-w-3xl">
-          <TabsTrigger value="pedidos" className="flex items-center gap-1">
-            <ShoppingCart size={14} />
-            <span className="hidden sm:inline">Pedidos</span>
-          </TabsTrigger>
-          <TabsTrigger value="inventario" className="flex items-center gap-1">
-            <Package size={14} />
-            <span className="hidden sm:inline">Inventario</span>
-          </TabsTrigger>
-          <TabsTrigger value="aprobaciones" className="flex items-center gap-1">
-            <ClipboardCheck size={14} />
-            <span className="hidden sm:inline">Aprobaciones</span>
-          </TabsTrigger>
-          <TabsTrigger value="leads" className="flex items-center gap-1">
-            <Target size={14} />
-            <span className="hidden sm:inline">Leads</span>
-          </TabsTrigger>
-          <TabsTrigger value="facturacion" className="flex items-center gap-1">
-            <FileText size={14} />
-            <span className="hidden sm:inline">Facturación</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:grid-cols-5 sm:w-full sm:max-w-3xl">
+            <TabsTrigger value="pedidos" className="flex items-center gap-1 whitespace-nowrap">
+              <ShoppingCart size={14} />
+              <span className="hidden sm:inline">Pedidos</span>
+            </TabsTrigger>
+            <TabsTrigger value="inventario" className="flex items-center gap-1 whitespace-nowrap">
+              <Package size={14} />
+              <span className="hidden sm:inline">Inventario</span>
+            </TabsTrigger>
+            <TabsTrigger value="aprobaciones" className="flex items-center gap-1 whitespace-nowrap">
+              <ClipboardCheck size={14} />
+              <span className="hidden sm:inline">Aprob.</span>
+            </TabsTrigger>
+            <TabsTrigger value="leads" className="flex items-center gap-1 whitespace-nowrap">
+              <Target size={14} />
+              <span className="hidden sm:inline">Leads</span>
+            </TabsTrigger>
+            <TabsTrigger value="facturacion" className="flex items-center gap-1 whitespace-nowrap">
+              <FileText size={14} />
+              <span className="hidden sm:inline">Factura</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="pedidos"><ManejoOrders /></TabsContent>
         <TabsContent value="inventario"><ManejoInventario /></TabsContent>
