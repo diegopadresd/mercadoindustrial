@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
@@ -115,7 +115,8 @@ function mapClient(c: any) {
 
 const AdminClientes = () => {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState<any>(null);
@@ -124,10 +125,19 @@ const AdminClientes = () => {
   const [page, setPage] = useState(1);
   const [newTag, setNewTag] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchInput]);
 
   const { data: result, isLoading } = useQuery({
-    queryKey: ['admin-clients', search, page],
-    queryFn: () => fetchClients(page, search),
+    queryKey: ['admin-clients', debouncedSearch, page],
+    queryFn: () => fetchClients(page, debouncedSearch),
   });
 
   const { data: newClientsCount = 0 } = useQuery({
@@ -357,8 +367,8 @@ const AdminClientes = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
           <Input
             placeholder="Buscar por nombre, email o empresa..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-10"
           />
         </div>
