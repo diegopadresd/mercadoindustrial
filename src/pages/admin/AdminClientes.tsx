@@ -4,63 +4,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import * as XLSX from 'xlsx';
 import { 
-  Users, 
-  Search,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Eye,
-  FileText,
-  Download,
-  Filter,
-  UserPlus,
-  MoreVertical,
-  Building2,
-  ShoppingBag,
-  TrendingUp,
-  X,
-  RotateCcw,
-  Package,
-  DollarSign,
-  Loader2,
-  Receipt
+  Users, Search, Mail, Phone, MapPin, Calendar, Eye, FileText,
+  Download, Filter, UserPlus, MoreVertical, Building2,
+  X, RotateCcw, Tag
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -69,19 +23,73 @@ import { toast } from '@/hooks/use-toast';
 
 interface Filters {
   dateRange: string;
-  hasRFC: string;
-  activity: string;
-  salesVolume: string;
-  state: string;
+  country: string;
+  source: string;
+  marketing: string;
 }
 
 const defaultFilters: Filters = {
   dateRange: 'all',
-  hasRFC: 'all',
-  activity: 'all',
-  salesVolume: 'all',
-  state: 'all',
+  country: 'all',
+  source: 'all',
+  marketing: 'all',
 };
+
+const PAGE_SIZE = 50;
+
+async function fetchClients(page: number, search: string) {
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token || '';
+  
+  let url = import.meta.env.VITE_SUPABASE_URL +
+    '/rest/v1/clients?select=*&order=created_at.desc&offset=' + from + '&limit=' + PAGE_SIZE;
+
+  if (search) {
+    const encoded = encodeURIComponent(search);
+    url += '&or=(first_name.ilike.*' + encoded + '*,last_name.ilike.*' + encoded + '*,email.ilike.*' + encoded + '*,company.ilike.*' + encoded + '*)';
+  }
+
+  const resp = await fetch(url, {
+    headers: {
+      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      'Authorization': 'Bearer ' + token,
+      'Prefer': 'count=exact',
+    },
+  });
+
+  const data = await resp.json();
+  const range = resp.headers.get('content-range') || '0-0/0';
+  const totalCount = parseInt(range.split('/')[1] || '0');
+
+  return { data: data || [], totalCount };
+}
+
+function mapClient(c: any) {
+  return {
+    id: c.id,
+    user_id: String(c.id),
+    full_name: [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Sin nombre',
+    email: c.email || '',
+    phone: c.phone || c.mobile || null,
+    company: c.company || null,
+    country: c.country || null,
+    region: c.region || null,
+    city: c.city || null,
+    address: c.address || null,
+    postal_code: c.postal_code || null,
+    vat: c.vat || null,
+    source: c.source || null,
+    created_at: c.created_at,
+    marketing_emails: c.marketing_emails || null,
+    tags: c.tags || [],
+    custom_fields: c.custom_fields || null,
+    notes: c.notes || null,
+    contact_type: c.contact_type || null,
+  };
+}
 
 const AdminClientes = () => {
   const [search, setSearch] = useState('');
@@ -89,174 +97,82 @@ const AdminClientes = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
+  const [page, setPage] = useState(1);
 
-  const { data: clients, isLoading } = useQuery({
-    queryKey: ['admin-clients', search],
-    queryFn: async () => {
-      let query = supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (search) {
-        query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,rfc.ilike.%${search}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
+  const { data: result, isLoading } = useQuery({
+    queryKey: ['admin-clients', search, page],
+    queryFn: () => fetchClients(page, search),
   });
 
-  // Fetch order counts for each client
-  const { data: clientOrders } = useQuery({
-    queryKey: ['admin-client-orders'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('user_id, total');
-      
-      if (error) throw error;
-      
-      // Group by user_id
-      const orderStats: Record<string, { count: number; total: number }> = {};
-      data.forEach(order => {
-        if (order.user_id) {
-          if (!orderStats[order.user_id]) {
-            orderStats[order.user_id] = { count: 0, total: 0 };
-          }
-          orderStats[order.user_id].count += 1;
-          orderStats[order.user_id].total += Number(order.total);
-        }
-      });
-      return orderStats;
-    },
-  });
+  const rawClients = useMemo(() => (result?.data || []).map(mapClient), [result]);
+  const totalCount = result?.totalCount || 0;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-  // Get unique states for filter dropdown
-  const uniqueStates = useMemo(() => {
-    if (!clients) return [];
-    const states = clients
-      .map(c => c.shipping_state)
-      .filter((s): s is string => !!s);
-    return [...new Set(states)].sort();
-  }, [clients]);
-
-  // Apply filters to clients
+  // Apply client-side filters
   const filteredClients = useMemo(() => {
-    if (!clients) return [];
-    
-    return clients.filter(client => {
-      const orderData = clientOrders?.[client.user_id];
+    return rawClients.filter(client => {
       const created = new Date(client.created_at);
       const now = new Date();
       
-      // Date range filter
       if (filters.dateRange !== 'all') {
         const daysDiff = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
-        if (filters.dateRange === 'today' && daysDiff > 0) return false;
         if (filters.dateRange === 'week' && daysDiff > 7) return false;
         if (filters.dateRange === 'month' && daysDiff > 30) return false;
         if (filters.dateRange === '3months' && daysDiff > 90) return false;
         if (filters.dateRange === 'year' && daysDiff > 365) return false;
       }
       
-      // RFC filter
-      if (filters.hasRFC === 'yes' && !client.rfc) return false;
-      if (filters.hasRFC === 'no' && client.rfc) return false;
-      
-      // Activity filter
-      if (filters.activity === 'active' && !orderData) return false;
-      if (filters.activity === 'inactive' && orderData) return false;
-      
-      // Sales volume filter
-      if (filters.salesVolume !== 'all' && orderData) {
-        const total = orderData.total;
-        if (filters.salesVolume === 'low' && total >= 10000) return false;
-        if (filters.salesVolume === 'medium' && (total < 10000 || total >= 50000)) return false;
-        if (filters.salesVolume === 'high' && total < 50000) return false;
-      } else if (filters.salesVolume !== 'all' && !orderData) {
-        return false; // No orders = no sales volume
-      }
-      
-      // State filter
-      if (filters.state !== 'all' && client.shipping_state !== filters.state) return false;
+      if (filters.country !== 'all' && client.country !== filters.country) return false;
+      if (filters.source !== 'all' && client.source !== filters.source) return false;
+      if (filters.marketing !== 'all' && client.marketing_emails !== filters.marketing) return false;
       
       return true;
     });
-  }, [clients, clientOrders, filters]);
+  }, [rawClients, filters]);
+
+  const uniqueCountries = useMemo(() => {
+    const countries = rawClients.map(c => c.country).filter((s): s is string => !!s);
+    return [...new Set(countries)].sort();
+  }, [rawClients]);
+
+  const uniqueSources = useMemo(() => {
+    const sources = rawClients.map(c => c.source).filter((s): s is string => !!s);
+    return [...new Set(sources)].sort();
+  }, [rawClients]);
 
   const activeFiltersCount = Object.values(filters).filter(v => v !== 'all').length;
-
-  const resetFilters = () => {
-    setFilters(defaultFilters);
-  };
-
-  const totalClients = filteredClients?.length || 0;
-  const clientsWithRFC = filteredClients?.filter(c => c.rfc).length || 0;
-  const clientsThisMonth = filteredClients?.filter(c => {
-    const created = new Date(c.created_at);
-    const now = new Date();
-    return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
-  }).length || 0;
+  const resetFilters = () => setFilters(defaultFilters);
 
   const stats = [
-    { label: 'Total Clientes', value: totalClients, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Con RFC', value: clientsWithRFC, icon: FileText, color: 'text-green-500', bg: 'bg-green-500/10' },
-    { label: 'Nuevos este mes', value: clientsThisMonth, icon: UserPlus, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { label: 'Total Clientes', value: totalCount.toLocaleString(), icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'En esta página', value: filteredClients.length, icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Página', value: page + ' / ' + (totalPages || 1), icon: UserPlus, color: 'text-primary', bg: 'bg-primary/10' },
   ];
 
-  const openClientDetails = (client: any) => {
-    setSelectedClient(client);
-    setDetailsOpen(true);
-  };
-
   const exportToExcel = () => {
-    if (!filteredClients || filteredClients.length === 0) {
-      toast({
-        title: "Sin datos",
-        description: "No hay clientes para exportar",
-        variant: "destructive"
-      });
+    if (filteredClients.length === 0) {
+      toast({ title: "Sin datos", description: "No hay clientes para exportar", variant: "destructive" });
       return;
     }
-
-    const exportData = filteredClients.map(client => {
-      const orderData = clientOrders?.[client.user_id];
-      return {
-        'Nombre': client.full_name,
-        'Email': client.email,
-        'Teléfono': client.phone || 'N/A',
-        'RFC': client.rfc || 'N/A',
-        'Dirección': client.shipping_address || 'N/A',
-        'Ciudad': client.shipping_city || 'N/A',
-        'Estado': client.shipping_state || 'N/A',
-        'País': client.shipping_country || 'México',
-        'Código Postal': client.shipping_postal_code || 'N/A',
-        'Pedidos': orderData?.count || 0,
-        'Total Compras': orderData?.total ? `$${orderData.total.toLocaleString('es-MX')}` : '$0',
-        'Fecha de Registro': new Date(client.created_at).toLocaleDateString('es-MX'),
-        'Estado de Cuenta': client.status || 'active'
-      };
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Clientes');
-    
-    // Auto-size columns
-    const colWidths = Object.keys(exportData[0]).map(key => ({
-      wch: Math.max(key.length, ...exportData.map(row => String(row[key as keyof typeof row]).length))
+    const exportData = filteredClients.map(client => ({
+      'Nombre': client.full_name,
+      'Email': client.email,
+      'Teléfono': client.phone || 'N/A',
+      'Empresa': client.company || 'N/A',
+      'País': client.country || 'N/A',
+      'Región': client.region || 'N/A',
+      'Ciudad': client.city || 'N/A',
+      'RFC/VAT': client.vat || 'N/A',
+      'Fuente': client.source || 'N/A',
+      'Tags': (client.tags || []).join(', '),
+      'Marketing': client.marketing_emails || 'N/A',
+      'Fecha': new Date(client.created_at).toLocaleDateString('es-MX'),
     }));
-    worksheet['!cols'] = colWidths;
-
-    const fileName = `clientes_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(workbook, fileName);
-    
-    toast({
-      title: "Exportación exitosa",
-      description: `Se exportaron ${filteredClients.length} clientes a Excel`
-    });
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+    XLSX.writeFile(wb, 'clientes_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    toast({ title: "Exportación exitosa", description: 'Se exportaron ' + filteredClients.length + ' clientes' });
   };
 
   return (
@@ -268,10 +184,9 @@ const AdminClientes = () => {
             Clientes
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gestiona tu base de clientes y sus datos fiscales
+            Base de datos de clientes importados ({totalCount.toLocaleString()} registros)
           </p>
         </div>
-        
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={exportToExcel}>
             <Download size={16} className="mr-2" />
@@ -291,7 +206,7 @@ const AdminClientes = () => {
             className="bg-card rounded-xl p-5 border border-border/50 shadow-sm"
           >
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${stat.bg}`}>
+              <div className={'p-3 rounded-xl ' + stat.bg}>
                 <stat.icon size={22} className={stat.color} />
               </div>
               <div>
@@ -308,9 +223,9 @@ const AdminClientes = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
           <Input
-            placeholder="Buscar por nombre, email o RFC..."
+            placeholder="Buscar por nombre, email o empresa..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="pl-10"
           />
         </div>
@@ -332,25 +247,16 @@ const AdminClientes = () => {
                 <h4 className="font-semibold">Filtros</h4>
                 {activeFiltersCount > 0 && (
                   <Button variant="ghost" size="sm" onClick={resetFilters}>
-                    <RotateCcw size={14} className="mr-1" />
-                    Limpiar
+                    <RotateCcw size={14} className="mr-1" /> Limpiar
                   </Button>
                 )}
               </div>
-              
-              {/* Date Range */}
               <div className="space-y-2">
                 <Label>Fecha de registro</Label>
-                <Select 
-                  value={filters.dateRange} 
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, dateRange: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar período" />
-                  </SelectTrigger>
+                <Select value={filters.dateRange} onValueChange={(v) => setFilters(prev => ({ ...prev, dateRange: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Período" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos los tiempos</SelectItem>
-                    <SelectItem value="today">Hoy</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="week">Última semana</SelectItem>
                     <SelectItem value="month">Último mes</SelectItem>
                     <SelectItem value="3months">Últimos 3 meses</SelectItem>
@@ -358,120 +264,73 @@ const AdminClientes = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
-              {/* Activity */}
               <div className="space-y-2">
-                <Label>Actividad</Label>
-                <Select 
-                  value={filters.activity} 
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, activity: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar actividad" />
-                  </SelectTrigger>
+                <Label>País</Label>
+                <Select value={filters.country} onValueChange={(v) => setFilters(prev => ({ ...prev, country: v }))}>
+                  <SelectTrigger><SelectValue placeholder="País" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="active">Con pedidos</SelectItem>
-                    <SelectItem value="inactive">Sin pedidos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Sales Volume */}
-              <div className="space-y-2">
-                <Label>Volumen de ventas</Label>
-                <Select 
-                  value={filters.salesVolume} 
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, salesVolume: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar volumen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="low">Bajo (&lt; $10,000)</SelectItem>
-                    <SelectItem value="medium">Medio ($10,000 - $50,000)</SelectItem>
-                    <SelectItem value="high">Alto (&gt; $50,000)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Has RFC */}
-              <div className="space-y-2">
-                <Label>Datos fiscales</Label>
-                <Select 
-                  value={filters.hasRFC} 
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, hasRFC: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="yes">Con RFC</SelectItem>
-                    <SelectItem value="no">Sin RFC</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* State */}
-              <div className="space-y-2">
-                <Label>Estado/Ubicación</Label>
-                <Select 
-                  value={filters.state} 
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, state: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los estados</SelectItem>
-                    {uniqueStates.map(state => (
-                      <SelectItem key={state} value={state}>{state}</SelectItem>
+                    {uniqueCountries.map((c: string) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              
-              <Button className="w-full" onClick={() => setFiltersOpen(false)}>
-                Aplicar filtros
-              </Button>
+              <div className="space-y-2">
+                <Label>Fuente</Label>
+                <Select value={filters.source} onValueChange={(v) => setFilters(prev => ({ ...prev, source: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Fuente" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {uniqueSources.map((s: string) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Marketing</Label>
+                <Select value={filters.marketing} onValueChange={(v) => setFilters(prev => ({ ...prev, marketing: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Estado" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="subscribed">Subscrito</SelectItem>
+                    <SelectItem value="unsubscribed">Desuscrito</SelectItem>
+                    <SelectItem value="bounced">Rebotado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button className="w-full" onClick={() => setFiltersOpen(false)}>Aplicar filtros</Button>
             </div>
           </PopoverContent>
         </Popover>
       </div>
-      
-      {/* Active Filters Display */}
+
+      {/* Active Filters */}
       {activeFiltersCount > 0 && (
         <div className="flex flex-wrap gap-2">
           {filters.dateRange !== 'all' && (
             <Badge variant="secondary" className="gap-1">
-              Fecha: {filters.dateRange === 'today' ? 'Hoy' : filters.dateRange === 'week' ? 'Última semana' : filters.dateRange === 'month' ? 'Último mes' : filters.dateRange === '3months' ? 'Últimos 3 meses' : 'Último año'}
+              Fecha: {filters.dateRange}
               <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, dateRange: 'all' }))} />
             </Badge>
           )}
-          {filters.activity !== 'all' && (
+          {filters.country !== 'all' && (
             <Badge variant="secondary" className="gap-1">
-              {filters.activity === 'active' ? 'Con pedidos' : 'Sin pedidos'}
-              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, activity: 'all' }))} />
+              {filters.country}
+              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, country: 'all' }))} />
             </Badge>
           )}
-          {filters.salesVolume !== 'all' && (
+          {filters.source !== 'all' && (
             <Badge variant="secondary" className="gap-1">
-              Ventas: {filters.salesVolume === 'low' ? 'Bajo' : filters.salesVolume === 'medium' ? 'Medio' : 'Alto'}
-              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, salesVolume: 'all' }))} />
+              {filters.source}
+              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, source: 'all' }))} />
             </Badge>
           )}
-          {filters.hasRFC !== 'all' && (
+          {filters.marketing !== 'all' && (
             <Badge variant="secondary" className="gap-1">
-              {filters.hasRFC === 'yes' ? 'Con RFC' : 'Sin RFC'}
-              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, hasRFC: 'all' }))} />
-            </Badge>
-          )}
-          {filters.state !== 'all' && (
-            <Badge variant="secondary" className="gap-1">
-              {filters.state}
-              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, state: 'all' }))} />
+              {filters.marketing}
+              <X size={12} className="cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, marketing: 'all' }))} />
             </Badge>
           )}
         </div>
@@ -489,51 +348,43 @@ const AdminClientes = () => {
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead className="font-semibold min-w-[200px]">Cliente</TableHead>
-                <TableHead className="font-semibold min-w-[120px]">Contacto</TableHead>
-                <TableHead className="font-semibold min-w-[150px] hidden sm:table-cell">Ubicación</TableHead>
-                <TableHead className="font-semibold min-w-[150px] hidden md:table-cell">Datos Fiscales</TableHead>
-                <TableHead className="font-semibold min-w-[120px] hidden lg:table-cell">Actividad</TableHead>
+                <TableHead className="font-semibold min-w-[150px]">Empresa</TableHead>
+                <TableHead className="font-semibold min-w-[120px] hidden sm:table-cell">Contacto</TableHead>
+                <TableHead className="font-semibold min-w-[150px] hidden md:table-cell">Ubicación</TableHead>
+                <TableHead className="font-semibold min-w-[100px] hidden lg:table-cell">Fuente</TableHead>
+                <TableHead className="font-semibold min-w-[100px] hidden lg:table-cell">Tags</TableHead>
                 <TableHead className="font-semibold min-w-[100px] hidden lg:table-cell">Registro</TableHead>
                 <TableHead className="text-right font-semibold min-w-[80px]">Acciones</TableHead>
               </TableRow>
             </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    <p className="text-muted-foreground">Cargando clientes...</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : filteredClients?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                      <Users className="text-muted-foreground" size={32} />
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <p className="text-muted-foreground">Cargando clientes...</p>
                     </div>
-                    <div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredClients.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                        <Users className="text-muted-foreground" size={32} />
+                      </div>
                       <p className="font-medium">No se encontraron clientes</p>
-                      <p className="text-sm text-muted-foreground">
-                        {activeFiltersCount > 0 
-                          ? 'Intenta ajustar los filtros para ver más resultados' 
-                          : 'Los clientes aparecerán aquí cuando se registren'}
-                      </p>
                     </div>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredClients?.map((client, index) => {
-                const orderData = clientOrders?.[client.user_id];
-                return (
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredClients.map((client, index) => (
                   <motion.tr
                     key={client.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    transition={{ delay: Math.min(index * 0.02, 0.5) }}
                     className="group hover:bg-muted/30 transition-colors"
                   >
                     <TableCell>
@@ -548,61 +399,51 @@ const AdminClientes = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
-                        {client.phone ? (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone size={14} className="text-muted-foreground" />
-                            <span>{client.phone}</span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Sin teléfono</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {client.shipping_city || client.shipping_state ? (
+                      {client.company ? (
                         <div className="flex items-center gap-2 text-sm">
-                          <MapPin size={14} className="text-muted-foreground" />
-                          <span>{[client.shipping_city, client.shipping_state].filter(Boolean).join(', ')}</span>
+                          <Building2 size={14} className="text-muted-foreground" />
+                          <span className="truncate max-w-[150px]">{client.company}</span>
                         </div>
                       ) : (
-                        <span className="text-sm text-muted-foreground">Sin ubicación</span>
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {client.phone ? (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone size={14} className="text-muted-foreground" />
+                          <span>{client.phone}</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {client.rfc ? (
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="font-mono text-xs">
-                            {client.rfc}
-                          </Badge>
-                          {client.fiscal_document_url && (
-                            <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">
-                              <FileText size={12} className="mr-1" />
-                              CSF
-                            </Badge>
-                          )}
+                      {client.city || client.country ? (
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin size={14} className="text-muted-foreground" />
+                          <span>{[client.city, client.country].filter(Boolean).join(', ')}</span>
                         </div>
                       ) : (
-                        <Badge variant="secondary" className="text-muted-foreground">
-                          Sin datos fiscales
-                        </Badge>
+                        <span className="text-sm text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      {orderData ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <ShoppingBag size={14} className="text-blue-500" />
-                            <span>{orderData.count} pedidos</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <TrendingUp size={14} className="text-green-500" />
-                            <span>${orderData.total.toLocaleString('es-MX')}</span>
-                          </div>
-                        </div>
+                      {client.source ? (
+                        <Badge variant="outline" className="text-xs">{client.source}</Badge>
                       ) : (
-                        <span className="text-sm text-muted-foreground">Sin actividad</span>
+                        <span className="text-sm text-muted-foreground">—</span>
                       )}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div className="flex flex-wrap gap-1">
+                        {(client.tags || []).slice(0, 2).map((tag: string) => (
+                          <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                        ))}
+                        {(client.tags || []).length > 2 && (
+                          <Badge variant="secondary" className="text-xs">+{client.tags.length - 2}</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -618,7 +459,7 @@ const AdminClientes = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openClientDetails(client)}>
+                          <DropdownMenuItem onClick={() => { setSelectedClient(client); setDetailsOpen(true); }}>
                             <Eye size={14} className="mr-2" />
                             Ver detalles
                           </DropdownMenuItem>
@@ -626,339 +467,133 @@ const AdminClientes = () => {
                             <Mail size={14} className="mr-2" />
                             Enviar correo
                           </DropdownMenuItem>
-                          {client.fiscal_document_url && (
-                            <DropdownMenuItem asChild>
-                              <a href={client.fiscal_document_url} target="_blank" rel="noopener noreferrer">
-                                <FileText size={14} className="mr-2" />
-                                Ver CSF
-                              </a>
-                            </DropdownMenuItem>
-                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
                   </motion.tr>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </motion.div>
 
-      {/* Client Details Dialog */}
-      <ClientDetailsDialog
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
-        client={selectedClient}
-        orderStats={selectedClient ? clientOrders?.[selectedClient.user_id] : null}
-      />
-    </div>
-  );
-};
-
-// Separate component for client details with order history
-interface ClientDetailsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  client: any;
-  orderStats: { count: number; total: number } | null | undefined;
-}
-
-const ClientDetailsDialog = ({ open, onOpenChange, client, orderStats }: ClientDetailsDialogProps) => {
-  // Fetch orders for this specific client
-  const { data: clientOrdersData, isLoading: ordersLoading } = useQuery({
-    queryKey: ['client-orders-detail', client?.user_id],
-    queryFn: async () => {
-      if (!client?.user_id) return [];
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (*)
-        `)
-        .eq('user_id', client.user_id)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!client?.user_id && open,
-  });
-
-  // Calculate purchased items aggregate
-  const purchasedItems = useMemo(() => {
-    if (!clientOrdersData) return [];
-    const itemsMap = new Map<string, { 
-      title: string; 
-      image: string; 
-      sku: string; 
-      quantity: number; 
-      totalSpent: number 
-    }>();
-    
-    clientOrdersData.forEach(order => {
-      order.order_items?.forEach((item: any) => {
-        const key = item.product_sku;
-        const existing = itemsMap.get(key);
-        if (existing) {
-          existing.quantity += item.quantity;
-          existing.totalSpent += item.total_price || (item.unit_price * item.quantity);
-        } else {
-          itemsMap.set(key, {
-            title: item.product_title,
-            image: item.product_image || '/placeholder.svg',
-            sku: item.product_sku,
-            quantity: item.quantity,
-            totalSpent: item.total_price || (item.unit_price * item.quantity) || 0
-          });
-        }
-      });
-    });
-    
-    return Array.from(itemsMap.values()).sort((a, b) => b.totalSpent - a.totalSpent);
-  }, [clientOrdersData]);
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; className: string }> = {
-      pending: { label: 'Pendiente', className: 'bg-yellow-500/20 text-yellow-600' },
-      paid: { label: 'Pagado', className: 'bg-green-500/20 text-green-600' },
-      processing: { label: 'Procesando', className: 'bg-blue-500/20 text-blue-600' },
-      shipped: { label: 'Enviado', className: 'bg-purple-500/20 text-purple-600' },
-      delivered: { label: 'Entregado', className: 'bg-green-500/20 text-green-600' },
-      cancelled: { label: 'Cancelado', className: 'bg-red-500/20 text-red-600' },
-    };
-    const config = statusConfig[status] || { label: status, className: 'bg-muted text-muted-foreground' };
-    return <Badge className={config.className}>{config.label}</Badge>;
-  };
-
-  if (!client) return null;
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-semibold text-primary text-lg">
-              {client.full_name?.[0]?.toUpperCase() || 'U'}
-            </div>
-            <div>
-              <span className="block">{client.full_name}</span>
-              <span className="text-sm font-normal text-muted-foreground">{client.email}</span>
-            </div>
-          </DialogTitle>
-          <DialogDescription>
-            Información detallada del cliente
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Summary Stats */}
-        <div className="grid grid-cols-3 gap-4 my-4">
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
-            <DollarSign className="mx-auto text-green-500 mb-2" size={24} />
-            <p className="text-2xl font-bold text-green-600">
-              ${(orderStats?.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-xs text-muted-foreground">Total gastado</p>
-          </div>
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
-            <Receipt className="mx-auto text-blue-500 mb-2" size={24} />
-            <p className="text-2xl font-bold">{orderStats?.count || 0}</p>
-            <p className="text-xs text-muted-foreground">Pedidos realizados</p>
-          </div>
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
-            <Package className="mx-auto text-purple-500 mb-2" size={24} />
-            <p className="text-2xl font-bold">{purchasedItems.length}</p>
-            <p className="text-xs text-muted-foreground">Productos únicos</p>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, totalCount)} de {totalCount.toLocaleString()}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+              Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">Página {page} de {totalPages}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+              Siguiente
+            </Button>
           </div>
         </div>
-        
-        <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="info">Información</TabsTrigger>
-            <TabsTrigger value="orders">Historial de Pedidos</TabsTrigger>
-            <TabsTrigger value="products">Productos Comprados</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="info" className="mt-4">
-            <div className="grid grid-cols-2 gap-6">
+      )}
+
+      {/* Client Details Dialog */}
+      {selectedClient && (
+        <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-semibold text-primary text-lg">
+                  {selectedClient.full_name?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <div>
+                  <span className="block">{selectedClient.full_name}</span>
+                  <span className="text-sm font-normal text-muted-foreground">{selectedClient.email}</span>
+                </div>
+              </DialogTitle>
+              <DialogDescription>Información del cliente</DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-6 mt-4">
               <div className="space-y-4">
                 <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Contacto</h4>
-                <div className="space-y-3">
+                <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-3">
                     <Mail size={16} className="text-muted-foreground" />
-                    <span>{client.email}</span>
+                    <span>{selectedClient.email}</span>
                   </div>
-                  {client.phone && (
+                  {selectedClient.phone && (
                     <div className="flex items-center gap-3">
                       <Phone size={16} className="text-muted-foreground" />
-                      <span>{client.phone}</span>
+                      <span>{selectedClient.phone}</span>
+                    </div>
+                  )}
+                  {selectedClient.company && (
+                    <div className="flex items-center gap-3">
+                      <Building2 size={16} className="text-muted-foreground" />
+                      <span>{selectedClient.company}</span>
                     </div>
                   )}
                 </div>
               </div>
-              
               <div className="space-y-4">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Dirección de Envío</h4>
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Ubicación</h4>
                 <div className="space-y-1 text-sm">
-                  {client.shipping_address && <p>{client.shipping_address}</p>}
-                  <p>
-                    {[client.shipping_city, client.shipping_state, client.shipping_postal_code]
-                      .filter(Boolean)
-                      .join(', ')}
-                  </p>
-                  {client.shipping_country && <p>{client.shipping_country}</p>}
+                  {selectedClient.address && <p>{selectedClient.address}</p>}
+                  <p>{[selectedClient.city, selectedClient.region].filter(Boolean).join(', ')}</p>
+                  {selectedClient.country && <p>{selectedClient.country}</p>}
+                  {selectedClient.postal_code && <p>CP: {selectedClient.postal_code}</p>}
                 </div>
               </div>
-              
               <div className="space-y-4">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Datos Fiscales</h4>
-                {client.rfc ? (
-                  <div className="space-y-2">
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Datos Adicionales</h4>
+                <div className="space-y-2 text-sm">
+                  {selectedClient.vat && (
                     <div className="flex items-center gap-2">
-                      <Building2 size={16} className="text-muted-foreground" />
-                      <span className="font-mono">{client.rfc}</span>
+                      <span className="text-muted-foreground">RFC/VAT:</span>
+                      <span className="font-mono">{selectedClient.vat}</span>
                     </div>
-                    {client.fiscal_document_url && (
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={client.fiscal_document_url} target="_blank" rel="noopener noreferrer">
-                          <FileText size={14} className="mr-2" />
-                          Ver Constancia Fiscal
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Sin datos fiscales registrados</p>
-                )}
+                  )}
+                  {selectedClient.source && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Fuente:</span>
+                      <Badge variant="outline">{selectedClient.source}</Badge>
+                    </div>
+                  )}
+                  {selectedClient.marketing_emails && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Marketing:</span>
+                      <Badge variant="secondary">{selectedClient.marketing_emails}</Badge>
+                    </div>
+                  )}
+                </div>
               </div>
-              
               <div className="space-y-4">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Registro</h4>
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar size={16} className="text-muted-foreground" />
-                  <span>{new Date(client.created_at).toLocaleDateString('es-MX', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}</span>
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Tags</h4>
+                <div className="flex flex-wrap gap-1">
+                  {(selectedClient.tags || []).map((tag: string) => (
+                    <Badge key={tag} variant="secondary">{tag}</Badge>
+                  ))}
+                  {(!selectedClient.tags || selectedClient.tags.length === 0) && (
+                    <span className="text-sm text-muted-foreground">Sin tags</span>
+                  )}
                 </div>
               </div>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="orders" className="mt-4">
-            <ScrollArea className="h-[400px]">
-              {ordersLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : !clientOrdersData || clientOrdersData.length === 0 ? (
-                <div className="text-center py-12">
-                  <ShoppingBag size={48} className="mx-auto text-muted-foreground/30 mb-4" />
-                  <p className="text-muted-foreground">Este cliente no tiene pedidos registrados</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {clientOrdersData.map((order: any) => (
-                    <div key={order.id} className="border border-border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <p className="font-semibold">{order.order_number}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(order.created_at).toLocaleDateString('es-MX', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {getStatusBadge(order.status)}
-                          <Badge variant="outline" className="capitalize">
-                            {order.order_type === 'quote' ? 'Cotización' : 'Compra'}
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      {/* Order Items Preview */}
-                      <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
-                        {order.order_items?.slice(0, 4).map((item: any) => (
-                          <div key={item.id} className="flex-shrink-0">
-                            <img
-                              src={item.product_image || '/placeholder.svg'}
-                              alt={item.product_title}
-                              className="w-12 h-12 rounded object-cover"
-                            />
-                          </div>
-                        ))}
-                        {order.order_items && order.order_items.length > 4 && (
-                          <div className="w-12 h-12 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground flex-shrink-0">
-                            +{order.order_items.length - 4}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">
-                          {order.order_items?.length || 0} {order.order_items?.length === 1 ? 'producto' : 'productos'}
-                        </span>
-                        <span className="font-bold text-primary">
-                          ${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-          
-          <TabsContent value="products" className="mt-4">
-            <ScrollArea className="h-[400px]">
-              {ordersLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : purchasedItems.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package size={48} className="mx-auto text-muted-foreground/30 mb-4" />
-                  <p className="text-muted-foreground">No hay productos comprados registrados</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {purchasedItems.map((item, index) => (
-                    <div key={item.sku} className="flex items-center gap-4 p-3 border border-border rounded-lg">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-16 h-16 rounded-lg object-cover"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
-                        <div className="flex items-center gap-4 mt-1 text-sm">
-                          <span className="text-muted-foreground">
-                            Cantidad: <span className="font-medium text-foreground">{item.quantity}</span>
-                          </span>
-                          <span className="text-muted-foreground">
-                            Total: <span className="font-medium text-green-600">${item.totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-                          </span>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="shrink-0">
-                        #{index + 1}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+            {selectedClient.notes && (
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-2">Notas</h4>
+                <p className="text-sm">{selectedClient.notes}</p>
+              </div>
+            )}
+            {selectedClient.custom_fields && (
+              <div className="mt-2 p-3 bg-muted/50 rounded-lg">
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-2">Campos Personalizados</h4>
+                <p className="text-sm">{selectedClient.custom_fields}</p>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
   );
 };
 
