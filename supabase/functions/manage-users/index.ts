@@ -19,16 +19,25 @@ Deno.serve(async (req) => {
 
     // Verify the requesting user is an admin
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       throw new Error('No authorization header')
     }
 
+    const userClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
     const token = authHeader.replace('Bearer ', '')
-    const { data: { user: requestingUser }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token)
     
-    if (authError || !requestingUser) {
+    if (claimsError || !claimsData?.claims) {
       throw new Error('Invalid token')
     }
+
+    const requestingUserId = claimsData.claims.sub as string
+    const requestingUser = { id: requestingUserId }
 
     // Check if requesting user is admin
     const { data: adminRole } = await supabaseAdmin

@@ -8,3 +8,27 @@ verify_jwt = false
 
 [functions.extract-product-data]
 verify_jwt = false
+
+[functions.manage-users]
+verify_jwt = false
+
+[functions.auth-signup]
+verify_jwt = false
+
+[functions.create-admin]
+verify_jwt = false
+
+[functions.get-exchange-rate]
+verify_jwt = false
+
+[functions.import-clients]
+verify_jwt = false
+
+[functions.mercadopago-create-preference]
+verify_jwt = false
+
+[functions.mercadopago-webhook]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
