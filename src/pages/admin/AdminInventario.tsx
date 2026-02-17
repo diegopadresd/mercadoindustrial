@@ -72,7 +72,7 @@ import { useProductAI, ProductAIResult } from '@/hooks/useProductAI';
 
 const AdminInventario = () => {
   const { user } = useAuth();
-  const { isVendedor, isStaff, sellerId, permissions } = useUserRole();
+  const { isVendedor, isStaff, isAdmin, sellerId, permissions } = useUserRole();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'draft'>('all');
   const [filterPrice, setFilterPrice] = useState<'all' | 'with_price' | 'no_price'>('all');
@@ -244,8 +244,8 @@ const AdminInventario = () => {
         auction_end: data.is_auction && data.auction_end ? data.auction_end : null,
         auction_status: data.is_auction ? 'scheduled' : 'inactive',
         contact_for_quote: !data.is_auction && data.contact_for_quote,
-        // Approval status for vendors
-        ...(isVendedor && !isStaff && !editingProduct ? { approval_status: 'draft' } : {}),
+        // Approval status: vendors and operators go through approval, admins publish directly
+        ...(!isAdmin && !editingProduct ? { approval_status: 'draft' } : {}),
       };
 
       // Assign seller_id for vendors
