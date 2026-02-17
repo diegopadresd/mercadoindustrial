@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type AppRole = 'admin' | 'operador' | 'vendedor' | 'vendedor_oficial' | 'user';
+export type AppRole = 'admin' | 'operador' | 'vendedor' | 'vendedor_oficial' | 'manejo' | 'user';
 
 export interface UserRoleInfo {
   role: AppRole;
@@ -10,6 +10,7 @@ export interface UserRoleInfo {
   isOperador: boolean;
   isVendedor: boolean;
   isVendedorOficial: boolean;
+  isManejo: boolean;
   isStaff: boolean; // admin or operador
   sellerId: string | null;
   companyId: string | null;
@@ -63,6 +64,21 @@ export const getRolePermissions = (role: AppRole): RolePermissions => {
         canViewClients: false,
         canViewConfig: false,
       };
+    case 'manejo':
+      return {
+        canViewUsers: false,
+        canManageUsers: false,
+        canInviteUsers: false,
+        canViewAllProducts: true,
+        canPublishProducts: true,
+        canViewOrders: true,
+        canViewAllOrders: true,
+        canViewInvoices: false,
+        canViewQuestions: false,
+        canViewOffers: false,
+        canViewClients: true,
+        canViewConfig: false,
+      };
     case 'vendedor_oficial':
       return {
         canViewUsers: false,
@@ -114,6 +130,7 @@ export const getRolePermissions = (role: AppRole): RolePermissions => {
 export const getRoleLabel = (role: AppRole): string => {
   const labels: Record<AppRole, string> = {
     admin: 'Administrador',
+    manejo: 'Manejo / Administrativo',
     operador: 'Operador',
     vendedor_oficial: 'Vendedor Oficial',
     vendedor: 'Vendedor',
@@ -157,7 +174,7 @@ export const useUserRole = (): UserRoleInfo & { permissions: RolePermissions } =
         // Determine the highest priority role
         let highestRole: AppRole = 'user';
         if (roles && roles.length > 0) {
-          const roleHierarchy: AppRole[] = ['admin', 'operador', 'vendedor_oficial', 'vendedor', 'user'];
+          const roleHierarchy: AppRole[] = ['admin', 'manejo', 'operador', 'vendedor_oficial', 'vendedor', 'user'];
           for (const r of roleHierarchy) {
             if (roles.some(ur => ur.role === r)) {
               highestRole = r;
@@ -203,6 +220,7 @@ export const useUserRole = (): UserRoleInfo & { permissions: RolePermissions } =
     isOperador: role === 'operador',
     isVendedor: role === 'vendedor',
     isVendedorOficial: role === 'vendedor_oficial',
+    isManejo: role === 'manejo',
     isStaff: role === 'admin' || role === 'operador',
     sellerId: roleData.sellerId,
     companyId: roleData.companyId,
