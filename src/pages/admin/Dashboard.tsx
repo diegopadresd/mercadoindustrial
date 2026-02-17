@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole, getRoleLabel } from '@/hooks/useUserRole';
@@ -390,7 +390,11 @@ const AdminDashboard = () => {
           {/* Page Content */}
           <div className="p-4 sm:p-6 lg:p-8 overflow-x-hidden">
             <Routes>
-              <Route index element={<AdminResumen />} />
+              <Route index element={
+                (isOperador && !isAdmin) ? <Navigate to="/admin/pedidos" replace /> :
+                (isManejo && !isAdmin) ? <Navigate to="/admin/manejo" replace /> :
+                <AdminResumen />
+              } />
               <Route path="usuarios" element={<AdminUsuarios />} />
               <Route path="clientes" element={
                 isAdmin ? <AdminClientes /> : <AccessDenied message="Solo los administradores pueden ver la lista de clientes." />
