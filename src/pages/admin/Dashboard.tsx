@@ -48,6 +48,7 @@ import AdminSoporte from './AdminSoporte';
 import AdminImportClients from './AdminImportClients';
 import VendorLeads from './VendorLeads';
 import AdminVendedores from './AdminVendedores';
+import AdminManejo from './AdminManejo';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -76,6 +77,7 @@ const allSidebarItems: SidebarItem[] = [
   { icon: Ticket, label: 'Soporte', path: '/admin/soporte', description: 'Tickets de contacto', staffOnly: true, vendedorOficialAccess: true, operadorAccess: false },
   { icon: Settings, label: 'Ajustes', path: '/admin/ajustes', description: 'Configuración del sitio', adminOnly: true },
   { icon: LinkIcon, label: 'Auditoría Enlaces', path: '/admin/auditoria-enlaces', description: 'Verificación de rutas', adminOnly: true },
+  { icon: LayoutDashboard, label: 'Panel de Manejo', path: '/admin/manejo', description: 'Control administrativo', adminOnly: true },
 ];
 
 const AdminDashboard = () => {
@@ -408,6 +410,9 @@ const AdminDashboard = () => {
               <Route path="auditoria-enlaces" element={<AdminAuditoriaEnlaces />} />
               <Route path="importar-clientes" element={
                 isAdmin ? <AdminImportClients /> : <AccessDenied message="Solo administradores pueden importar clientes." />
+              } />
+              <Route path="manejo" element={
+                isAdmin ? <AdminManejo /> : <AccessDenied message="Solo administradores pueden acceder al panel de manejo." />
               } />
             </Routes>
           </div>

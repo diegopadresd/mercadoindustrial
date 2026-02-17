@@ -1273,7 +1273,7 @@ const AdminInventario = () => {
                       )}
                       {(product as any).approval_status === 'rejected' && (
                         <Badge variant="outline" className="border-red-500 text-red-600 bg-red-500/10">
-                          Rechazado
+                          {(product as any).review_notes ? '⚠️ Necesita Revisión' : 'Rechazado'}
                         </Badge>
                       )}
                       {product.is_featured && (
@@ -1282,6 +1282,11 @@ const AdminInventario = () => {
                         </Badge>
                       )}
                     </div>
+                    {(product as any).review_notes && (product as any).approval_status === 'rejected' && (
+                      <p className="text-xs text-destructive mt-1 max-w-[200px] truncate" title={(product as any).review_notes}>
+                        📝 {(product as any).review_notes}
+                      </p>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -1319,8 +1324,8 @@ const AdminInventario = () => {
                           </>
                         )}
                         
-                        {/* Vendors see "Request Publication" for drafts */}
-                        {isVendedor && !isStaff && !product.is_active && (product as any).approval_status !== 'pending_approval' && (
+                         {/* Vendors/operators see "Request Publication" for drafts or rejected products */}
+                        {(isVendedor || isStaff) && !product.is_active && (product as any).approval_status !== 'pending_approval' && (
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
@@ -1330,7 +1335,7 @@ const AdminInventario = () => {
                               }}
                             >
                               <Send size={16} className="mr-2" />
-                              Solicitar Publicación
+                              {(product as any).approval_status === 'rejected' ? 'Reenviar a Aprobación' : 'Solicitar Publicación'}
                             </DropdownMenuItem>
                           </>
                         )}
