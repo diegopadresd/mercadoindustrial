@@ -124,13 +124,27 @@ const AdminInventario = () => {
     contact_for_quote: false,
   });
 
-  // Get total count
+  // Get total count with same filters as product query
   const { data: totalCount } = useQuery({
-    queryKey: ['admin-products-count', sellerId, isVendedor, isStaff],
+    queryKey: ['admin-products-count', sellerId, isVendedor, isStaff, search, filterStatus, filterPrice, filterLocation],
     queryFn: async () => {
       let query = supabase.from('products').select('*', { count: 'exact', head: true });
       if (isVendedor && !isStaff && sellerId) {
         query = query.eq('seller_id', sellerId);
+      }
+      if (search) {
+        query = query.or(`title.ilike.%${search}%,sku.ilike.%${search}%,brand.ilike.%${search}%`);
+      }
+      if (filterStatus === 'active') query = query.eq('is_active', true);
+      if (filterStatus === 'draft') query = query.eq('is_active', false);
+      if (filterPrice === 'with_price') query = query.not('price', 'is', null).gt('price', 0);
+      if (filterPrice === 'no_price') query = query.or('price.is.null,price.eq.0');
+      if (filterLocation !== 'all') {
+        if (filterLocation === 'none') {
+          query = query.is('location', null);
+        } else {
+          query = query.eq('location', filterLocation);
+        }
       }
       const { count } = await query;
       return count || 0;
