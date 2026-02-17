@@ -87,6 +87,81 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          company: string | null
+          contact_type: string | null
+          country: string | null
+          created_at: string | null
+          custom_fields: string | null
+          email: string | null
+          first_name: string | null
+          id: number
+          imported_at: string | null
+          last_name: string | null
+          marketing_emails: string | null
+          mobile: string | null
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          region: string | null
+          source: string | null
+          tags: string[] | null
+          vat: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company?: string | null
+          contact_type?: string | null
+          country?: string | null
+          created_at?: string | null
+          custom_fields?: string | null
+          email?: string | null
+          first_name?: string | null
+          id: number
+          imported_at?: string | null
+          last_name?: string | null
+          marketing_emails?: string | null
+          mobile?: string | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          region?: string | null
+          source?: string | null
+          tags?: string[] | null
+          vat?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company?: string | null
+          contact_type?: string | null
+          country?: string | null
+          created_at?: string | null
+          custom_fields?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: number
+          imported_at?: string | null
+          last_name?: string | null
+          marketing_emails?: string | null
+          mobile?: string | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          region?: string | null
+          source?: string | null
+          tags?: string[] | null
+          vat?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           buyer_id: string

@@ -43,6 +43,7 @@ import AdminUsuarios from './AdminUsuarios';
 import AdminAjustes from './AdminAjustes';
 import AdminAuditoriaEnlaces from './AdminAuditoriaEnlaces';
 import AdminSoporte from './AdminSoporte';
+import AdminImportClients from './AdminImportClients';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -379,6 +380,9 @@ const AdminDashboard = () => {
               } />
               <Route path="ajustes" element={<AdminAjustes />} />
               <Route path="auditoria-enlaces" element={<AdminAuditoriaEnlaces />} />
+              <Route path="importar-clientes" element={
+                isAdmin ? <AdminImportClients /> : <AccessDenied message="Solo administradores pueden importar clientes." />
+              } />
             </Routes>
           </div>
         </main>
