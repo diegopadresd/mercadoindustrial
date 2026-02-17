@@ -775,6 +775,7 @@ export type Database = {
           original_price: number | null
           peso_aprox_kg: number | null
           price: number | null
+          review_notes: string | null
           seller_id: string | null
           sku: string
           specifications: Json | null
@@ -815,6 +816,7 @@ export type Database = {
           original_price?: number | null
           peso_aprox_kg?: number | null
           price?: number | null
+          review_notes?: string | null
           seller_id?: string | null
           sku: string
           specifications?: Json | null
@@ -855,6 +857,7 @@ export type Database = {
           original_price?: number | null
           peso_aprox_kg?: number | null
           price?: number | null
+          review_notes?: string | null
           seller_id?: string | null
           sku?: string
           specifications?: Json | null
