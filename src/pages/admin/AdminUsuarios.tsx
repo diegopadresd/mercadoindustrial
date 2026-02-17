@@ -871,6 +871,7 @@ const AdminUsuarios = () => {
                    <SelectItem value="vendedor">Vendedor</SelectItem>
                    <SelectItem value="vendedor_oficial">Vendedor Oficial</SelectItem>
                    <SelectItem value="operador">Operador</SelectItem>
+                   <SelectItem value="manejo">Manejo / Administrativo</SelectItem>
                    <SelectItem value="admin">Administrador</SelectItem>
                  </SelectContent>
               </Select>
@@ -1065,6 +1066,7 @@ const AdminUsuarios = () => {
                   <SelectItem value="vendedor">Vendedor</SelectItem>
                   <SelectItem value="vendedor_oficial">Vendedor Oficial</SelectItem>
                   <SelectItem value="operador">Operador</SelectItem>
+                  <SelectItem value="manejo">Manejo / Administrativo</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
                 </SelectContent>
               </Select>
