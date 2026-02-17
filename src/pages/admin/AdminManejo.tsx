@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import {
   ShoppingCart, Package, ClipboardCheck, Target, Search, Clock, AlertTriangle,
   Bell, Send, Eye, Loader2, MessageSquare, User, Phone, Mail, Plus,
-  CheckCircle, XCircle, FileText, StickyNote, ArrowRight, Filter
+  CheckCircle, XCircle, FileText, StickyNote, ArrowRight, Filter, Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -860,17 +860,307 @@ const ManejoLeads = () => {
   );
 };
 
+// ==================== FACTURACION TAB ====================
+const ManejoFacturacion = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [filterTab, setFilterTab] = useState<'pending' | 'issued'>('pending');
+  const [uploadingOrderId, setUploadingOrderId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch orders that require invoice and are paid
+  const { data: invoiceOrders, isLoading: loadingOrders } = useQuery({
+    queryKey: ['manejo-invoice-orders', search],
+    queryFn: async () => {
+      let query = supabase
+        .from('orders')
+        .select('*')
+        .eq('requires_invoice', true)
+        .order('created_at', { ascending: false });
+      if (search) {
+        query = query.or(`order_number.ilike.%${search}%,customer_name.ilike.%${search}%,rfc.ilike.%${search}%`);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch invoices
+  const { data: invoices, isLoading: loadingInvoices } = useQuery({
+    queryKey: ['manejo-invoices'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getInvoiceForOrder = (orderId: string) => invoices?.find(inv => inv.order_id === orderId);
+
+  const pendingOrders = invoiceOrders?.filter(o => {
+    const inv = getInvoiceForOrder(o.id);
+    return o.fiscal_document_url && (!inv || inv.status === 'pending');
+  }) || [];
+
+  const issuedOrders = invoiceOrders?.filter(o => {
+    const inv = getInvoiceForOrder(o.id);
+    return inv?.status === 'issued';
+  }) || [];
+
+  const displayOrders = filterTab === 'pending' ? pendingOrders : issuedOrders;
+
+  const handleUploadClick = (orderId: string) => {
+    setUploadingOrderId(orderId);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingOrderId) return;
+
+    const allowedTypes = ['application/pdf', 'text/xml', 'application/xml'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: 'Archivo no válido', description: 'Solo se permiten archivos PDF o XML.', variant: 'destructive' });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const order = invoiceOrders?.find(o => o.id === uploadingOrderId);
+      if (!order) throw new Error('Pedido no encontrado');
+
+      const isPdf = file.type === 'application/pdf';
+      const ext = isPdf ? 'pdf' : 'xml';
+      const filePath = `${uploadingOrderId}/${order.order_number}-factura.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('invoices')
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: signedUrlData, error: signedError } = await supabase.storage
+        .from('invoices')
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
+      if (signedError) throw signedError;
+      const fileUrl = signedUrlData.signedUrl;
+
+      const existingInvoice = getInvoiceForOrder(uploadingOrderId);
+      if (existingInvoice) {
+        const updateData: Record<string, string> = { status: 'issued', issued_at: new Date().toISOString() };
+        if (isPdf) updateData.pdf_url = fileUrl; else updateData.xml_url = fileUrl;
+        const { error } = await supabase.from('invoices').update(updateData).eq('id', existingInvoice.id);
+        if (error) throw error;
+      } else {
+        const invoiceData: Record<string, unknown> = {
+          order_id: uploadingOrderId, status: 'issued', issued_at: new Date().toISOString(),
+          invoice_number: `FAC-${order.order_number}`,
+        };
+        if (isPdf) invoiceData.pdf_url = fileUrl; else invoiceData.xml_url = fileUrl;
+        const { error } = await supabase.from('invoices').insert([invoiceData as any]);
+        if (error) throw error;
+      }
+
+      // Send email automatically
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            to: order.customer_email,
+            subject: `Tu factura para el pedido ${order.order_number} - Mercado Industrial`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <h1 style="color: #1a365d; margin: 0;">Mercado Industrial</h1>
+                  <p style="color: #666; margin-top: 5px;">Tu factura está lista</p>
+                </div>
+                <div style="background: #f8fafc; border-radius: 12px; padding: 24px; margin-bottom: 20px;">
+                  <h2 style="color: #1a365d; margin-top: 0;">Hola ${order.customer_name},</h2>
+                  <p style="color: #444; line-height: 1.6;">
+                    Tu factura para el pedido <strong>${order.order_number}</strong> ha sido emitida exitosamente.
+                  </p>
+                  <div style="background: white; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                      <tr><td style="padding: 8px 0; color: #666;">Pedido:</td><td style="padding: 8px 0; font-weight: bold; text-align: right;">${order.order_number}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #666;">RFC:</td><td style="padding: 8px 0; font-weight: bold; text-align: right;">${order.rfc || 'N/A'}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #666;">Total:</td><td style="padding: 8px 0; font-weight: bold; text-align: right; color: #d69e2e;">$${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td></tr>
+                    </table>
+                  </div>
+                  <div style="text-align: center; margin: 20px 0;">
+                    <a href="${fileUrl}" style="display: inline-block; background: #d69e2e; color: white; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: bold;">
+                      📄 Descargar Factura (${ext.toUpperCase()})
+                    </a>
+                  </div>
+                </div>
+                <div style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
+                  <p>© ${new Date().getFullYear()} Mercado Industrial. Todos los derechos reservados.</p>
+                </div>
+              </div>
+            `,
+            type: 'general',
+          },
+        });
+        toast({ title: '¡Factura subida y enviada!', description: `Enviada a ${order.customer_email}` });
+      } catch (emailError) {
+        console.error('Error sending invoice email:', emailError);
+        toast({ title: 'Factura subida', description: 'Se guardó pero hubo error al enviar el correo.', variant: 'destructive' });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['manejo-invoice-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['manejo-invoices'] });
+    } catch (error: any) {
+      console.error('Error uploading invoice:', error);
+      toast({ title: 'Error al subir factura', description: error.message || 'Intenta de nuevo.', variant: 'destructive' });
+    } finally {
+      setIsUploading(false);
+      setUploadingOrderId(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <input ref={fileInputRef} type="file" accept=".pdf,.xml" className="hidden" onChange={handleFileChange} />
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="bg-card rounded-xl p-4 border border-border text-center">
+          <p className="text-2xl font-bold text-yellow-600">{pendingOrders.length}</p>
+          <p className="text-xs text-muted-foreground">Pendientes</p>
+        </div>
+        <div className="bg-card rounded-xl p-4 border border-border text-center">
+          <p className="text-2xl font-bold text-green-600">{issuedOrders.length}</p>
+          <p className="text-xs text-muted-foreground">Procesadas</p>
+        </div>
+        <div className="bg-card rounded-xl p-4 border border-border text-center">
+          <p className="text-2xl font-bold">{invoiceOrders?.length || 0}</p>
+          <p className="text-xs text-muted-foreground">Total Solicitudes</p>
+        </div>
+      </div>
+
+      {/* Alert */}
+      {pendingOrders.length > 0 && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle className="text-yellow-500 shrink-0 mt-0.5" size={20} />
+          <div>
+            <p className="font-medium text-yellow-600">{pendingOrders.length} factura(s) pendiente(s)</p>
+            <p className="text-sm text-muted-foreground">Clientes pagados que subieron constancia fiscal y esperan su factura</p>
+          </div>
+        </div>
+      )}
+
+      {/* Filter tabs + search */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <div className="flex gap-2">
+          <Button size="sm" variant={filterTab === 'pending' ? 'default' : 'outline'} onClick={() => setFilterTab('pending')}>
+            <Clock size={14} className="mr-1" /> Pendientes ({pendingOrders.length})
+          </Button>
+          <Button size="sm" variant={filterTab === 'issued' ? 'default' : 'outline'} onClick={() => setFilterTab('issued')}>
+            <CheckCircle size={14} className="mr-1" /> Procesadas ({issuedOrders.length})
+          </Button>
+        </div>
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <Input placeholder="Buscar por pedido, cliente o RFC..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-card rounded-xl shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Pedido</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>RFC</TableHead>
+              <TableHead>Total</TableHead>
+              <TableHead>Constancia</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loadingOrders || loadingInvoices ? (
+              <TableRow><TableCell colSpan={7} className="text-center py-8"><Loader2 className="mx-auto animate-spin" /></TableCell></TableRow>
+            ) : displayOrders.length === 0 ? (
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                {filterTab === 'pending' ? 'No hay facturas pendientes' : 'No hay facturas procesadas'}
+              </TableCell></TableRow>
+            ) : displayOrders.map(order => {
+              const inv = getInvoiceForOrder(order.id);
+              const isIssued = inv?.status === 'issued';
+              return (
+                <TableRow key={order.id}>
+                  <TableCell><span className="font-mono text-sm">{order.order_number}</span></TableCell>
+                  <TableCell>
+                    <p className="font-medium text-sm">{order.customer_name}</p>
+                    <p className="text-xs text-muted-foreground">{order.customer_email}</p>
+                  </TableCell>
+                  <TableCell><span className="font-mono text-sm">{order.rfc || '-'}</span></TableCell>
+                  <TableCell><span className="font-semibold text-sm">${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span></TableCell>
+                  <TableCell>
+                    {order.fiscal_document_url ? (
+                      <Button variant="ghost" size="sm" onClick={() => window.open(order.fiscal_document_url!, '_blank')} className="text-primary">
+                        <Eye size={14} className="mr-1" /> Ver
+                      </Button>
+                    ) : (
+                      <Badge variant="outline" className="text-muted-foreground">No subida</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isIssued ? (
+                      <Badge className="bg-green-500/20 text-green-600 hover:bg-green-500/30"><CheckCircle size={12} className="mr-1" /> Procesada</Badge>
+                    ) : (
+                      <Badge className="bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30">Pendiente</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {isIssued && inv?.pdf_url && (
+                        <Button size="sm" variant="outline" onClick={() => window.open(inv.pdf_url!, '_blank')}>
+                          <FileText size={14} className="mr-1" /> Ver Factura
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        onClick={() => handleUploadClick(order.id)}
+                        disabled={isUploading && uploadingOrderId === order.id}
+                      >
+                        {isUploading && uploadingOrderId === order.id ? (
+                          <><Loader2 size={14} className="mr-1 animate-spin" /> Subiendo...</>
+                        ) : isIssued ? (
+                          <><Upload size={14} className="mr-1" /> Resubir</>
+                        ) : (
+                          <><Upload size={14} className="mr-1" /> Subir Factura</>
+                        )}
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+};
+
 // ==================== MAIN COMPONENT ====================
 const AdminManejo = () => {
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Panel de Manejo</h1>
-        <p className="text-muted-foreground mt-1">Control administrativo de operaciones, inventario, aprobaciones y leads</p>
+        <p className="text-muted-foreground mt-1">Control administrativo de operaciones, inventario, aprobaciones, leads y facturación</p>
       </div>
 
       <Tabs defaultValue="pedidos" className="space-y-6">
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+        <TabsList className="grid grid-cols-5 w-full max-w-3xl">
           <TabsTrigger value="pedidos" className="flex items-center gap-1">
             <ShoppingCart size={14} />
             <span className="hidden sm:inline">Pedidos</span>
@@ -887,12 +1177,17 @@ const AdminManejo = () => {
             <Target size={14} />
             <span className="hidden sm:inline">Leads</span>
           </TabsTrigger>
+          <TabsTrigger value="facturacion" className="flex items-center gap-1">
+            <FileText size={14} />
+            <span className="hidden sm:inline">Facturación</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="pedidos"><ManejoOrders /></TabsContent>
         <TabsContent value="inventario"><ManejoInventario /></TabsContent>
         <TabsContent value="aprobaciones"><ManejoAprobaciones /></TabsContent>
         <TabsContent value="leads"><ManejoLeads /></TabsContent>
+        <TabsContent value="facturacion"><ManejoFacturacion /></TabsContent>
       </Tabs>
     </div>
   );
