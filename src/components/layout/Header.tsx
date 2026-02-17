@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { LayoutDashboard } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import logoMercadoIndustrial from '@/assets/logo-mercado-industrial.png';
@@ -42,7 +43,7 @@ export const Header = () => {
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
   const location = useLocation();
   const { user, profile, isAdmin, signOut } = useAuth();
-  const { isVendedor } = useUserRole();
+  const { isVendedor, isVendedorOficial, isStaff, isAdmin: isAdminRole } = useUserRole();
   const { itemCount } = useCart();
   const { language, currency, setLanguage, setCurrency, t } = useLocale();
 
@@ -313,14 +314,14 @@ export const Header = () => {
                           <User size={16} />
                           {t('account.profile')}
                         </Link>
-                        {isAdmin && (
+                        {(isAdmin || isAdminRole || isStaff || isVendedorOficial) && (
                           <Link
                             to="/admin"
                             onClick={() => setUserMenuOpen(false)}
                             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors text-primary font-medium"
                           >
-                            <User size={16} />
-                            {t('nav.admin')}
+                            <LayoutDashboard size={16} />
+                            {isVendedorOficial ? 'Panel de Ventas' : isStaff ? 'Panel Operador' : t('nav.admin')}
                           </Link>
                         )}
                         <hr className="my-1 border-border" />
@@ -547,14 +548,14 @@ export const Header = () => {
                     <User size={18} />
                     {t('account.profile')}
                   </Link>
-                  {isAdmin && (
+                  {(isAdmin || isAdminRole || isStaff || isVendedorOficial) && (
                     <Link
                       to="/admin"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-muted transition-colors"
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-bold text-primary-foreground bg-primary hover:bg-primary/90 transition-colors"
                     >
-                      <User size={18} />
-                      {t('nav.admin')}
+                      <LayoutDashboard size={18} />
+                      {isVendedorOficial ? 'Panel de Ventas' : isStaff ? 'Panel Operador' : t('nav.admin')}
                     </Link>
                   )}
                   <button
