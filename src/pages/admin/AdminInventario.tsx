@@ -227,7 +227,7 @@ const AdminInventario = () => {
         location: data.location,
         description: data.description,
         categories: data.categories.split(',').map(c => c.trim()).filter(Boolean),
-        is_active: isVendedor && !isStaff ? false : data.is_active, // Vendors can't publish
+        is_active: isAdmin ? data.is_active : (!editingProduct ? false : data.is_active), // Only admins can publish directly
         is_featured: data.is_featured,
         is_new: data.is_new,
         images: data.images,
@@ -269,8 +269,8 @@ const AdminInventario = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast({
-        title: editingProduct ? 'Producto actualizado' : (isVendedor && !isStaff ? 'Borrador guardado' : 'Producto creado'),
-        description: isVendedor && !isStaff && !editingProduct 
+        title: editingProduct ? 'Producto actualizado' : (!isAdmin ? 'Borrador guardado' : 'Producto creado'),
+        description: !isAdmin && !editingProduct 
           ? 'Tu producto se guardó como borrador. Solicita publicación cuando esté listo.'
           : 'Los cambios se guardaron correctamente',
       });
