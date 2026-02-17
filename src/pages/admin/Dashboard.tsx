@@ -22,6 +22,7 @@ import {
   UserCog,
   Ticket,
   Link as LinkIcon,
+  Target,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +45,7 @@ import AdminAjustes from './AdminAjustes';
 import AdminAuditoriaEnlaces from './AdminAuditoriaEnlaces';
 import AdminSoporte from './AdminSoporte';
 import AdminImportClients from './AdminImportClients';
+import VendorLeads from './VendorLeads';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -53,25 +55,28 @@ interface SidebarItem {
   requiredPermission?: string;
   adminOnly?: boolean;
   staffOnly?: boolean;
+  vendedorOficialOnly?: boolean;
+  vendedorOficialAccess?: boolean;
 }
 
 const allSidebarItems: SidebarItem[] = [
-  { icon: LayoutDashboard, label: 'Panel de Control', path: '/admin', description: 'Vista general' },
+  { icon: LayoutDashboard, label: 'Panel de Control', path: '/admin', description: 'Vista general', vendedorOficialAccess: true },
   { icon: UserCog, label: 'Usuarios', path: '/admin/usuarios', description: 'Gestión de usuarios', adminOnly: true },
   { icon: Users, label: 'Clientes', path: '/admin/clientes', description: 'Gestión de clientes', adminOnly: true },
-  { icon: ShoppingCart, label: 'Pedidos', path: '/admin/pedidos', description: 'Órdenes y cotizaciones' },
-  { icon: Tag, label: 'Ofertas', path: '/admin/ofertas', description: 'Negociación de precios' },
+  { icon: Target, label: 'Mis Leads', path: '/admin/leads', description: 'Leads asignados', vendedorOficialOnly: true },
+  { icon: ShoppingCart, label: 'Pedidos', path: '/admin/pedidos', description: 'Órdenes y cotizaciones', vendedorOficialAccess: true },
+  { icon: Tag, label: 'Ofertas', path: '/admin/ofertas', description: 'Negociación de precios', vendedorOficialAccess: true },
   { icon: FileText, label: 'Facturación', path: '/admin/facturacion', description: 'CFDI y documentos', staffOnly: true },
-  { icon: Package, label: 'Inventario', path: '/admin/inventario', description: 'Productos y stock' },
-  { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes', staffOnly: true },
-  { icon: Ticket, label: 'Soporte', path: '/admin/soporte', description: 'Tickets de contacto', staffOnly: true },
+  { icon: Package, label: 'Inventario', path: '/admin/inventario', description: 'Productos y stock', vendedorOficialAccess: true },
+  { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes', staffOnly: true, vendedorOficialAccess: true },
+  { icon: Ticket, label: 'Soporte', path: '/admin/soporte', description: 'Tickets de contacto', staffOnly: true, vendedorOficialAccess: true },
   { icon: Settings, label: 'Ajustes', path: '/admin/ajustes', description: 'Configuración del sitio', adminOnly: true },
   { icon: LinkIcon, label: 'Auditoría Enlaces', path: '/admin/auditoria-enlaces', description: 'Verificación de rutas', adminOnly: true },
 ];
 
 const AdminDashboard = () => {
   const { user, profile, isLoading: authLoading, signOut } = useAuth();
-  const { role, isAdmin, isOperador, isVendedor, isStaff, permissions, isLoading: roleLoading } = useUserRole();
+  const { role, isAdmin, isOperador, isVendedor, isVendedorOficial, isStaff, permissions, isLoading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -96,8 +101,8 @@ const AdminDashboard = () => {
     return null;
   }
 
-  // Check if user has any admin role (admin, operador, or vendedor)
-  const hasAccess = isAdmin || isOperador || isVendedor;
+  // Check if user has any admin role (admin, operador, vendedor, or vendedor_oficial)
+  const hasAccess = isAdmin || isOperador || isVendedor || isVendedorOficial;
   
   if (!hasAccess) {
     return (
@@ -110,7 +115,11 @@ const AdminDashboard = () => {
   // Filter sidebar items based on role
   const sidebarItems = allSidebarItems.filter(item => {
     if (item.adminOnly && !isAdmin) return false;
-    if (item.staffOnly && !isStaff) return false;
+    if (item.vendedorOficialOnly && !isVendedorOficial) return false;
+    if (item.staffOnly && !isStaff && !isVendedorOficial) {
+      if (!item.vendedorOficialAccess || !isVendedorOficial) return false;
+    }
+    if (isVendedorOficial && !item.vendedorOficialAccess && !item.vendedorOficialOnly) return false;
     return true;
   });
 
@@ -137,6 +146,7 @@ const AdminDashboard = () => {
     switch (role) {
       case 'admin': return 'bg-red-500/10 text-red-500';
       case 'operador': return 'bg-blue-500/10 text-blue-500';
+      case 'vendedor_oficial': return 'bg-emerald-500/10 text-emerald-500';
       case 'vendedor': return 'bg-amber-500/10 text-amber-500';
       default: return 'bg-muted text-muted-foreground';
     }
@@ -366,6 +376,9 @@ const AdminDashboard = () => {
               <Route path="clientes" element={
                 isAdmin ? <AdminClientes /> : <AccessDenied message="Solo los administradores pueden ver la lista de clientes." />
               } />
+              <Route path="leads" element={
+                isVendedorOficial || isAdmin ? <VendorLeads /> : <AccessDenied message="Solo vendedores oficiales pueden ver leads." />
+              } />
               <Route path="pedidos" element={<AdminPedidos />} />
               <Route path="ofertas" element={<AdminOfertas />} />
               <Route path="facturacion" element={
@@ -373,10 +386,10 @@ const AdminDashboard = () => {
               } />
               <Route path="inventario" element={<AdminInventario />} />
               <Route path="preguntas" element={
-                isStaff ? <AdminPreguntas /> : <AccessDenied message="Solo administradores y operadores pueden gestionar preguntas." />
+                (isStaff || isVendedorOficial) ? <AdminPreguntas /> : <AccessDenied message="Solo administradores y operadores pueden gestionar preguntas." />
               } />
               <Route path="soporte" element={
-                isStaff ? <AdminSoporte /> : <AccessDenied message="Solo administradores y operadores pueden gestionar tickets de soporte." />
+                (isStaff || isVendedorOficial) ? <AdminSoporte /> : <AccessDenied message="Solo administradores y operadores pueden gestionar tickets de soporte." />
               } />
               <Route path="ajustes" element={<AdminAjustes />} />
               <Route path="auditoria-enlaces" element={<AdminAuditoriaEnlaces />} />

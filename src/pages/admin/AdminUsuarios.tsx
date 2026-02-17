@@ -503,6 +503,7 @@ const AdminUsuarios = () => {
     switch (role) {
       case 'admin': return 'destructive';
       case 'operador': return 'default';
+      case 'vendedor_oficial': return 'default';
       case 'vendedor': return 'secondary';
       default: return 'outline';
     }
@@ -867,14 +868,16 @@ const AdminUsuarios = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="vendedor">Vendedor</SelectItem>
-                  <SelectItem value="operador">Operador</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                </SelectContent>
+                   <SelectItem value="vendedor">Vendedor</SelectItem>
+                   <SelectItem value="vendedor_oficial">Vendedor Oficial</SelectItem>
+                   <SelectItem value="operador">Operador</SelectItem>
+                   <SelectItem value="admin">Administrador</SelectItem>
+                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
                 {createFormData.role === 'admin' && 'Acceso completo al sistema'}
                 {createFormData.role === 'operador' && 'Gestiona productos, pedidos y facturas'}
+                {createFormData.role === 'vendedor_oficial' && 'Panel de ventas con leads, pedidos e inventario'}
                 {createFormData.role === 'vendedor' && 'Solo puede gestionar sus propias publicaciones'}
               </p>
             </div>
@@ -1060,6 +1063,7 @@ const AdminUsuarios = () => {
                 <SelectContent>
                   <SelectItem value="user">Usuario</SelectItem>
                   <SelectItem value="vendedor">Vendedor</SelectItem>
+                  <SelectItem value="vendedor_oficial">Vendedor Oficial</SelectItem>
                   <SelectItem value="operador">Operador</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
                 </SelectContent>

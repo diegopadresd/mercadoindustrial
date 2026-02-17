@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   DollarSign,
@@ -13,6 +14,7 @@ import {
   Mail,
   Phone,
   ArrowLeftRight,
+  UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,7 +65,7 @@ const OfferProductInfo = ({ productId }: { productId: string }) => {
 
 const AdminOfertas = () => {
   const { user } = useAuth();
-  const { isVendedor, isStaff } = useUserRole();
+  const { isVendedor, isStaff, isAdmin, isVendedorOficial } = useUserRole();
   const { data: offers, isLoading, refetch } = useAdminOffers();
   const updateOfferStatus = useUpdateOfferStatus();
   const createNotification = useCreateNotification();
@@ -75,6 +77,30 @@ const AdminOfertas = () => {
   const [actionType, setActionType] = useState<'accept' | 'reject' | 'counter' | null>(null);
   const [counterOfferPrice, setCounterOfferPrice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [assignOfferId, setAssignOfferId] = useState<string | null>(null);
+  const [vendedoresOficiales, setVendedoresOficiales] = useState<any[]>([]);
+  const [selectedVendorId, setSelectedVendorId] = useState<string>('');
+
+  // Fetch vendedores oficiales for assignment
+  const { data: vendedores } = useQuery({
+    queryKey: ['vendedores-oficiales'],
+    queryFn: async () => {
+      const { data: roles, error } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'vendedor_oficial');
+      if (error) throw error;
+      if (!roles || roles.length === 0) return [];
+      const userIds = roles.map(r => r.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds);
+      return profiles || [];
+    },
+    enabled: isAdmin,
+  });
 
   const filteredOffers = offers?.filter((offer) => {
     const matchesSearch =
@@ -375,8 +401,27 @@ const AdminOfertas = () => {
                 {/* Status & Actions */}
                 <div className="flex flex-col items-end gap-3">
                   {getStatusBadge(offer.status)}
+                  {(offer as any).assigned_vendor_id && vendedores && (
+                    <span className="text-xs text-muted-foreground">
+                      Asignado a: <strong>{vendedores.find((v: any) => v.user_id === (offer as any).assigned_vendor_id)?.full_name || 'Vendedor'}</strong>
+                    </span>
+                  )}
                   {offer.status === 'pending' && (
                     <div className="flex flex-wrap gap-2 justify-end">
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setAssignOfferId(offer.id);
+                            setSelectedVendorId('');
+                            setAssignDialogOpen(true);
+                          }}
+                        >
+                          <UserPlus size={16} className="mr-1" />
+                          Asignar Lead
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         onClick={() => handleAction(offer.id, 'accept')}
@@ -493,6 +538,70 @@ const AdminOfertas = () => {
                 {actionType === 'counter' ? 'Enviar Contraoferta' : 'Confirmar'}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign to Vendor Dialog */}
+      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Asignar Lead a Vendedor Oficial</DialogTitle>
+            <DialogDescription>
+              Selecciona un vendedor oficial para asignar esta oferta como lead.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar vendedor..." />
+              </SelectTrigger>
+              <SelectContent>
+                {vendedores?.map((v: any) => (
+                  <SelectItem key={v.user_id} value={v.user_id}>
+                    {v.full_name} ({v.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setAssignDialogOpen(false)} className="flex-1">Cancelar</Button>
+            <Button
+              className="flex-1"
+              disabled={!selectedVendorId || isSubmitting}
+              onClick={async () => {
+                if (!assignOfferId || !selectedVendorId) return;
+                setIsSubmitting(true);
+                try {
+                  const offer = offers?.find(o => o.id === assignOfferId);
+                  if (!offer) return;
+                  // Update offer with assigned vendor
+                  await supabase.from('offers').update({ assigned_vendor_id: selectedVendorId }).eq('id', assignOfferId);
+                  // Create lead for the vendor
+                  await supabase.from('leads').insert({
+                    vendor_id: selectedVendorId,
+                    client_name: offer.customer_name,
+                    client_email: offer.customer_email,
+                    client_phone: offer.customer_phone,
+                    product_id: offer.product_id,
+                    offer_id: offer.id,
+                    status: 'nuevo',
+                    notes: `Oferta de $${offer.offer_price.toLocaleString('es-MX')} en producto ${offer.product_id}`,
+                  });
+                  toast.success('Lead asignado correctamente');
+                  refetch();
+                  setAssignDialogOpen(false);
+                } catch (err) {
+                  toast.error('Error al asignar lead');
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+            >
+              {isSubmitting && <Loader2 size={16} className="mr-2 animate-spin" />}
+              Asignar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
