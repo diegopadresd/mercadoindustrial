@@ -244,6 +244,8 @@ const AdminInventario = () => {
         auction_end: data.is_auction && data.auction_end ? data.auction_end : null,
         auction_status: data.is_auction ? 'scheduled' : 'inactive',
         contact_for_quote: !data.is_auction && data.contact_for_quote,
+        // Approval status for vendors
+        ...(isVendedor && !isStaff && !editingProduct ? { approval_status: 'draft' } : {}),
       };
 
       // Assign seller_id for vendors
@@ -314,16 +316,35 @@ const AdminInventario = () => {
   // Request publication mutation (for vendors)
   const requestPublicationMutation = useMutation({
     mutationFn: async (productId: string) => {
-      // TODO: Implement publication request logic
-      // For now, just notify - in a real app, you'd create a notification for admins
-      // This could be a new table "publication_requests" or a notification system
-      console.log('Publication requested for:', productId);
-      return { productId };
+      // Update approval_status to pending_approval
+      const { error } = await supabase
+        .from('products')
+        .update({ approval_status: 'pending_approval' })
+        .eq('id', productId);
+      if (error) throw error;
+
+      // Create notification for admins
+      const { data: admins } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+
+      if (admins?.length) {
+        const notifications = admins.map(admin => ({
+          user_id: admin.user_id,
+          type: 'product_approval',
+          title: 'Solicitud de publicación',
+          message: `Un vendedor solicita aprobación para publicar un producto`,
+          action_url: '/admin/inventario',
+        }));
+        await supabase.from('notifications').insert(notifications);
+      }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast({
         title: 'Solicitud enviada',
-        description: 'Tu solicitud de publicación ha sido enviada al administrador',
+        description: 'Tu solicitud de publicación ha sido enviada al administrador para revisión',
       });
       setShowPublishRequestDialog(false);
     },
@@ -1244,6 +1265,17 @@ const AdminInventario = () => {
                           Borrador
                         </Badge>
                       )}
+                      {(product as any).approval_status === 'pending_approval' && (
+                        <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-500/10">
+                          <Clock size={12} className="mr-1" />
+                          Pendiente
+                        </Badge>
+                      )}
+                      {(product as any).approval_status === 'rejected' && (
+                        <Badge variant="outline" className="border-red-500 text-red-600 bg-red-500/10">
+                          Rechazado
+                        </Badge>
+                      )}
                       {product.is_featured && (
                         <Badge variant="outline" className="border-primary text-primary bg-primary/10">
                           Destacado
@@ -1288,7 +1320,7 @@ const AdminInventario = () => {
                         )}
                         
                         {/* Vendors see "Request Publication" for drafts */}
-                        {isVendedor && !isStaff && !product.is_active && (
+                        {isVendedor && !isStaff && !product.is_active && (product as any).approval_status !== 'pending_approval' && (
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
@@ -1299,6 +1331,35 @@ const AdminInventario = () => {
                             >
                               <Send size={16} className="mr-2" />
                               Solicitar Publicación
+                            </DropdownMenuItem>
+                          </>
+                        )}
+
+                        {/* Staff can approve/reject pending products */}
+                        {isStaff && (product as any).approval_status === 'pending_approval' && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                supabase.from('products').update({ approval_status: 'approved', is_active: true }).eq('id', product.id).then(() => {
+                                  queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+                                  toast({ title: 'Producto aprobado y publicado' });
+                                });
+                              }}
+                            >
+                              <CheckCircle size={16} className="mr-2 text-green-600" />
+                              Aprobar y Publicar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                supabase.from('products').update({ approval_status: 'rejected' }).eq('id', product.id).then(() => {
+                                  queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+                                  toast({ title: 'Producto rechazado', variant: 'destructive' });
+                                });
+                              }}
+                            >
+                              <EyeOff size={16} className="mr-2 text-red-600" />
+                              Rechazar
                             </DropdownMenuItem>
                           </>
                         )}

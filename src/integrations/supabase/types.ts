@@ -613,10 +613,13 @@ export type Database = {
           notes: string | null
           order_number: string
           order_type: Database["public"]["Enums"]["order_type"]
+          processed_at: string | null
+          processed_by: string | null
           requires_invoice: boolean | null
           rfc: string | null
           shipping_address: string
           shipping_city: string | null
+          shipping_company: string | null
           shipping_cost: number | null
           shipping_country: string | null
           shipping_postal_code: string | null
@@ -624,6 +627,7 @@ export type Database = {
           status: Database["public"]["Enums"]["order_status"]
           subtotal: number
           total: number
+          tracking_number: string | null
           updated_at: string
           user_id: string | null
         }
@@ -640,10 +644,13 @@ export type Database = {
           notes?: string | null
           order_number: string
           order_type?: Database["public"]["Enums"]["order_type"]
+          processed_at?: string | null
+          processed_by?: string | null
           requires_invoice?: boolean | null
           rfc?: string | null
           shipping_address: string
           shipping_city?: string | null
+          shipping_company?: string | null
           shipping_cost?: number | null
           shipping_country?: string | null
           shipping_postal_code?: string | null
@@ -651,6 +658,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
+          tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -667,10 +675,13 @@ export type Database = {
           notes?: string | null
           order_number?: string
           order_type?: Database["public"]["Enums"]["order_type"]
+          processed_at?: string | null
+          processed_by?: string | null
           requires_invoice?: boolean | null
           rfc?: string | null
           shipping_address?: string
           shipping_city?: string | null
+          shipping_company?: string | null
           shipping_cost?: number | null
           shipping_country?: string | null
           shipping_postal_code?: string | null
@@ -678,6 +689,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
+          tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -737,6 +749,7 @@ export type Database = {
         Row: {
           alto_aprox_cm: number | null
           ancho_aprox_cm: number | null
+          approval_status: string
           auction_end: string | null
           auction_min_price: number | null
           auction_start: string | null
@@ -776,6 +789,7 @@ export type Database = {
         Insert: {
           alto_aprox_cm?: number | null
           ancho_aprox_cm?: number | null
+          approval_status?: string
           auction_end?: string | null
           auction_min_price?: number | null
           auction_start?: string | null
@@ -815,6 +829,7 @@ export type Database = {
         Update: {
           alto_aprox_cm?: number | null
           ancho_aprox_cm?: number | null
+          approval_status?: string
           auction_end?: string | null
           auction_min_price?: number | null
           auction_start?: string | null

@@ -18,11 +18,13 @@ import {
   Phone,
   Mail,
   X,
-  User
+  User,
+  CheckCircle
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
 import { QuoteResponseDialog } from '@/components/admin/QuoteResponseDialog';
 import {
   Table,
@@ -57,7 +59,7 @@ const statusOptions = [
 ];
 
 const AdminPedidos = () => {
-  const { isVendedor, isStaff, sellerId } = useUserRole();
+  const { isVendedor, isStaff, isOperador, isAdmin, sellerId } = useUserRole();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -67,6 +69,10 @@ const AdminPedidos = () => {
   const [viewOrderItems, setViewOrderItems] = useState<any[]>([]);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [processDialogOpen, setProcessDialogOpen] = useState(false);
+  const [processOrder, setProcessOrder] = useState<any>(null);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [shippingCompany, setShippingCompany] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -121,6 +127,32 @@ const AdminPedidos = () => {
     },
   });
 
+  const processOrderMutation = useMutation({
+    mutationFn: async ({ orderId, trackingNumber, shippingCompany }: { orderId: string; trackingNumber: string; shippingCompany: string }) => {
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          tracking_number: trackingNumber,
+          shipping_company: shippingCompany,
+          status: 'shipped' as const,
+          processed_at: new Date().toISOString(),
+        })
+        .eq('id', orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-orders-list'] });
+      toast({ title: 'Pedido procesado', description: 'Guía y paquetería registradas correctamente' });
+      setProcessDialogOpen(false);
+      setProcessOrder(null);
+      setTrackingNumber('');
+      setShippingCompany('');
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'No se pudo procesar el pedido', variant: 'destructive' });
+    },
+  });
+
   const getStatusBadge = (status: string) => {
     const config = statusOptions.find(s => s.value === status) || statusOptions[0];
     return <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>{config.label}</span>;
@@ -154,10 +186,13 @@ const AdminPedidos = () => {
   };
 
   // Dynamic labels based on role
-  const headerTitle = isVendedor && !isStaff ? 'Mis Pedidos' : 'Pedidos';
-  const headerDescription = isVendedor && !isStaff 
-    ? `${orders?.length || 0} ventas registradas` 
-    : `${orders?.length || 0} pedidos totales`;
+  const isOperadorOnly = isOperador && !isAdmin;
+  const headerTitle = isOperadorOnly ? 'Pedidos a Preparar' : (isVendedor && !isStaff ? 'Mis Pedidos' : 'Pedidos');
+  const headerDescription = isOperadorOnly
+    ? `${orders?.length || 0} pedidos en el sistema`
+    : (isVendedor && !isStaff 
+      ? `${orders?.length || 0} ventas registradas` 
+      : `${orders?.length || 0} pedidos totales`);
 
   return (
     <div className="space-y-6">
@@ -222,7 +257,7 @@ const AdminPedidos = () => {
                 <TableHead className="min-w-[120px]">Pedido</TableHead>
                 <TableHead className="min-w-[180px]">Cliente</TableHead>
                 <TableHead className="min-w-[100px] hidden sm:table-cell">Tipo</TableHead>
-                <TableHead className="min-w-[100px]">Total</TableHead>
+                {!isOperadorOnly && <TableHead className="min-w-[100px]">Total</TableHead>}
                 <TableHead className="min-w-[130px] hidden md:table-cell">Estado</TableHead>
                 <TableHead className="min-w-[100px] hidden lg:table-cell">Fecha</TableHead>
                 <TableHead className="text-right min-w-[80px]">Acciones</TableHead>
@@ -263,16 +298,21 @@ const AdminPedidos = () => {
                         {order.order_type === 'quote' ? 'Cotización' : 'Compra'}
                       </span>
                     </TableCell>
-                    <TableCell>
-                      {order.order_type === 'quote' && Number(order.total) === 0 ? (
-                        <span className="text-muted-foreground text-xs sm:text-sm italic">Por cotizar</span>
-                      ) : (
-                        <span className="font-semibold text-xs sm:text-sm">
-                          ${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                        </span>
-                      )}
-                    </TableCell>
+                    {!isOperadorOnly && (
+                      <TableCell>
+                        {order.order_type === 'quote' && Number(order.total) === 0 ? (
+                          <span className="text-muted-foreground text-xs sm:text-sm italic">Por cotizar</span>
+                        ) : (
+                          <span className="font-semibold text-xs sm:text-sm">
+                            ${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="hidden md:table-cell">
+                    {isOperadorOnly ? (
+                      getStatusBadge(order.status)
+                    ) : (
                     <Select
                       value={order.status}
                       onValueChange={(value) => updateStatusMutation.mutate({ orderId: order.id, status: value as 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled' })}
@@ -288,6 +328,7 @@ const AdminPedidos = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    )}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <div className="text-sm">
@@ -303,7 +344,22 @@ const AdminPedidos = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1 sm:gap-2">
-                      {order.order_type === 'quote' && Number(order.total) === 0 && (
+                      {isOperadorOnly && (order.status === 'paid' || order.status === 'processing') && (
+                        <Button 
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => {
+                            setProcessOrder(order);
+                            setTrackingNumber((order as any).tracking_number || '');
+                            setShippingCompany((order as any).shipping_company || '');
+                            setProcessDialogOpen(true);
+                          }}
+                        >
+                          <Truck size={14} className="mr-1" />
+                          Procesar
+                        </Button>
+                      )}
+                      {!isOperadorOnly && order.order_type === 'quote' && Number(order.total) === 0 && (
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -314,7 +370,7 @@ const AdminPedidos = () => {
                           Cotizar
                         </Button>
                       )}
-                      {order.order_type === 'quote' && Number(order.total) > 0 && order.status === 'pending' && (
+                      {!isOperadorOnly && order.order_type === 'quote' && Number(order.total) > 0 && order.status === 'pending' && (
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -450,9 +506,11 @@ const AdminPedidos = () => {
                           <p className="text-sm font-medium truncate">{item.product_title}</p>
                           <p className="text-xs text-muted-foreground">SKU: {item.product_sku} · Cant: {item.quantity}</p>
                         </div>
-                        <p className="text-sm font-semibold whitespace-nowrap">
-                          ${Number(item.total_price || item.unit_price * item.quantity).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                        </p>
+                        {!isOperadorOnly && (
+                          <p className="text-sm font-semibold whitespace-nowrap">
+                            ${Number(item.total_price || item.unit_price * item.quantity).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -461,26 +519,48 @@ const AdminPedidos = () => {
 
               <Separator />
 
-              {/* Totals */}
-              <div className="bg-muted/50 rounded-xl p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>${Number(viewOrder.subtotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-                </div>
-                {viewOrder.shipping_cost > 0 && (
+              {/* Totals - hidden for operators */}
+              {!isOperadorOnly && (
+                <div className="bg-muted/50 rounded-xl p-4 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Envío</span>
-                    <span>${Number(viewOrder.shipping_cost).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>${Number(viewOrder.subtotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                   </div>
-                )}
-                <Separator />
-                <div className="flex justify-between font-semibold text-base">
-                  <span>Total</span>
-                  <span className="text-primary">
-                    ${Number(viewOrder.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                  </span>
+                  {viewOrder.shipping_cost > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Envío</span>
+                      <span>${Number(viewOrder.shipping_cost).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
+                  <Separator />
+                  <div className="flex justify-between font-semibold text-base">
+                    <span>Total</span>
+                    <span className="text-primary">
+                      ${Number(viewOrder.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Tracking info if exists */}
+              {(viewOrder as any).tracking_number && (
+                <div className="bg-primary/5 rounded-xl p-4">
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Truck size={16} className="text-primary" />
+                    Información de Envío
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Guía:</span>
+                      <p className="font-mono font-medium">{(viewOrder as any).tracking_number}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Paquetería:</span>
+                      <p className="font-medium">{(viewOrder as any).shipping_company}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Notes */}
               {viewOrder.notes && (
@@ -489,6 +569,89 @@ const AdminPedidos = () => {
                   <p className="text-sm text-muted-foreground">{viewOrder.notes}</p>
                 </div>
               )}
+
+              {/* Process button for operators in detail view */}
+              {isOperadorOnly && (viewOrder.status === 'paid' || viewOrder.status === 'processing') && (
+                <Button 
+                  className="w-full"
+                  onClick={() => {
+                    setProcessOrder(viewOrder);
+                    setTrackingNumber((viewOrder as any).tracking_number || '');
+                    setShippingCompany((viewOrder as any).shipping_company || '');
+                    setProcessDialogOpen(true);
+                    setViewDialogOpen(false);
+                  }}
+                >
+                  <Truck size={16} className="mr-2" />
+                  Procesar Pedido
+                </Button>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Process Order Dialog */}
+      <Dialog open={processDialogOpen} onOpenChange={setProcessDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck size={20} className="text-primary" />
+              Procesar Pedido
+            </DialogTitle>
+          </DialogHeader>
+          {processOrder && (
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <p className="font-medium">{processOrder.order_number}</p>
+                <p className="text-muted-foreground">{processOrder.customer_name}</p>
+                <p className="text-muted-foreground text-xs mt-1">
+                  {processOrder.shipping_address}
+                  {processOrder.shipping_city && `, ${processOrder.shipping_city}`}
+                  {processOrder.shipping_state && `, ${processOrder.shipping_state}`}
+                  {processOrder.shipping_postal_code && ` C.P. ${processOrder.shipping_postal_code}`}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Paquetería / Empresa de envío</Label>
+                <Input
+                  placeholder="Ej: FedEx, DHL, Estafeta, Castores..."
+                  value={shippingCompany}
+                  onChange={(e) => setShippingCompany(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Número de guía</Label>
+                <Input
+                  placeholder="Ingresa el número de guía"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setProcessDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1"
+                  disabled={!trackingNumber.trim() || !shippingCompany.trim() || processOrderMutation.isPending}
+                  onClick={() => {
+                    if (!processOrder) return;
+                    processOrderMutation.mutate({
+                      orderId: processOrder.id,
+                      trackingNumber: trackingNumber.trim(),
+                      shippingCompany: shippingCompany.trim(),
+                    });
+                  }}
+                >
+                  {processOrderMutation.isPending ? (
+                    <Loader2 size={16} className="mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle size={16} className="mr-2" />
+                  )}
+                  Confirmar Envío
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

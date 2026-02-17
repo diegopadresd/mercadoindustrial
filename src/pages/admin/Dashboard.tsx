@@ -59,20 +59,21 @@ interface SidebarItem {
   staffOnly?: boolean;
   vendedorOficialOnly?: boolean;
   vendedorOficialAccess?: boolean;
+  operadorAccess?: boolean;
 }
 
 const allSidebarItems: SidebarItem[] = [
-  { icon: LayoutDashboard, label: 'Panel de Control', path: '/admin', description: 'Vista general', vendedorOficialAccess: true },
+  { icon: LayoutDashboard, label: 'Panel de Control', path: '/admin', description: 'Vista general', vendedorOficialAccess: true, operadorAccess: false },
   { icon: UserCog, label: 'Usuarios', path: '/admin/usuarios', description: 'Gestión de usuarios', adminOnly: true },
   { icon: Users, label: 'Clientes', path: '/admin/clientes', description: 'Gestión de clientes', adminOnly: true },
   { icon: TrendingUp, label: 'Vendedores', path: '/admin/vendedores', description: 'Rendimiento del equipo', adminOnly: true },
   { icon: Target, label: 'Mis Leads', path: '/admin/leads', description: 'Leads asignados', vendedorOficialOnly: true },
-  { icon: ShoppingCart, label: 'Pedidos', path: '/admin/pedidos', description: 'Órdenes y cotizaciones', vendedorOficialAccess: true },
+  { icon: ShoppingCart, label: 'Pedidos', path: '/admin/pedidos', description: 'Órdenes y cotizaciones', vendedorOficialAccess: true, operadorAccess: true },
   { icon: Tag, label: 'Ofertas', path: '/admin/ofertas', description: 'Negociación de precios', vendedorOficialAccess: true },
-  { icon: FileText, label: 'Facturación', path: '/admin/facturacion', description: 'CFDI y documentos', staffOnly: true },
-  { icon: Package, label: 'Inventario', path: '/admin/inventario', description: 'Productos y stock', vendedorOficialAccess: true },
-  { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes', staffOnly: true, vendedorOficialAccess: true },
-  { icon: Ticket, label: 'Soporte', path: '/admin/soporte', description: 'Tickets de contacto', staffOnly: true, vendedorOficialAccess: true },
+  { icon: FileText, label: 'Facturación', path: '/admin/facturacion', description: 'CFDI y documentos', staffOnly: true, operadorAccess: false },
+  { icon: Package, label: 'Inventario', path: '/admin/inventario', description: 'Productos y stock', vendedorOficialAccess: true, operadorAccess: true },
+  { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes', staffOnly: true, vendedorOficialAccess: true, operadorAccess: false },
+  { icon: Ticket, label: 'Soporte', path: '/admin/soporte', description: 'Tickets de contacto', staffOnly: true, vendedorOficialAccess: true, operadorAccess: false },
   { icon: Settings, label: 'Ajustes', path: '/admin/ajustes', description: 'Configuración del sitio', adminOnly: true },
   { icon: LinkIcon, label: 'Auditoría Enlaces', path: '/admin/auditoria-enlaces', description: 'Verificación de rutas', adminOnly: true },
 ];
@@ -119,6 +120,12 @@ const AdminDashboard = () => {
   const sidebarItems = allSidebarItems.filter(item => {
     if (item.adminOnly && !isAdmin) return false;
     if (item.vendedorOficialOnly && !isVendedorOficial) return false;
+    
+    // Operator: only show items explicitly marked with operadorAccess
+    if (isOperador && !isAdmin) {
+      return item.operadorAccess === true;
+    }
+    
     if (item.staffOnly && !isStaff && !isVendedorOficial) {
       if (!item.vendedorOficialAccess || !isVendedorOficial) return false;
     }
