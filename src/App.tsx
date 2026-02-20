@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { LocaleProvider } from "@/contexts/LocaleContext";
@@ -50,6 +51,7 @@ import VentaExterna from "./pages/VentaExterna";
 const queryClient = new QueryClient();
 
 const App = () => (
+  <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <LocaleProvider>
       <AuthProvider>
@@ -110,6 +112,7 @@ const App = () => (
       </AuthProvider>
     </LocaleProvider>
   </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
