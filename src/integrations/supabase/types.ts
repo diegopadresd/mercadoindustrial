@@ -49,6 +49,54 @@ export type Database = {
           },
         ]
       }
+      blog_posts: {
+        Row: {
+          author: string
+          category: string | null
+          content: string | null
+          created_at: string
+          created_by: string
+          excerpt: string | null
+          id: string
+          image_url: string | null
+          is_published: boolean
+          read_time: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          created_by: string
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          read_time?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          read_time?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string
