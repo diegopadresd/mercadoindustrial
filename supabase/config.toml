@@ -36,5 +36,8 @@ verify_jwt = false
 [functions.generate-blog]
 verify_jwt = false
 
+[functions.dynamic-render]
+verify_jwt = false
+
 [functions.sitemap]
 verify_jwt = false

@@ -175,6 +175,7 @@ const mockReviews = [
 import { extractProductId, generateProductUrl } from '@/lib/slugify';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { ProductJsonLd } from '@/components/seo/ProductJsonLd';
+import { getSocialShareUrl } from '@/lib/sharing';
 
 const SITE_URL = 'https://mercadoindustrial.lovable.app';
 
@@ -350,19 +351,22 @@ const ProductoDetalle = () => {
   };
 
   const shareProduct = async () => {
+    const productPath = generateProductUrl(productData.title, productData.id);
+    const shareUrl = getSocialShareUrl(productPath);
+    
     if (navigator.share) {
       try {
         await navigator.share({
           title: productData.title,
           text: `Mira este producto en Mercado Industrial: ${productData.title}`,
-          url: window.location.href,
+          url: shareUrl,
         });
       } catch (err) {
         console.error('Error sharing:', err);
       }
     } else {
       window.open(
-        `https://api.whatsapp.com/send?text=${encodeURIComponent(`${productData.title}\n${window.location.href}`)}`,
+        `https://api.whatsapp.com/send?text=${encodeURIComponent(`${productData.title}\n${shareUrl}`)}`,
         '_blank'
       );
     }
