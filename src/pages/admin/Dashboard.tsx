@@ -49,6 +49,7 @@ import AdminImportClients from './AdminImportClients';
 import VendorLeads from './VendorLeads';
 import AdminVendedores from './AdminVendedores';
 import AdminManejo from './AdminManejo';
+import AdminBlog from './AdminBlog';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -79,6 +80,7 @@ const allSidebarItems: SidebarItem[] = [
   { icon: Settings, label: 'Ajustes', path: '/admin/ajustes', description: 'Configuración del sitio', adminOnly: true },
   { icon: LinkIcon, label: 'Auditoría Enlaces', path: '/admin/auditoria-enlaces', description: 'Verificación de rutas', adminOnly: true },
   { icon: LayoutDashboard, label: 'Panel de Manejo', path: '/admin/manejo', description: 'Control administrativo', adminOnly: false, manejoAccess: true },
+  { icon: FileText, label: 'Blog', path: '/admin/blog', description: 'Gestión de artículos', adminOnly: false, manejoAccess: true },
 ];
 
 const AdminDashboard = () => {
@@ -424,6 +426,9 @@ const AdminDashboard = () => {
               } />
               <Route path="manejo" element={
                 (isAdmin || isManejo) ? <AdminManejo /> : <AccessDenied message="Solo administradores y personal de manejo pueden acceder al panel de manejo." />
+              } />
+              <Route path="blog" element={
+                (isAdmin || isManejo) ? <AdminBlog /> : <AccessDenied message="Solo administradores y personal de manejo pueden gestionar el blog." />
               } />
             </Routes>
           </div>
