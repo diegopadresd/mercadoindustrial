@@ -172,7 +172,11 @@ const mockReviews = [
   },
 ];
 
-import { extractProductId } from '@/lib/slugify';
+import { extractProductId, generateProductUrl } from '@/lib/slugify';
+import { PageMeta } from '@/components/seo/PageMeta';
+import { ProductJsonLd } from '@/components/seo/ProductJsonLd';
+
+const SITE_URL = 'https://mercadoindustrial.lovable.app';
 
 const ProductoDetalle = () => {
   const { id: slugParam } = useParams();
@@ -404,6 +408,23 @@ const ProductoDetalle = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={`${productData.title} - ${productData.brand}`}
+        description={`${productData.title} marca ${productData.brand}. SKU: ${productData.sku}. ${'contact_for_quote' in productData && productData.contact_for_quote || !productData.price ? 'Solicita cotización.' : `Precio: $${productData.price?.toLocaleString('es-MX')} MXN.`} Compra en Mercado Industrial.`}
+        image={productData.images?.[0] || undefined}
+        url={`${SITE_URL}${generateProductUrl(productData.title, productData.id)}`}
+        type="product"
+      />
+      <ProductJsonLd
+        name={productData.title}
+        description={productData.description || productData.title}
+        sku={productData.sku}
+        brand={productData.brand}
+        image={productData.images?.[0] || '/placeholder.svg'}
+        price={productData.price}
+        url={`${SITE_URL}${generateProductUrl(productData.title, productData.id)}`}
+        condition={productData.isNew ? 'NewCondition' : 'UsedCondition'}
+      />
       <Header />
       
       <main className="container mx-auto px-4 py-8">
