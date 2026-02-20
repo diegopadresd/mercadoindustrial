@@ -61,10 +61,10 @@ function buildCatalogQuery(options: CatalogOptions) {
       query = query.order('is_featured', { ascending: false }).order('created_at', { ascending: false });
       break;
     case 'precio-asc':
-      query = query.order('price', { ascending: true, nullsFirst: false });
+      query = query.gt('price', 0).order('price', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
       break;
     case 'precio-desc':
-      query = query.order('price', { ascending: false });
+      query = query.gt('price', 0).order('price', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
       break;
     case 'nombre':
       query = query.order('title', { ascending: true });
