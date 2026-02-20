@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut, Package, ShoppingBag, MessageSquare, Store, Globe, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ export const Header = () => {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, profile, isAdmin, signOut } = useAuth();
   const { isVendedor, isVendedorOficial, isManejo, isStaff, isOperador, isAdmin: isAdminRole } = useUserRole();
   const { itemCount } = useCart();
@@ -67,6 +68,18 @@ export const Header = () => {
   ];
 
   const currentSectors = language === 'es' ? sectors : sectorsEn;
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+    const params = new URLSearchParams();
+    params.set('search', searchQuery.trim());
+    if (selectedSector !== 'Todos los sectores' && selectedSector !== 'All sectors') {
+      params.set('sector', selectedSector.toLowerCase());
+    }
+    navigate(`/catalogo?${params.toString()}`);
+    setSearchQuery('');
+    setMobileMenuOpen(false);
+  };
 
   // Refs for click outside detection
   const langDropdownRef = useRef<HTMLDivElement>(null);
@@ -228,9 +241,10 @@ export const Header = () => {
                   placeholder={language === 'es' ? 'Buscar producto o marca...' : 'Search product or brand...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   className="flex-1 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
-                <Button className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-none rounded-r-xl px-6">
+                <Button onClick={handleSearch} className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-none rounded-r-xl px-6">
                   <Search size={20} />
                   <span className="ml-2 hidden xl:inline">{language === 'es' ? 'Buscar' : 'Search'}</span>
                 </Button>
@@ -443,9 +457,10 @@ export const Header = () => {
                 placeholder="Buscar producto o marca..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="flex-1 border-0 rounded-l-xl focus-visible:ring-0"
               />
-              <Button className="bg-secondary hover:bg-secondary/90 text-white rounded-none rounded-r-xl px-4">
+              <Button onClick={handleSearch} className="bg-secondary hover:bg-secondary/90 text-white rounded-none rounded-r-xl px-4">
                 <Search size={20} />
               </Button>
             </div>
