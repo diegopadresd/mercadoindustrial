@@ -25,6 +25,9 @@ import {
   Phone,
   Mail,
   ShoppingCart,
+  Store,
+  Banknote,
+  Lock,
 } from 'lucide-react';
 
 // Demo SPEI account details
@@ -35,6 +38,15 @@ const SPEI_ACCOUNT = {
   beneficiary: 'Mercado Industrial SA de CV',
   rfc: 'MIN210101ABC',
 };
+
+const SUCURSALES = [
+  { id: 'hermosillo', name: 'Hermosillo', address: 'Blvd. Solidaridad #123, Col. Industrial' },
+  { id: 'mexicali', name: 'Mexicali', address: 'Av. Lázaro Cárdenas #456, Zona Centro' },
+  { id: 'santa-catarina', name: 'Santa Catarina', address: 'Carr. Nacional #789, Parque Industrial' },
+  { id: 'tijuana', name: 'Tijuana', address: 'Blvd. Industrial #321, Mesa de Otay' },
+];
+
+type PaymentMethod = 'terminal' | 'mercadopago' | 'paypal' | 'stripe' | 'spei';
 
 interface ShippingInfo {
   fullName: string;
@@ -55,9 +67,10 @@ const Checkout = () => {
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'spei'>('spei');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mercadopago');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [transferReference, setTransferReference] = useState('');
+  const [selectedSucursal, setSelectedSucursal] = useState('hermosillo');
   
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     fullName: '',
@@ -112,6 +125,22 @@ const Checkout = () => {
   };
 
   const validateShippingInfo = () => {
+    // Terminal en sucursal doesn't require shipping address
+    if (paymentMethod === 'terminal') {
+      const required = ['fullName', 'email', 'phone'];
+      for (const field of required) {
+        if (!shippingInfo[field as keyof ShippingInfo]?.trim()) {
+          toast({
+            title: 'Información incompleta',
+            description: 'Por favor completa tu nombre, correo y teléfono',
+            variant: 'destructive',
+          });
+          return false;
+        }
+      }
+      return true;
+    }
+
     const required = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'postalCode'];
     for (const field of required) {
       if (!shippingInfo[field as keyof ShippingInfo]?.trim()) {
@@ -134,13 +163,10 @@ const Checkout = () => {
 
   const total = subtotal;
 
+  // ---- MERCADO PAGO ----
   const handleMercadoPagoCheckout = async () => {
     if (!user) {
-      toast({
-        title: 'Inicia sesión',
-        description: 'Debes iniciar sesión para continuar',
-        variant: 'destructive',
-      });
+      toast({ title: 'Inicia sesión', description: 'Debes iniciar sesión para continuar', variant: 'destructive' });
       return;
     }
 
@@ -149,10 +175,7 @@ const Checkout = () => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
-
-      if (!token) {
-        throw new Error('No session token');
-      }
+      if (!token) throw new Error('No session token');
 
       const response = await supabase.functions.invoke('mercadopago-create-preference', {
         body: {
@@ -169,123 +192,192 @@ const Checkout = () => {
         },
       });
 
-      if (response.error) {
-        throw new Error(response.error.message || 'Error creating preference');
-      }
+      if (response.error) throw new Error(response.error.message || 'Error creating preference');
 
       const data = response.data;
-
       if (data.success && data.init_point) {
-        // Clear cart before redirecting
         await clearCart();
-        // Redirect to MercadoPago
         window.location.href = data.init_point;
       } else {
         throw new Error(data.error || 'Error creating payment');
       }
-
     } catch (error) {
       console.error('MercadoPago checkout error:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo procesar el pago. Intenta de nuevo o usa SPEI.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'No se pudo procesar el pago. Intenta de nuevo.', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // ---- SPEI ----
   const handleSpeiConfirmation = async () => {
     if (!user || !profile) {
-      toast({
-        title: 'Inicia sesión',
-        description: 'Debes iniciar sesión para continuar',
-        variant: 'destructive',
-      });
+      toast({ title: 'Inicia sesión', description: 'Debes iniciar sesión para continuar', variant: 'destructive' });
       return;
     }
 
     if (!transferReference.trim()) {
-      toast({
-        title: 'Referencia requerida',
-        description: 'Por favor ingresa el número de referencia de tu transferencia',
-        variant: 'destructive',
-      });
+      toast({ title: 'Referencia requerida', description: 'Por favor ingresa el número de referencia de tu transferencia', variant: 'destructive' });
       return;
     }
 
     setIsProcessing(true);
-
     try {
-      const orderNumber = `MI-${Date.now()}`;
-      
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          order_number: orderNumber,
-          user_id: user.id,
-          customer_name: shippingInfo.fullName,
-          customer_email: shippingInfo.email,
-          customer_phone: shippingInfo.phone,
-          shipping_address: shippingInfo.address,
-          shipping_city: shippingInfo.city,
-          shipping_state: shippingInfo.state,
-          shipping_postal_code: shippingInfo.postalCode,
-          shipping_country: shippingInfo.country,
-          subtotal: subtotal,
-          shipping_cost: 0,
-          total: total,
-          status: 'pending',
-          order_type: 'purchase',
-          notes: `Pago SPEI - Ref: ${transferReference}`,
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      const orderItems = items.map(item => ({
-        order_id: order.id,
-        product_id: item.productId,
-        product_title: item.title,
-        product_sku: item.sku,
-        product_image: item.image,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: (item.price || 0) * item.quantity,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      await clearCart();
-
-      toast({
-        title: '¡Pedido registrado!',
-        description: 'Tu pedido ha sido registrado. Verificaremos tu pago y te notificaremos.',
-      });
-
+      await createOrder(`Pago SPEI - Ref: ${transferReference}`, 'pending');
+      toast({ title: '¡Pedido registrado!', description: 'Verificaremos tu pago y te notificaremos.' });
       navigate('/mi-cuenta/mis-compras');
-
     } catch (error) {
       console.error('Error creating order:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo procesar tu pedido. Intenta de nuevo.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'No se pudo procesar tu pedido. Intenta de nuevo.', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // ---- TERMINAL EN SUCURSAL ----
+  const handleTerminalConfirmation = async () => {
+    if (!user) {
+      toast({ title: 'Inicia sesión', description: 'Debes iniciar sesión para continuar', variant: 'destructive' });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const sucursal = SUCURSALES.find(s => s.id === selectedSucursal);
+      await createOrder(`Pago en terminal - Sucursal: ${sucursal?.name || selectedSucursal}`, 'pending');
+      toast({ title: '¡Pedido reservado!', description: `Acude a la sucursal ${sucursal?.name} para completar tu pago en terminal.` });
+      navigate('/mi-cuenta/mis-compras');
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast({ title: 'Error', description: 'No se pudo reservar tu pedido. Intenta de nuevo.', variant: 'destructive' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // ---- PAYPAL ----
+  const handlePaypalCheckout = async () => {
+    if (!user) {
+      toast({ title: 'Inicia sesión', description: 'Debes iniciar sesión para continuar', variant: 'destructive' });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      await createOrder('Pago PayPal - Pendiente verificación', 'pending');
+      // Redirect to PayPal.me link with amount
+      const paypalUrl = `https://www.paypal.com/paypalme/mercadoindustrial/${total.toFixed(2)}MXN`;
+      await clearCart();
+      window.open(paypalUrl, '_blank');
+      toast({ title: '¡Pedido registrado!', description: 'Completa tu pago en PayPal. Te redirigimos ahora.' });
+      navigate('/mi-cuenta/mis-compras');
+    } catch (error) {
+      console.error('PayPal checkout error:', error);
+      toast({ title: 'Error', description: 'No se pudo procesar tu pedido. Intenta de nuevo.', variant: 'destructive' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // ---- Shared order creation ----
+  const createOrder = async (notes: string, status: 'pending' | 'paid' = 'pending') => {
+    const orderNumber = `MI-${Date.now()}`;
+    
+    const shippingAddr = paymentMethod === 'terminal'
+      ? `Recoger en sucursal: ${SUCURSALES.find(s => s.id === selectedSucursal)?.name}`
+      : shippingInfo.address;
+
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        order_number: orderNumber,
+        user_id: user!.id,
+        customer_name: shippingInfo.fullName,
+        customer_email: shippingInfo.email,
+        customer_phone: shippingInfo.phone,
+        shipping_address: shippingAddr,
+        shipping_city: paymentMethod === 'terminal' ? '' : shippingInfo.city,
+        shipping_state: paymentMethod === 'terminal' ? '' : shippingInfo.state,
+        shipping_postal_code: paymentMethod === 'terminal' ? '' : shippingInfo.postalCode,
+        shipping_country: paymentMethod === 'terminal' ? 'México' : shippingInfo.country,
+        subtotal: subtotal,
+        shipping_cost: 0,
+        total: total,
+        status: status as any,
+        order_type: 'purchase' as any,
+        notes,
+      })
+      .select()
+      .single();
+
+    if (orderError) throw orderError;
+
+    const orderItems = items.map(item => ({
+      order_id: order.id,
+      product_id: item.productId,
+      product_title: item.title,
+      product_sku: item.sku,
+      product_image: item.image,
+      quantity: item.quantity,
+      unit_price: item.price,
+      total_price: (item.price || 0) * item.quantity,
+    }));
+
+    const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+    if (itemsError) throw itemsError;
+
+    await clearCart();
+    return order;
   };
 
   if (items.length === 0 || !user) {
     return null;
   }
+
+  const paymentOptions: { value: PaymentMethod; label: string; subtitle: string; icon: React.ReactNode; disabled?: boolean; badge?: string }[] = [
+    {
+      value: 'terminal',
+      label: 'Terminal en Sucursal',
+      subtitle: 'Paga con tarjeta en cualquiera de nuestras sucursales',
+      icon: <Store className="text-secondary-foreground" size={20} />,
+    },
+    {
+      value: 'mercadopago',
+      label: 'Mercado Pago',
+      subtitle: 'Tarjeta, débito, crédito o saldo MP',
+      icon: <CreditCard className="text-white" size={20} />,
+    },
+    {
+      value: 'paypal',
+      label: 'PayPal',
+      subtitle: 'Paga con tu cuenta de PayPal',
+      icon: <Banknote className="text-white" size={20} />,
+    },
+    {
+      value: 'stripe',
+      label: 'Stripe',
+      subtitle: 'Tarjeta de crédito o débito internacional',
+      icon: <CreditCard className="text-white" size={20} />,
+      disabled: true,
+      badge: 'Próximamente',
+    },
+    {
+      value: 'spei',
+      label: 'Transferencia SPEI',
+      subtitle: 'Transferencia bancaria inmediata',
+      icon: <Building2 className="text-secondary-foreground" size={20} />,
+    },
+  ];
+
+  const getIconBg = (method: PaymentMethod) => {
+    switch (method) {
+      case 'terminal': return 'bg-primary';
+      case 'mercadopago': return 'bg-[#009EE3]';
+      case 'paypal': return 'bg-[#003087]';
+      case 'stripe': return 'bg-[#635BFF]';
+      case 'spei': return 'bg-secondary';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -450,72 +542,138 @@ const Checkout = () => {
 
                 <RadioGroup
                   value={paymentMethod}
-                  onValueChange={(value) => setPaymentMethod(value as 'mercadopago' | 'spei')}
+                  onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
                   className="space-y-3"
                 >
-                  <div 
-                    className={`flex items-center space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-                      paymentMethod === 'mercadopago' 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-border hover:border-muted-foreground/50'
-                    }`}
-                    onClick={() => setPaymentMethod('mercadopago')}
-                  >
-                    <RadioGroupItem value="mercadopago" id="mercadopago" />
-                    <Label htmlFor="mercadopago" className="flex items-center gap-3 cursor-pointer flex-1">
-                      <div className="w-10 h-10 bg-[#009EE3] rounded-lg flex items-center justify-center">
-                        <CreditCard className="text-white" size={20} />
-                      </div>
-                      <div>
-                        <p className="font-semibold">Mercado Pago</p>
-                        <p className="text-sm text-muted-foreground">Tarjeta, débito, crédito o saldo</p>
-                      </div>
-                    </Label>
-                  </div>
-
-                  <div 
-                    className={`flex items-center space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-                      paymentMethod === 'spei' 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-border hover:border-muted-foreground/50'
-                    }`}
-                    onClick={() => setPaymentMethod('spei')}
-                  >
-                    <RadioGroupItem value="spei" id="spei" />
-                    <Label htmlFor="spei" className="flex items-center gap-3 cursor-pointer flex-1">
-                      <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
-                        <Building2 className="text-secondary-foreground" size={20} />
-                      </div>
-                      <div>
-                        <p className="font-semibold">Transferencia SPEI</p>
-                        <p className="text-sm text-muted-foreground">Transferencia bancaria inmediata</p>
-                      </div>
-                    </Label>
-                  </div>
+                  {paymentOptions.map((option) => (
+                    <div
+                      key={option.value}
+                      className={`flex items-center space-x-3 p-4 rounded-xl border-2 transition-colors ${
+                        option.disabled
+                          ? 'border-border opacity-60 cursor-not-allowed'
+                          : paymentMethod === option.value
+                            ? 'border-primary bg-primary/5 cursor-pointer'
+                            : 'border-border hover:border-muted-foreground/50 cursor-pointer'
+                      }`}
+                      onClick={() => !option.disabled && setPaymentMethod(option.value)}
+                    >
+                      <RadioGroupItem value={option.value} id={option.value} disabled={option.disabled} />
+                      <Label htmlFor={option.value} className={`flex items-center gap-3 flex-1 ${option.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getIconBg(option.value)}`}>
+                          {option.icon}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold">{option.label}</p>
+                            {option.badge && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                                {option.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{option.subtitle}</p>
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
                 </RadioGroup>
 
-                {/* Mercado Pago */}
-                {paymentMethod === 'mercadopago' && (
-                  <div className="mt-6">
-                    <Button 
-                      className="w-full bg-[#009EE3] hover:bg-[#007eb5] text-white"
-                      onClick={handleMercadoPagoCheckout}
+                {/* ---- TERMINAL EN SUCURSAL ---- */}
+                {paymentMethod === 'terminal' && (
+                  <div className="mt-6 space-y-4">
+                    <div className="p-4 bg-muted/50 border border-border rounded-xl space-y-3">
+                      <h4 className="font-semibold text-foreground flex items-center gap-2">
+                        <Store size={18} className="text-primary" />
+                        Selecciona tu sucursal
+                      </h4>
+                      <RadioGroup
+                        value={selectedSucursal}
+                        onValueChange={setSelectedSucursal}
+                        className="space-y-2"
+                      >
+                        {SUCURSALES.map((suc) => (
+                          <div
+                            key={suc.id}
+                            className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                              selectedSucursal === suc.id ? 'border-primary bg-primary/5' : 'border-border'
+                            }`}
+                            onClick={() => setSelectedSucursal(suc.id)}
+                          >
+                            <RadioGroupItem value={suc.id} id={`suc-${suc.id}`} />
+                            <Label htmlFor={`suc-${suc.id}`} className="cursor-pointer">
+                              <p className="font-medium">{suc.name}</p>
+                              <p className="text-xs text-muted-foreground">{suc.address}</p>
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground">
+                      Tu pedido será reservado. Acude a la sucursal seleccionada para pagar con terminal bancaria y recoger tu producto.
+                    </p>
+
+                    <Button
+                      className="w-full btn-gold"
+                      onClick={handleTerminalConfirmation}
                       disabled={isProcessing}
                     >
                       {isProcessing ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : null}
+                      ) : (
+                        <Store size={18} className="mr-2" />
+                      )}
+                      Reservar y pagar en sucursal
+                    </Button>
+                  </div>
+                )}
+
+                {/* ---- MERCADO PAGO ---- */}
+                {paymentMethod === 'mercadopago' && (
+                  <div className="mt-6">
+                    <Button
+                      className="w-full bg-[#009EE3] hover:bg-[#007eb5] text-white"
+                      onClick={handleMercadoPagoCheckout}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       Pagar con Mercado Pago
                     </Button>
                   </div>
                 )}
 
-                {/* SPEI */}
+                {/* ---- PAYPAL ---- */}
+                {paymentMethod === 'paypal' && (
+                  <div className="mt-6 space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Serás redirigido a PayPal para completar tu pago. Una vez confirmado, verificaremos y procesaremos tu pedido.
+                    </p>
+                    <Button
+                      className="w-full bg-[#003087] hover:bg-[#002060] text-white"
+                      onClick={handlePaypalCheckout}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Pagar con PayPal
+                    </Button>
+                  </div>
+                )}
+
+                {/* ---- STRIPE (Próximamente) ---- */}
+                {paymentMethod === 'stripe' && (
+                  <div className="mt-6 p-4 bg-muted/50 border border-border rounded-xl text-center">
+                    <Lock size={24} className="mx-auto text-muted-foreground mb-2" />
+                    <p className="font-semibold text-foreground">Próximamente</p>
+                    <p className="text-sm text-muted-foreground">Estamos integrando Stripe para pagos internacionales con tarjeta.</p>
+                  </div>
+                )}
+
+                {/* ---- SPEI ---- */}
                 {paymentMethod === 'spei' && (
                   <div className="mt-6 space-y-4">
                     <div className="p-4 bg-muted/50 border border-border rounded-xl space-y-3">
                       <h4 className="font-semibold text-foreground">Datos para transferencia SPEI</h4>
-                      
+
                       {[
                         { label: 'Banco', value: SPEI_ACCOUNT.bank, key: 'bank' },
                         { label: 'CLABE Interbancaria', value: SPEI_ACCOUNT.clabe, key: 'clabe', mono: true },
@@ -528,8 +686,8 @@ const Checkout = () => {
                             <p className="text-xs text-muted-foreground">{label}</p>
                             <p className={`font-medium ${mono ? 'font-mono' : ''}`}>{value}</p>
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => copyToClipboard(value, key)}
                           >
@@ -556,7 +714,7 @@ const Checkout = () => {
                       </p>
                     </div>
 
-                    <Button 
+                    <Button
                       className="w-full btn-gold"
                       onClick={handleSpeiConfirmation}
                       disabled={isProcessing || !transferReference.trim()}
@@ -630,18 +788,37 @@ const Checkout = () => {
               </div>
 
               {/* Shipping Info Summary */}
-              {currentStep >= 2 && shippingInfo.address && (
+              {currentStep >= 2 && shippingInfo.fullName && (
                 <>
                   <Separator className="my-4" />
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Enviar a:</p>
-                    <p className="text-sm font-medium">{shippingInfo.fullName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {shippingInfo.address}, {shippingInfo.city}, {shippingInfo.state} {shippingInfo.postalCode}
+                    <p className="text-xs font-semibold text-muted-foreground uppercase">
+                      {paymentMethod === 'terminal' ? 'Datos de contacto:' : 'Enviar a:'}
                     </p>
+                    <p className="text-sm font-medium">{shippingInfo.fullName}</p>
+                    {paymentMethod === 'terminal' ? (
+                      <p className="text-xs text-muted-foreground">
+                        Recoger en: {SUCURSALES.find(s => s.id === selectedSucursal)?.name}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {shippingInfo.address}, {shippingInfo.city}, {shippingInfo.state} {shippingInfo.postalCode}
+                      </p>
+                    )}
                   </div>
                 </>
               )}
+
+              {/* Payment method badges */}
+              <Separator className="my-4" />
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground">Aceptamos:</span>
+                <div className="flex items-center gap-1.5">
+                  {['Terminal', 'MP', 'PayPal', 'Stripe', 'SPEI'].map(m => (
+                    <span key={m} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{m}</span>
+                  ))}
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>

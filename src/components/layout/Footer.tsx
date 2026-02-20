@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin } from 'lucide-react';
+import { Phone, Mail, MapPin, Store, CreditCard, Building2 } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 
 const locations = [
@@ -107,6 +107,13 @@ export const Footer = forwardRef<HTMLElement>((_, ref) => {
                 : 'E-Business with personalized service. Your trusted marketplace for industrial machinery and equipment.'}
             </p>
             <div className="flex items-center gap-3 flex-wrap">
+              <div className="bg-secondary-foreground/10 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                <Store size={14} className="text-primary" />
+                <span className="text-xs text-secondary-foreground/80 font-medium">Terminal</span>
+              </div>
+              <div className="bg-secondary-foreground/10 rounded-lg px-3 py-2">
+                <img src="https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/6.6.73/mercadopago/logo__large.png" alt="Mercado Pago" className="h-5" />
+              </div>
               <a
                 href="https://www.paypal.com/paypalme/mercadoindustrial"
                 target="_blank"
@@ -115,8 +122,13 @@ export const Footer = forwardRef<HTMLElement>((_, ref) => {
               >
                 <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" className="h-5" />
               </a>
-              <div className="bg-secondary-foreground/10 rounded-lg px-3 py-2">
-                <img src="https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/6.6.73/mercadopago/logo__large.png" alt="Mercado Pago" className="h-5" />
+              <div className="bg-secondary-foreground/10 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                <CreditCard size={14} className="text-[#635BFF]" />
+                <span className="text-xs text-secondary-foreground/80 font-medium">Stripe</span>
+              </div>
+              <div className="bg-secondary-foreground/10 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                <Building2 size={14} className="text-primary" />
+                <span className="text-xs text-secondary-foreground/80 font-medium">SPEI</span>
               </div>
             </div>
           </div>
