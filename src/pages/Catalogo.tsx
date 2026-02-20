@@ -118,7 +118,7 @@ const Catalogo = () => {
     'agroindustria': 'Agroindustria',
   };
 
-  // Read category, sector and brand from URL on load
+  // Read category, sector, brand and search from URL on load
   useEffect(() => {
     const categorySlug = searchParams.get('categoria');
     if (categorySlug && categorySlugMap[categorySlug]) {
@@ -133,6 +133,11 @@ const Catalogo = () => {
     const brandParam = searchParams.get('marca');
     if (brandParam) {
       setSelectedBrands([brandParam]);
+    }
+
+    const searchParam = searchParams.get('search');
+    if (searchParam) {
+      setSearchQuery(searchParam);
     }
   }, [searchParams]);
 
