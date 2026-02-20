@@ -139,6 +139,8 @@ export const HeroSection = () => {
             src={heroImage}
             alt="Maquinaria Industrial"
             className="w-full h-full object-cover"
+            fetchPriority="high"
+            decoding="async"
           />
           {/* Gradient Overlay - Left to Right fade */}
           <div className="absolute inset-0 bg-gradient-to-r from-secondary/95 via-secondary/70 to-transparent" />
