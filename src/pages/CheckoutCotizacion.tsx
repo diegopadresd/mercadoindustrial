@@ -15,6 +15,111 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+const STEPS = [
+  { label: 'Cotización enviada', icon: FileText,   desc: 'Solicitud recibida' },
+  { label: 'Precio asignado',    icon: DollarSign, desc: 'Cotización lista' },
+  { label: 'Pago recibido',      icon: CreditCard, desc: 'Confirmando pago' },
+  { label: 'En proceso',         icon: Package,    desc: 'Preparando pedido' },
+  { label: 'Enviado',            icon: Truck,      desc: 'En camino' },
+];
+
+function getActiveStep(order: any): number {
+  if (!order) return 0;
+  if (order.status === 'shipped' || order.status === 'delivered') return 4;
+  if (order.status === 'confirmed' || order.status === 'in_progress') return 3;
+  if (order.status === 'processing' || order.status === 'paid') return 2;
+  if (order.status === 'pending' && order.total > 0) return 1;
+  return 0;
+}
+
+function StatusTimeline({ order }: { order: any }) {
+  const activeStep = getActiveStep(order);
+
+  return (
+    <Card className="mb-6 overflow-hidden">
+      <CardContent className="p-6">
+        {/* Desktop: horizontal */}
+        <div className="hidden sm:flex items-start justify-between relative">
+          {/* Background connector line */}
+          <div className="absolute top-5 left-0 right-0 h-0.5 bg-border mx-10" />
+          {/* Gold fill line */}
+          <div
+            className="absolute top-5 left-0 h-0.5 bg-primary mx-10 transition-all duration-700"
+            style={{ width: activeStep === 0 ? '0%' : `${(activeStep / (STEPS.length - 1)) * 100}%` }}
+          />
+          {STEPS.map((step, i) => {
+            const Icon = step.icon;
+            const isDone = i < activeStep;
+            const isCurrent = i === activeStep;
+            return (
+              <div key={i} className="flex flex-col items-center gap-2 z-10 flex-1">
+                <div
+                  className={cn(
+                    'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300',
+                    isDone && 'bg-primary border-primary text-primary-foreground',
+                    isCurrent && 'bg-background border-primary text-primary ring-4 ring-primary/20 animate-pulse',
+                    !isDone && !isCurrent && 'bg-background border-border text-muted-foreground',
+                  )}
+                >
+                  {isDone ? <CheckCircle2 size={18} /> : <Icon size={16} />}
+                </div>
+                <div className="text-center">
+                  <p className={cn(
+                    'text-xs font-semibold leading-tight',
+                    (isDone || isCurrent) ? 'text-foreground' : 'text-muted-foreground',
+                  )}>
+                    {step.label}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{step.desc}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Mobile: vertical */}
+        <div className="flex sm:hidden flex-col gap-0">
+          {STEPS.map((step, i) => {
+            const Icon = step.icon;
+            const isDone = i < activeStep;
+            const isCurrent = i === activeStep;
+            const isLast = i === STEPS.length - 1;
+            return (
+              <div key={i} className="flex items-start gap-3">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-all duration-300',
+                      isDone && 'bg-primary border-primary text-primary-foreground',
+                      isCurrent && 'bg-background border-primary text-primary ring-4 ring-primary/20 animate-pulse',
+                      !isDone && !isCurrent && 'bg-background border-border text-muted-foreground',
+                    )}
+                  >
+                    {isDone ? <CheckCircle2 size={14} /> : <Icon size={13} />}
+                  </div>
+                  {!isLast && (
+                    <div className={cn('w-0.5 h-8 transition-colors duration-300', isDone ? 'bg-primary' : 'bg-border')} />
+                  )}
+                </div>
+                <div className="pb-4">
+                  <p className={cn(
+                    'text-sm font-semibold',
+                    (isDone || isCurrent) ? 'text-foreground' : 'text-muted-foreground',
+                  )}>
+                    {step.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{step.desc}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 const SPEI_ACCOUNT = {
   bank: 'BBVA México',
@@ -180,6 +285,8 @@ const CheckoutCotizacion = () => {
             <ArrowLeft className="mr-2" size={16} />
             Mis Compras
           </Button>
+
+          <StatusTimeline order={order} />
 
           {!showPaymentStep ? (
             // Step 1: Quote Summary
