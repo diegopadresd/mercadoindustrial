@@ -24,6 +24,7 @@ import {
   Link as LinkIcon,
   Target,
   TrendingUp,
+  Truck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +53,7 @@ import AdminManejo from './AdminManejo';
 import AdminBlog from './AdminBlog';
 import AdminExtraccionIA from './AdminExtraccionIA';
 import AdminMigracion from './AdminMigracion';
+import AdminCotizador from './AdminCotizador';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -85,6 +87,7 @@ const allSidebarItems: SidebarItem[] = [
   { icon: FileText, label: 'Blog', path: '/admin/blog', description: 'Gestión de artículos', adminOnly: false, manejoAccess: true },
   { icon: Search, label: 'Extracción IA', path: '/admin/extraccion-ia', description: 'Extracción de datos con IA', adminOnly: true },
   { icon: Package, label: 'Migración', path: '/admin/migracion', description: 'Migración de datos', adminOnly: true },
+  { icon: Truck, label: 'Cotizador', path: '/admin/cotizador', description: 'Cotiza envíos de flete', vendedorOficialAccess: true, operadorAccess: true, manejoAccess: true },
 ];
 
 const AdminDashboard = () => {
@@ -440,6 +443,7 @@ const AdminDashboard = () => {
               <Route path="migracion" element={
                 isAdmin ? <AdminMigracion /> : <AccessDenied message="Solo administradores pueden acceder a la migración de datos." />
               } />
+              <Route path="cotizador" element={<AdminCotizador />} />
             </Routes>
           </div>
         </main>
