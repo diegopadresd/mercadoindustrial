@@ -50,6 +50,8 @@ import VendorLeads from './VendorLeads';
 import AdminVendedores from './AdminVendedores';
 import AdminManejo from './AdminManejo';
 import AdminBlog from './AdminBlog';
+import AdminExtraccionIA from './AdminExtraccionIA';
+import AdminMigracion from './AdminMigracion';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -81,6 +83,8 @@ const allSidebarItems: SidebarItem[] = [
   { icon: LinkIcon, label: 'Auditoría Enlaces', path: '/admin/auditoria-enlaces', description: 'Verificación de rutas', adminOnly: true },
   { icon: LayoutDashboard, label: 'Panel de Manejo', path: '/admin/manejo', description: 'Control administrativo', adminOnly: false, manejoAccess: true },
   { icon: FileText, label: 'Blog', path: '/admin/blog', description: 'Gestión de artículos', adminOnly: false, manejoAccess: true },
+  { icon: Search, label: 'Extracción IA', path: '/admin/extraccion-ia', description: 'Extracción de datos con IA', adminOnly: true },
+  { icon: Package, label: 'Migración', path: '/admin/migracion', description: 'Migración de datos', adminOnly: true },
 ];
 
 const AdminDashboard = () => {
@@ -429,6 +433,12 @@ const AdminDashboard = () => {
               } />
               <Route path="blog" element={
                 (isAdmin || isManejo) ? <AdminBlog /> : <AccessDenied message="Solo administradores y personal de manejo pueden gestionar el blog." />
+              } />
+              <Route path="extraccion-ia" element={
+                isAdmin ? <AdminExtraccionIA /> : <AccessDenied message="Solo administradores pueden acceder a la extracción con IA." />
+              } />
+              <Route path="migracion" element={
+                isAdmin ? <AdminMigracion /> : <AccessDenied message="Solo administradores pueden acceder a la migración de datos." />
               } />
             </Routes>
           </div>
