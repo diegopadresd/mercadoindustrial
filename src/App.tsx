@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -56,7 +56,53 @@ const PublicarProducto = lazy(() => import("./pages/mi-cuenta/PublicarProducto")
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const prefetchRoutes = () => {
+  import("./pages/Catalogo");
+  import("./pages/ProductoDetalle");
+  import("./pages/Marcas");
+  import("./pages/Blog");
+  import("./pages/BlogDetalle");
+  import("./pages/Nosotros");
+  import("./pages/Recientes");
+  import("./pages/Carrito");
+  import("./pages/Cotizador");
+  import("./pages/Auth");
+  import("./pages/Perfil");
+  import("./pages/FAQ");
+  import("./pages/ComoVender");
+  import("./pages/ComoComprar");
+  import("./pages/SubastasYOfertas");
+  import("./pages/Subastas");
+  import("./pages/PoliticasDePago");
+  import("./pages/Privacidad");
+  import("./pages/Terminos");
+  import("./pages/Contacto");
+  import("./pages/Soporte");
+  import("./pages/Checkout");
+  import("./pages/CheckoutContraoferta");
+  import("./pages/CheckoutCotizacion");
+  import("./pages/checkout/CheckoutSuccess");
+  import("./pages/checkout/CheckoutFailure");
+  import("./pages/checkout/CheckoutPending");
+  import("./pages/VentaExterna");
+  import("./pages/MiCuenta");
+  import("./pages/mi-cuenta/MisPublicaciones");
+  import("./pages/mi-cuenta/MisCompras");
+  import("./pages/mi-cuenta/MisOfertas");
+  import("./pages/mi-cuenta/Chats");
+  import("./pages/mi-cuenta/ActivarVendedor");
+  import("./pages/mi-cuenta/PublicarProducto");
+  import("./pages/admin/Dashboard");
+  import("./pages/NotFound");
+};
+
+const App = () => {
+  useEffect(() => {
+    const timer = setTimeout(prefetchRoutes, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
   <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <LocaleProvider>
@@ -126,6 +172,7 @@ const App = () => (
     </LocaleProvider>
   </QueryClientProvider>
   </HelmetProvider>
-);
+  );
+};
 
 export default App;
