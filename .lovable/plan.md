@@ -1,48 +1,41 @@
 
-## Plan: Status Timeline in Quote Checkout Page
+## Plan: Shipping Email Notification on Tracking Number Save
 
-### What the order statuses map to
+### Where to change
 
-The `orders.status` field drives which step is "active":
-- `pending` + `total = 0` → Step 1 active (Cotización enviada)
-- `pending` + `total > 0` → Step 2 active (Precio asignado)  
-- `processing` → Step 3 active (Pago recibido)
-- `confirmed` / `in_progress` → Step 4 active (En proceso)
-- `shipped` → Step 5 active (Enviado)
+Single file: `src/pages/admin/AdminPedidos.tsx`
 
-### What to build
+### What to add
 
-A horizontal (desktop) / vertical (mobile) step tracker added at the **top of the card** (above the quote summary) in `CheckoutCotizacion.tsx`, always visible regardless of `showPaymentStep`.
+In `processOrderMutation.mutationFn`, right after the successful Supabase update, call `supabase.functions.invoke('send-email', ...)` to send a branded shipping notification to `processOrder.customer_email`.
 
-```text
-[●]──────[●]──────[○]──────[○]──────[○]
-  Cotización    Precio     Pago      En        Enviado
-  enviada      asignado   recibido  proceso
-```
+The email failure is **non-blocking** — wrapped in its own try/catch so if Resend fails the order still saves and the toast still fires.
 
-- Completed steps: filled gold circle with checkmark
-- Current step: pulsing gold ring
-- Future steps: muted gray circle
-- Connecting lines fill with gold up to the current step
+### Email content
 
-### Changes — `src/pages/CheckoutCotizacion.tsx` only
+- **Subject:** `Tu pedido ${order_number} está en camino — Mercado Industrial`
+- **Header:** Gold/dark branding (matching the quote email)
+- **Body:**
+  - "¡Tu pedido está en camino, [customer_name]!"
+  - Tracking number (monospaced)
+  - Shipping company
+  - Estimated info tip
+  - CTA button → `/mis-compras` (to see full order detail)
+- **Footer:** Legal copy
 
-1. Add a `getActiveStep(order)` helper that returns 0–4 based on `order.status` and `order.total`
-2. Define a `STEPS` array with label, icon, and description for each stage
-3. Render the timeline component **above** the existing card, as its own `Card` with `p-6`
-4. On mobile: stack steps vertically with a connecting vertical line on the left
-5. On desktop: horizontal row with connecting lines between circles
+### Data available at call time
 
-### Steps definition
+`processOrder` is in state at mutation time, so we have:
+- `processOrder.customer_email`
+- `processOrder.customer_name`
+- `processOrder.order_number`
+- `trackingNumber` (state var already populated)
+- `shippingCompany` (state var already populated)
 
-```typescript
-const STEPS = [
-  { label: 'Cotización enviada',  icon: FileText,     desc: 'Solicitud recibida' },
-  { label: 'Precio asignado',     icon: DollarSign,   desc: 'Cotización lista' },
-  { label: 'Pago recibido',       icon: CreditCard,   desc: 'Confirmando pago' },
-  { label: 'En proceso',          icon: Package,      desc: 'Preparando pedido' },
-  { label: 'Enviado',             icon: Truck,        desc: 'En camino' },
-];
-```
+### Changes summary
 
-### No new files, no DB changes — single file edit
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminPedidos.tsx` | Add `supabase.functions.invoke('send-email', ...)` inside `processOrderMutation.mutationFn` after the DB update, wrapped in a non-blocking try/catch |
+
+No edge function changes, no DB migration, no new files.
