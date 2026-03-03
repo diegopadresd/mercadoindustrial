@@ -128,7 +128,21 @@ const AdminPedidos = () => {
   });
 
   const processOrderMutation = useMutation({
-    mutationFn: async ({ orderId, trackingNumber, shippingCompany }: { orderId: string; trackingNumber: string; shippingCompany: string }) => {
+    mutationFn: async ({
+      orderId,
+      trackingNumber,
+      shippingCompany,
+      customerEmail,
+      customerName,
+      orderNumber,
+    }: {
+      orderId: string;
+      trackingNumber: string;
+      shippingCompany: string;
+      customerEmail: string;
+      customerName: string;
+      orderNumber: string;
+    }) => {
       const { error } = await supabase
         .from('orders')
         .update({
@@ -139,6 +153,94 @@ const AdminPedidos = () => {
         })
         .eq('id', orderId);
       if (error) throw error;
+
+      // Non-blocking shipping notification email
+      try {
+        const appUrl = window.location.origin;
+        const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Tu pedido está en camino</title></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+        <!-- Header -->
+        <tr>
+          <td style="background:#1a1a1a;padding:32px 40px;text-align:center;">
+            <h1 style="margin:0;color:#D4AF37;font-size:22px;font-weight:700;letter-spacing:1px;">MERCADO INDUSTRIAL</h1>
+            <p style="margin:6px 0 0;color:#a1a1aa;font-size:13px;">mercadoindustrial.com.mx</p>
+          </td>
+        </tr>
+        <!-- Icon banner -->
+        <tr>
+          <td style="background:#D4AF37;padding:20px;text-align:center;">
+            <p style="margin:0;color:#1a1a1a;font-size:28px;">🚚</p>
+            <p style="margin:4px 0 0;color:#1a1a1a;font-weight:700;font-size:14px;letter-spacing:0.5px;">TU PEDIDO ESTÁ EN CAMINO</p>
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:36px 40px;">
+            <p style="margin:0 0 16px;color:#18181b;font-size:16px;">¡Hola, <strong>${customerName}</strong>!</p>
+            <p style="margin:0 0 24px;color:#3f3f46;font-size:15px;line-height:1.6;">
+              Tu pedido <strong style="color:#1a1a1a;">${orderNumber}</strong> ha sido enviado y ya está en camino hacia ti.
+            </p>
+            <!-- Tracking box -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border:1px solid #e4e4e7;border-radius:6px;margin-bottom:24px;">
+              <tr>
+                <td style="padding:20px 24px;">
+                  <p style="margin:0 0 12px;color:#71717a;font-size:12px;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;">Información de envío</p>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:6px 0;color:#71717a;font-size:13px;width:140px;">Número de guía:</td>
+                      <td style="padding:6px 0;color:#1a1a1a;font-size:14px;font-family:monospace;font-weight:700;letter-spacing:1px;">${trackingNumber}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:6px 0;color:#71717a;font-size:13px;">Paquetería:</td>
+                      <td style="padding:6px 0;color:#1a1a1a;font-size:14px;font-weight:600;">${shippingCompany}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 28px;color:#52525b;font-size:13px;line-height:1.6;">
+              💡 <em>Los tiempos de entrega varían según tu ubicación. Puedes usar el número de guía directamente en el sitio de <strong>${shippingCompany}</strong> para rastrear tu paquete en tiempo real.</em>
+            </p>
+            <!-- CTA -->
+            <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+              <tr>
+                <td align="center" style="background:#D4AF37;border-radius:6px;">
+                  <a href="${appUrl}/mis-compras" style="display:inline-block;padding:14px 32px;color:#1a1a1a;font-weight:700;font-size:14px;text-decoration:none;letter-spacing:0.3px;">Ver mis compras →</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f4f4f5;padding:24px 40px;text-align:center;border-top:1px solid #e4e4e7;">
+            <p style="margin:0 0 6px;color:#a1a1aa;font-size:12px;">Mercado Industrial — Plataforma B2B de maquinaria y equipos industriales.</p>
+            <p style="margin:0;color:#d4d4d8;font-size:11px;">Si no esperabas este correo, por favor ignóralo o contáctanos.</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+        await supabase.functions.invoke('send-email', {
+          body: {
+            to: customerEmail,
+            subject: `Tu pedido ${orderNumber} está en camino — Mercado Industrial`,
+            html,
+            type: 'general',
+          },
+        });
+      } catch (emailErr) {
+        console.warn('Shipping email could not be sent (non-blocking):', emailErr);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders-list'] });
@@ -637,6 +739,9 @@ const AdminPedidos = () => {
                       orderId: processOrder.id,
                       trackingNumber: trackingNumber.trim(),
                       shippingCompany: shippingCompany.trim(),
+                      customerEmail: processOrder.customer_email,
+                      customerName: processOrder.customer_name,
+                      orderNumber: processOrder.order_number,
                     });
                   }}
                 >
