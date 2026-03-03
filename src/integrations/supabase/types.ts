@@ -1137,6 +1137,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_brand_counts: {
+        Args: never
+        Returns: {
+          brand: string
+          product_count: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

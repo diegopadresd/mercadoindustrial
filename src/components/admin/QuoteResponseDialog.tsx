@@ -153,7 +153,7 @@ export const QuoteResponseDialog = ({ open, onOpenChange, order, onSuccess }: Qu
           title: '¡Tu cotización está lista!',
           message: `Tu cotización ${order.order_number} por $${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })} está lista para pagar.`,
           type: 'quote_ready',
-          action_url: `/perfil?order=${order.id}`,
+          action_url: `/mi-cuenta/mis-ofertas`,
           related_order_id: order.id,
         });
       }

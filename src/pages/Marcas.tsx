@@ -35,41 +35,13 @@ const Marcas = () => {
   const { data: brands = [], isLoading } = useQuery({
     queryKey: ['brands-with-count'],
     queryFn: async () => {
-      // Paginated fetch to get all brands
-      const PAGE_SIZE = 1000;
-      let allData: { brand: string }[] = [];
-      let from = 0;
-      let keepFetching = true;
-
-      while (keepFetching) {
-        const { data, error } = await supabase
-          .from('products')
-          .select('brand')
-          .eq('is_active', true)
-          .is('seller_id', null)
-          .range(from, from + PAGE_SIZE - 1);
-        if (error) throw error;
-        allData = allData.concat(data || []);
-        if (!data || data.length < PAGE_SIZE) keepFetching = false;
-        else from += PAGE_SIZE;
-      }
-
-      // Count per brand
-      const brandCounts: Record<string, number> = {};
-      allData.forEach(p => {
-        const b = p.brand?.trim();
-        if (b && b !== 'SIN MARCA' && b !== 'Sin marca') {
-          brandCounts[b] = (brandCounts[b] || 0) + 1;
-        }
-      });
-
-      return Object.entries(brandCounts)
-        .map(([name, count]) => ({
-          name,
-          products: count,
-          logo: brandLogos[name] || null,
-        }))
-        .sort((a, b) => b.products - a.products);
+      const { data, error } = await supabase.rpc('get_brand_counts');
+      if (error) throw error;
+      return (data || []).map((row: { brand: string; product_count: number }) => ({
+        name: row.brand,
+        products: Number(row.product_count),
+        logo: brandLogos[row.brand] || null,
+      }));
     },
     staleTime: 5 * 60 * 1000,
   });
