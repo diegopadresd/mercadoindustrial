@@ -158,11 +158,108 @@ export const QuoteResponseDialog = ({ open, onOpenChange, order, onSuccess }: Qu
         });
       }
 
+      // Send email to customer (non-blocking)
+      try {
+        const paymentUrl = `${window.location.origin}/checkout/cotizacion/${order.id}`;
+        const itemsHtml = orderItems.map(item => `
+          <tr>
+            <td style="padding:10px 8px;border-bottom:1px solid #2a2a2a;color:#e5e5e5;">${item.product_title}<br/><span style="font-size:12px;color:#888;">SKU: ${item.product_sku} &times; ${item.quantity}</span></td>
+            <td style="padding:10px 8px;border-bottom:1px solid #2a2a2a;color:#e5e5e5;text-align:right;white-space:nowrap;">$${(parseFloat(itemPrices[item.id]) * item.quantity).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+          </tr>
+        `).join('');
+
+        const adminNotesHtml = adminNotes ? `
+          <div style="margin:24px 0;padding:16px;background:#1e1e1e;border-left:3px solid #C8A94A;border-radius:4px;">
+            <p style="margin:0 0 6px;font-size:13px;color:#C8A94A;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Notas del vendedor</p>
+            <p style="margin:0;color:#ccc;font-size:14px;line-height:1.6;">${adminNotes.replace(/\n/g, '<br/>')}</p>
+          </div>
+        ` : '';
+
+        const emailHtml = `
+          <!DOCTYPE html>
+          <html lang="es">
+          <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Cotización lista</title></head>
+          <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 16px;">
+              <tr><td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#1a1a1a;border-radius:8px;overflow:hidden;">
+                  <!-- Header -->
+                  <tr>
+                    <td style="background:#111;padding:28px 32px;border-bottom:3px solid #C8A94A;">
+                      <p style="margin:0;font-size:22px;font-weight:700;color:#C8A94A;letter-spacing:0.02em;">Mercado Industrial</p>
+                      <p style="margin:4px 0 0;font-size:13px;color:#888;">mercadoindustrial.com.mx</p>
+                    </td>
+                  </tr>
+                  <!-- Body -->
+                  <tr>
+                    <td style="padding:32px;">
+                      <h1 style="margin:0 0 8px;font-size:24px;color:#fff;">¡Tu cotización está lista!</h1>
+                      <p style="margin:0 0 24px;color:#aaa;font-size:15px;">Hola <strong style="color:#e5e5e5;">${order.customer_name}</strong>, hemos preparado tu cotización <strong style="color:#C8A94A;">${order.order_number}</strong>.</p>
+
+                      <!-- Items table -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
+                        <thead>
+                          <tr style="background:#222;">
+                            <th style="padding:10px 8px;text-align:left;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">Producto</th>
+                            <th style="padding:10px 8px;text-align:right;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody>${itemsHtml}</tbody>
+                      </table>
+
+                      <!-- Totals -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px;">
+                        <tr>
+                          <td style="padding:8px;color:#aaa;font-size:14px;">Subtotal</td>
+                          <td style="padding:8px;color:#e5e5e5;font-size:14px;text-align:right;">$${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:8px;color:#aaa;font-size:14px;">Envío</td>
+                          <td style="padding:8px;color:#e5e5e5;font-size:14px;text-align:right;">$${parseFloat(shippingCost || '0').toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                        <tr style="border-top:1px solid #333;">
+                          <td style="padding:12px 8px;color:#fff;font-size:18px;font-weight:700;">Total</td>
+                          <td style="padding:12px 8px;color:#C8A94A;font-size:20px;font-weight:700;text-align:right;">$${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      </table>
+
+                      ${adminNotesHtml}
+
+                      <!-- CTA -->
+                      <div style="text-align:center;margin:32px 0 8px;">
+                        <a href="${paymentUrl}" style="display:inline-block;padding:14px 36px;background:#C8A94A;color:#111;font-size:16px;font-weight:700;text-decoration:none;border-radius:6px;letter-spacing:0.02em;">Pagar cotización</a>
+                      </div>
+                      <p style="text-align:center;margin:12px 0 0;font-size:13px;color:#666;">O copia este enlace: <a href="${paymentUrl}" style="color:#C8A94A;">${paymentUrl}</a></p>
+                    </td>
+                  </tr>
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding:20px 32px;background:#111;border-top:1px solid #222;">
+                      <p style="margin:0;font-size:12px;color:#555;text-align:center;">© ${new Date().getFullYear()} Mercado Industrial &bull; Este correo fue generado automáticamente, por favor no respondas a este mensaje.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+          </body>
+          </html>
+        `;
+
+        await supabase.functions.invoke('send-email', {
+          body: {
+            to: order.customer_email,
+            subject: `Tu cotización ${order.order_number} está lista — Mercado Industrial`,
+            type: 'general',
+            html: emailHtml,
+          },
+        });
+      } catch (emailError) {
+        console.error('Error enviando email de cotización (no bloqueante):', emailError);
+      }
+
       toast({
         title: '¡Cotización enviada!',
-        description: order.user_id 
-          ? 'El cliente recibirá una notificación con el precio'
-          : 'La cotización ha sido actualizada',
+        description: 'El cliente recibirá un email con los precios y el enlace de pago.',
       });
 
       onSuccess();
