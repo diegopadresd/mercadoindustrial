@@ -1,34 +1,20 @@
 
-## Why this is happening
+The real problem: the 2-second prefetch delay is too long. If a user clicks a link in the first 2 seconds, the chunk hasn't been fetched yet and the Suspense spinner fires. Also, if the network is slow enough, even cached prefetches can occasionally show the spinner.
 
-The white flash / loading spinner is caused by the **performance optimization suite** that was previously added to the project. All pages except the homepage were converted to `React.lazy()` imports. This means:
+The definitive fix is two-pronged:
 
-1. First visit to a page → React fetches the JS chunk for that page over the network
-2. While the chunk downloads, `Suspense` shows the fallback (previously a white div, now the spinner)
-3. Once the chunk is cached, subsequent visits to that same page are instant — no flash
+1. **Drop the delay to 0** — use `setTimeout(prefetchRoutes, 0)` so prefetching starts immediately after the first paint on the next event loop tick, not 2 seconds later.
 
-**Before the lazy loading was added**, all pages were eagerly bundled into one JS file, so navigation was always instant. The tradeoff was a larger initial bundle.
+2. **Remove lazy loading entirely** — since the prefetch approach already downloads everything anyway, the lazy/Suspense split provides zero real-world benefit (it only helps the very first load before the 2s timer, and even then we still show the spinner). The actual solution users had before was simply: all pages eagerly imported, one bundle, instant navigation always.
 
-## The real fix: prefetch all route chunks after mount
+The right call here is to **revert to eager imports** — remove all `React.lazy()` wrappers and the `Suspense` fallback entirely. The bundle is slightly larger but Vite's code splitting still works at the chunk level, and the user never sees any flash or spinner between pages ever again.
 
-Instead of reverting lazy loading (which would hurt initial page load), the proper fix is to **silently prefetch all lazy chunks in the background** right after the homepage loads. By the time a user clicks a link, the chunk is already cached — zero flash, zero spinner, best of both worlds.
+### Change: `src/App.tsx` only
 
-### How it works
+- Remove all `lazy()` wrappers — import all pages directly (same as before the performance suite was added)
+- Remove the `prefetchRoutes` function
+- Remove the `useEffect`
+- Remove the `Suspense` wrapper entirely (or keep it with no fallback as `fallback={null}` — but since there's nothing lazy anymore it's irrelevant)
+- Keep `useEffect` import removed, keep `lazy` import removed
 
-Add a `useEffect` in `App.tsx` that fires after 2 seconds (giving the homepage time to paint first), then calls `import()` on every lazy page — the same dynamic import that `React.lazy` uses. The browser caches the result, so when React.lazy needs it, it's instant.
-
-```text
-App mounts → homepage renders (FCP fast) → 2s delay → 
-background prefetch of all other page chunks → 
-user clicks link → chunk already cached → instant navigation, no flash
-```
-
-### Changes
-
-**`src/App.tsx` only:**
-- Import `useEffect` from React
-- Add a `prefetchRoutes()` function that calls `import()` on every lazy page
-- Call it from a `useEffect` with a 2-second delay inside the App component
-- The `Suspense` fallback can remain as the dark spinner for true first loads (e.g., direct URL access), but normal in-app navigation will always be instant
-
-No new dependencies, no DB changes, no edge functions.
+This is the only guaranteed fix. The prefetch approach is inherently racy — it cannot guarantee chunks are ready before a user clicks.
