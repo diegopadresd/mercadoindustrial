@@ -1,62 +1,42 @@
 
-## Plan: Email Notification on Quote Response
+## Plan: Expandable Order Detail in MisCompras
 
 ### What to build
 
-When admin submits a quote via `QuoteResponseDialog`, send the customer an email with:
-- The quoted total, broken down by product
-- Shipping cost
+Replace the non-functional "Ver detalle" button with a toggle that expands an inline panel showing:
+- Full product list with thumbnails, SKU, quantity, unit price, and line total
+- Cost breakdown: subtotal + shipping + total
+- Shipping address
 - Admin notes (if any)
-- A direct CTA button linking to `/checkout/cotizacion/:orderId`
+- Tracking info (if any)
 
-### How it works
+### Approach
 
-The `send-email` edge function already exists and uses Resend (`noreply@alcance.co`). The only change needed is calling it from `QuoteResponseDialog.handleSubmit` right after the in-app notification is created.
+Use a `useState` set to track which order IDs are expanded (`expandedOrders: Set<string>`). Clicking "Ver detalle" toggles the order's expanded state. The expanded section animates in below the existing thumbnail strip using `framer-motion`.
 
-The email is sent to `order.customer_email` — which is always populated (guest or logged-in user), so **all customers get the email**, not just registered users.
+The "Pagar cotización" button orders keep their behavior unchanged. The "Ver detalle" button becomes a toggle (chevron rotates when open).
 
-### Changes
+### Changes — `src/pages/mi-cuenta/MisCompras.tsx` only
 
-**`src/components/admin/QuoteResponseDialog.tsx`**
+1. Add `useState` for `expandedOrders` (a `Set<string>`)
+2. Add `ChevronDown`, `Truck`, `MapPin`, `StickyNote` to lucide imports
+3. Replace the static "Ver detalle" button with a toggle button that flips chevron
+4. Add an animated expandable section below the thumbnail row containing:
 
-Inside `handleSubmit`, after the `createNotification` block, add a `supabase.functions.invoke('send-email', ...)` call that builds and sends the HTML email:
-
-```typescript
-// Send email to customer
-const paymentUrl = `${window.location.origin}/checkout/cotizacion/${order.id}`;
-const itemsHtml = orderItems.map(item => `
-  <tr>
-    <td>${item.product_title} (x${item.quantity})</td>
-    <td style="text-align:right">$${(parseFloat(itemPrices[item.id]) * item.quantity).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-  </tr>
-`).join('');
-
-await supabase.functions.invoke('send-email', {
-  body: {
-    to: order.customer_email,
-    subject: `Tu cotización ${order.order_number} está lista — Mercado Industrial`,
-    type: 'general',
-    html: `...branded HTML...`,
-  }
-});
+```text
+┌─────────────────────────────────────────────┐
+│ Productos                                    │
+│ [img] Nombre producto      x2   $1,200.00   │
+│ [img] Otro producto        x1   $800.00      │
+├─────────────────────────────────────────────┤
+│ Subtotal                         $2,000.00  │
+│ Envío                              $350.00  │
+│ Total                            $2,350.00  │
+├─────────────────────────────────────────────┤
+│ 📍 Dirección: Calle 123, CDMX               │
+│ 📦 Guía: ABC123 (Fedex)  [if present]       │
+│ 📝 Notas: [admin notes]  [if present]       │
+└─────────────────────────────────────────────┘
 ```
 
-The email failure is **non-blocking** — wrapped in its own try/catch so if Resend fails, the quote still saves successfully and the admin sees a toast.
-
-### Email HTML content
-
-- Header: Mercado Industrial branding (gold `#C8A94A` accent, dark bg `#1a1a1a`)
-- Body: "¡Tu cotización está lista, [nombre]!" message
-- Table: product rows with quantities and subtotals
-- Subtotal + shipping + total rows
-- Admin notes section (only if present)
-- Gold CTA button → `paymentUrl`
-- Footer with legal copy
-
-### Files changed
-
-| File | Change |
-|------|--------|
-| `src/components/admin/QuoteResponseDialog.tsx` | Add `supabase.functions.invoke('send-email', ...)` call in `handleSubmit` after notification |
-
-No edge function changes, no DB migration, no new routes.
+### No new files, no DB changes — single file edit
