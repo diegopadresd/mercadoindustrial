@@ -1,20 +1,33 @@
 
-The real problem: the 2-second prefetch delay is too long. If a user clicks a link in the first 2 seconds, the chunk hasn't been fetched yet and the Suspense spinner fires. Also, if the network is slow enough, even cached prefetches can occasionally show the spinner.
+The user wants a "Cotizar" (shipping quote) option in the admin/vendor panel sidebar. This should be a global option visible to all roles that have access to the admin panel.
 
-The definitive fix is two-pronged:
+Looking at the Dashboard.tsx:
+- `allSidebarItems` array defines all sidebar navigation items
+- The `Cotizador` page lives at `/cotizador` (public page with Header/Footer)
+- I need to add a sidebar entry that links to either `/cotizador` (external navigation) OR embed the cotizador inside the admin panel at `/admin/cotizador`
 
-1. **Drop the delay to 0** — use `setTimeout(prefetchRoutes, 0)` so prefetching starts immediately after the first paint on the next event loop tick, not 2 seconds later.
+The cleanest approach: add a sidebar item that links to `/cotizador` as an external link (opens the existing public page). But that takes the user out of the admin panel.
 
-2. **Remove lazy loading entirely** — since the prefetch approach already downloads everything anyway, the lazy/Suspense split provides zero real-world benefit (it only helps the very first load before the 2s timer, and even then we still show the spinner). The actual solution users had before was simply: all pages eagerly imported, one bundle, instant navigation always.
+Better approach: add it to the sidebar with no `adminOnly`, `staffOnly`, or other restrictions so all roles see it. It can simply navigate to `/cotizador` - since it's already a full page. The sidebar already has a "Ver Tienda" button that navigates away, so external navigation is acceptable.
 
-The right call here is to **revert to eager imports** — remove all `React.lazy()` wrappers and the `Suspense` fallback entirely. The bundle is slightly larger but Vite's code splitting still works at the chunk level, and the user never sees any flash or spinner between pages ever again.
+Actually the best UX would be to render `Cotizador` content inside the admin panel layout at `/admin/cotizador`. But the Cotizador page has its own Header/Footer which would conflict.
 
-### Change: `src/App.tsx` only
+Simplest clean solution: Add sidebar item pointing to `/cotizador` (external), OR embed just the `ShippingQuoteComponent` in a new admin sub-page at `/admin/cotizador` without the Header/Footer wrapper.
 
-- Remove all `lazy()` wrappers — import all pages directly (same as before the performance suite was added)
-- Remove the `prefetchRoutes` function
-- Remove the `useEffect`
-- Remove the `Suspense` wrapper entirely (or keep it with no fallback as `fallback={null}` — but since there's nothing lazy anymore it's irrelevant)
-- Keep `useEffect` import removed, keep `lazy` import removed
+I'll go with embedding it as an admin sub-page — create a thin wrapper `AdminCotizador` page that renders just the `ShippingQuoteComponent` content (no Header/Footer), add the route, and add the sidebar item visible to all roles.
 
-This is the only guaranteed fix. The prefetch approach is inherently racy — it cannot guarantee chunks are ready before a user clicks.
+### Changes needed:
+
+1. **`src/pages/admin/Dashboard.tsx`**:
+   - Import `Truck` icon (already imported — wait, let me check... no, `Truck` is not in the icon imports)
+   - Add `Truck` to lucide-react imports
+   - Import new `AdminCotizador` component
+   - Add sidebar item: `{ icon: Truck, label: 'Cotizador de Flete', path: '/admin/cotizador', description: 'Cotiza envíos', vendedorOficialAccess: true, operadorAccess: true, manejoAccess: true }`
+   - Since it has no `adminOnly`/`staffOnly`/`vendedorOficialOnly` and has all access flags, it'll show for everyone
+   - Add `<Route path="cotizador" element={<AdminCotizador />} />`
+
+2. **`src/pages/admin/AdminCotizador.tsx`** (new file):
+   - A simple page wrapping `ShippingQuoteComponent` with a page title header, no Header/Footer
+   - Also include the AdvisorWidget or a simplified layout
+
+That's it. Two file changes.
