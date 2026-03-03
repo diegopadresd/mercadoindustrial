@@ -39,6 +39,7 @@ const Terminos = lazy(() => import("./pages/Terminos"));
 const Contacto = lazy(() => import("./pages/Contacto"));
 const Soporte = lazy(() => import("./pages/Soporte"));
 const CheckoutContraoferta = lazy(() => import("./pages/CheckoutContraoferta"));
+const CheckoutCotizacion = lazy(() => import("./pages/CheckoutCotizacion"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const CheckoutSuccess = lazy(() => import("./pages/checkout/CheckoutSuccess"));
 const CheckoutFailure = lazy(() => import("./pages/checkout/CheckoutFailure"));
@@ -96,6 +97,7 @@ const App = () => (
                   <Route path="/checkout/failure" element={<CheckoutFailure />} />
                   <Route path="/checkout/pending" element={<CheckoutPending />} />
                   <Route path="/checkout/contraoferta/:offerId" element={<CheckoutContraoferta />} />
+                  <Route path="/checkout/cotizacion/:orderId" element={<CheckoutCotizacion />} />
                   {/* Help & Info Pages */}
                   <Route path="/faq" element={<FAQ />} />
                   <Route path="/como-vender" element={<ComoVender />} />

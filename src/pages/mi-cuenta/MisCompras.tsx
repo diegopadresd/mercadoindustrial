@@ -122,13 +122,24 @@ const MisCompras = () => {
                       <div className="text-right">
                         <p className="text-sm text-muted-foreground">Total</p>
                         <p className="text-lg font-bold text-primary">
-                          ${order.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+                          {order.total > 0 
+                            ? `$${order.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`
+                            : <span className="text-muted-foreground text-base">Por cotizar</span>
+                          }
                         </p>
                       </div>
-                      <Button variant="outline" size="sm">
-                        <Eye size={16} className="mr-2" />
-                        Ver detalle
-                      </Button>
+                      {order.order_type === 'quote' && order.total > 0 && order.status === 'pending' ? (
+                        <Link to={`/checkout/cotizacion/${order.id}`}>
+                          <Button size="sm" className="btn-gold">
+                            💳 Pagar cotización
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button variant="outline" size="sm">
+                          <Eye size={16} className="mr-2" />
+                          Ver detalle
+                        </Button>
+                      )}
                     </div>
                   </div>
 
