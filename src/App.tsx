@@ -1,4 +1,3 @@
-import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,98 +10,48 @@ import { CartProvider } from "@/contexts/CartContext";
 import { LocaleProvider } from "@/contexts/LocaleContext";
 import WelcomeAnnouncementOverlay from "./components/WelcomeAnnouncementOverlay";
 
-// Eagerly load Index for fastest FCP on homepage
 import Index from "./pages/Index";
-
-// Lazy load all other pages
-const Catalogo = lazy(() => import("./pages/Catalogo"));
-const ProductoDetalle = lazy(() => import("./pages/ProductoDetalle"));
-const Marcas = lazy(() => import("./pages/Marcas"));
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogDetalle = lazy(() => import("./pages/BlogDetalle"));
-const Nosotros = lazy(() => import("./pages/Nosotros"));
-const Recientes = lazy(() => import("./pages/Recientes"));
-const Carrito = lazy(() => import("./pages/Carrito"));
-const Cotizador = lazy(() => import("./pages/Cotizador"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Perfil = lazy(() => import("./pages/Perfil"));
-const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const FAQ = lazy(() => import("./pages/FAQ"));
-const ComoVender = lazy(() => import("./pages/ComoVender"));
-const ComoComprar = lazy(() => import("./pages/ComoComprar"));
-const SubastasYOfertas = lazy(() => import("./pages/SubastasYOfertas"));
-const Subastas = lazy(() => import("./pages/Subastas"));
-const PoliticasDePago = lazy(() => import("./pages/PoliticasDePago"));
-const Privacidad = lazy(() => import("./pages/Privacidad"));
-const Terminos = lazy(() => import("./pages/Terminos"));
-const Contacto = lazy(() => import("./pages/Contacto"));
-const Soporte = lazy(() => import("./pages/Soporte"));
-const CheckoutContraoferta = lazy(() => import("./pages/CheckoutContraoferta"));
-const CheckoutCotizacion = lazy(() => import("./pages/CheckoutCotizacion"));
-const Checkout = lazy(() => import("./pages/Checkout"));
-const CheckoutSuccess = lazy(() => import("./pages/checkout/CheckoutSuccess"));
-const CheckoutFailure = lazy(() => import("./pages/checkout/CheckoutFailure"));
-const CheckoutPending = lazy(() => import("./pages/checkout/CheckoutPending"));
-const VentaExterna = lazy(() => import("./pages/VentaExterna"));
-// Mi Cuenta pages
-const MiCuenta = lazy(() => import("./pages/MiCuenta"));
-const MisPublicaciones = lazy(() => import("./pages/mi-cuenta/MisPublicaciones"));
-const MisCompras = lazy(() => import("./pages/mi-cuenta/MisCompras"));
-const MisOfertas = lazy(() => import("./pages/mi-cuenta/MisOfertas"));
-const Chats = lazy(() => import("./pages/mi-cuenta/Chats"));
-const ActivarVendedor = lazy(() => import("./pages/mi-cuenta/ActivarVendedor"));
-const PublicarProducto = lazy(() => import("./pages/mi-cuenta/PublicarProducto"));
+import Catalogo from "./pages/Catalogo";
+import ProductoDetalle from "./pages/ProductoDetalle";
+import Marcas from "./pages/Marcas";
+import Blog from "./pages/Blog";
+import BlogDetalle from "./pages/BlogDetalle";
+import Nosotros from "./pages/Nosotros";
+import Recientes from "./pages/Recientes";
+import Carrito from "./pages/Carrito";
+import Cotizador from "./pages/Cotizador";
+import Auth from "./pages/Auth";
+import Perfil from "./pages/Perfil";
+import AdminDashboard from "./pages/admin/Dashboard";
+import NotFound from "./pages/NotFound";
+import FAQ from "./pages/FAQ";
+import ComoVender from "./pages/ComoVender";
+import ComoComprar from "./pages/ComoComprar";
+import SubastasYOfertas from "./pages/SubastasYOfertas";
+import Subastas from "./pages/Subastas";
+import PoliticasDePago from "./pages/PoliticasDePago";
+import Privacidad from "./pages/Privacidad";
+import Terminos from "./pages/Terminos";
+import Contacto from "./pages/Contacto";
+import Soporte from "./pages/Soporte";
+import CheckoutContraoferta from "./pages/CheckoutContraoferta";
+import CheckoutCotizacion from "./pages/CheckoutCotizacion";
+import Checkout from "./pages/Checkout";
+import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
+import CheckoutFailure from "./pages/checkout/CheckoutFailure";
+import CheckoutPending from "./pages/checkout/CheckoutPending";
+import VentaExterna from "./pages/VentaExterna";
+import MiCuenta from "./pages/MiCuenta";
+import MisPublicaciones from "./pages/mi-cuenta/MisPublicaciones";
+import MisCompras from "./pages/mi-cuenta/MisCompras";
+import MisOfertas from "./pages/mi-cuenta/MisOfertas";
+import Chats from "./pages/mi-cuenta/Chats";
+import ActivarVendedor from "./pages/mi-cuenta/ActivarVendedor";
+import PublicarProducto from "./pages/mi-cuenta/PublicarProducto";
 
 const queryClient = new QueryClient();
 
-const prefetchRoutes = () => {
-  import("./pages/Catalogo");
-  import("./pages/ProductoDetalle");
-  import("./pages/Marcas");
-  import("./pages/Blog");
-  import("./pages/BlogDetalle");
-  import("./pages/Nosotros");
-  import("./pages/Recientes");
-  import("./pages/Carrito");
-  import("./pages/Cotizador");
-  import("./pages/Auth");
-  import("./pages/Perfil");
-  import("./pages/FAQ");
-  import("./pages/ComoVender");
-  import("./pages/ComoComprar");
-  import("./pages/SubastasYOfertas");
-  import("./pages/Subastas");
-  import("./pages/PoliticasDePago");
-  import("./pages/Privacidad");
-  import("./pages/Terminos");
-  import("./pages/Contacto");
-  import("./pages/Soporte");
-  import("./pages/Checkout");
-  import("./pages/CheckoutContraoferta");
-  import("./pages/CheckoutCotizacion");
-  import("./pages/checkout/CheckoutSuccess");
-  import("./pages/checkout/CheckoutFailure");
-  import("./pages/checkout/CheckoutPending");
-  import("./pages/VentaExterna");
-  import("./pages/MiCuenta");
-  import("./pages/mi-cuenta/MisPublicaciones");
-  import("./pages/mi-cuenta/MisCompras");
-  import("./pages/mi-cuenta/MisOfertas");
-  import("./pages/mi-cuenta/Chats");
-  import("./pages/mi-cuenta/ActivarVendedor");
-  import("./pages/mi-cuenta/PublicarProducto");
-  import("./pages/admin/Dashboard");
-  import("./pages/NotFound");
-};
-
-const App = () => {
-  useEffect(() => {
-    const timer = setTimeout(prefetchRoutes, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  return (
+const App = () => (
   <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <LocaleProvider>
@@ -114,57 +63,51 @@ const App = () => {
             <BrowserRouter>
               <ScrollToTop />
               <WelcomeAnnouncementOverlay />
-              <Suspense fallback={
-                <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full border-2 border-yellow-500/30 border-t-yellow-500 animate-spin" />
-                </div>
-              }>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/catalogo" element={<Catalogo />} />
-                  <Route path="/venta-externa" element={<VentaExterna />} />
-                  <Route path="/productos/:id" element={<ProductoDetalle />} />
-                  <Route path="/marcas" element={<Marcas />} />
-                  <Route path="/blog" element={<Blog />} />
-                  <Route path="/blog/:id" element={<BlogDetalle />} />
-                  <Route path="/nosotros" element={<Nosotros />} />
-                  <Route path="/recientes" element={<Recientes />} />
-                  <Route path="/carrito" element={<Carrito />} />
-                  <Route path="/cotizador" element={<Cotizador />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/perfil" element={<Perfil />} />
-                  {/* Mi Cuenta Routes */}
-                  <Route path="/mi-cuenta" element={<MiCuenta />} />
-                  <Route path="/mi-cuenta/mis-publicaciones" element={<MisPublicaciones />} />
-                  <Route path="/mi-cuenta/mis-compras" element={<MisCompras />} />
-                  <Route path="/mi-cuenta/mis-ofertas" element={<MisOfertas />} />
-                  <Route path="/mi-cuenta/chats" element={<Chats />} />
-                  <Route path="/mi-cuenta/vender" element={<ActivarVendedor />} />
-                  <Route path="/mi-cuenta/publicar" element={<PublicarProducto />} />
-                  {/* Checkout Routes */}
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/checkout/success" element={<CheckoutSuccess />} />
-                  <Route path="/checkout/failure" element={<CheckoutFailure />} />
-                  <Route path="/checkout/pending" element={<CheckoutPending />} />
-                  <Route path="/checkout/contraoferta/:offerId" element={<CheckoutContraoferta />} />
-                  <Route path="/checkout/cotizacion/:orderId" element={<CheckoutCotizacion />} />
-                  {/* Help & Info Pages */}
-                  <Route path="/faq" element={<FAQ />} />
-                  <Route path="/como-vender" element={<ComoVender />} />
-                  <Route path="/como-comprar" element={<ComoComprar />} />
-                  <Route path="/subastas-y-ofertas" element={<SubastasYOfertas />} />
-                  <Route path="/subastas" element={<Subastas />} />
-                  <Route path="/politicas-de-pago" element={<PoliticasDePago />} />
-                  <Route path="/privacidad" element={<Privacidad />} />
-                  <Route path="/terminos" element={<Terminos />} />
-                  <Route path="/contacto" element={<Contacto />} />
-                  <Route path="/soporte" element={<Soporte />} />
-                  {/* Admin Panel */}
-                  <Route path="/admin/*" element={<AdminDashboard />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/catalogo" element={<Catalogo />} />
+                <Route path="/venta-externa" element={<VentaExterna />} />
+                <Route path="/productos/:id" element={<ProductoDetalle />} />
+                <Route path="/marcas" element={<Marcas />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:id" element={<BlogDetalle />} />
+                <Route path="/nosotros" element={<Nosotros />} />
+                <Route path="/recientes" element={<Recientes />} />
+                <Route path="/carrito" element={<Carrito />} />
+                <Route path="/cotizador" element={<Cotizador />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/perfil" element={<Perfil />} />
+                {/* Mi Cuenta Routes */}
+                <Route path="/mi-cuenta" element={<MiCuenta />} />
+                <Route path="/mi-cuenta/mis-publicaciones" element={<MisPublicaciones />} />
+                <Route path="/mi-cuenta/mis-compras" element={<MisCompras />} />
+                <Route path="/mi-cuenta/mis-ofertas" element={<MisOfertas />} />
+                <Route path="/mi-cuenta/chats" element={<Chats />} />
+                <Route path="/mi-cuenta/vender" element={<ActivarVendedor />} />
+                <Route path="/mi-cuenta/publicar" element={<PublicarProducto />} />
+                {/* Checkout Routes */}
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/checkout/success" element={<CheckoutSuccess />} />
+                <Route path="/checkout/failure" element={<CheckoutFailure />} />
+                <Route path="/checkout/pending" element={<CheckoutPending />} />
+                <Route path="/checkout/contraoferta/:offerId" element={<CheckoutContraoferta />} />
+                <Route path="/checkout/cotizacion/:orderId" element={<CheckoutCotizacion />} />
+                {/* Help & Info Pages */}
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/como-vender" element={<ComoVender />} />
+                <Route path="/como-comprar" element={<ComoComprar />} />
+                <Route path="/subastas-y-ofertas" element={<SubastasYOfertas />} />
+                <Route path="/subastas" element={<Subastas />} />
+                <Route path="/politicas-de-pago" element={<PoliticasDePago />} />
+                <Route path="/privacidad" element={<Privacidad />} />
+                <Route path="/terminos" element={<Terminos />} />
+                <Route path="/contacto" element={<Contacto />} />
+                <Route path="/soporte" element={<Soporte />} />
+                {/* Admin Panel */}
+                <Route path="/admin/*" element={<AdminDashboard />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
             </BrowserRouter>
           </TooltipProvider>
         </CartProvider>
@@ -172,7 +115,6 @@ const App = () => {
     </LocaleProvider>
   </QueryClientProvider>
   </HelmetProvider>
-  );
-};
+);
 
 export default App;
