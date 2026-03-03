@@ -68,7 +68,11 @@ const App = () => (
             <BrowserRouter>
               <ScrollToTop />
               <WelcomeAnnouncementOverlay />
-              <Suspense fallback={<div className="min-h-screen bg-background" />}>
+              <Suspense fallback={
+                <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full border-2 border-yellow-500/30 border-t-yellow-500 animate-spin" />
+                </div>
+              }>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/catalogo" element={<Catalogo />} />
