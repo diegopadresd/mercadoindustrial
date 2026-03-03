@@ -7,8 +7,9 @@ import { motion } from 'framer-motion';
 import {
   ShoppingCart, Package, ClipboardCheck, Target, Search, Clock, AlertTriangle,
   Bell, Send, Eye, Loader2, MessageSquare, User, Phone, Mail, Plus,
-  CheckCircle, XCircle, FileText, StickyNote, ArrowRight, Filter, Upload
+  CheckCircle, XCircle, FileText, StickyNote, ArrowRight, Filter, Upload, Star
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -1247,6 +1248,123 @@ const ManejoFacturacion = () => {
 };
 
 // ==================== MAIN COMPONENT ====================
+// ==================== DESTACADOS TAB ====================
+const ManejoDestacados = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+
+  const { data: products, isLoading } = useQuery({
+    queryKey: ['manejo-destacados'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, title, sku, brand, images, is_featured, is_active, price')
+        .is('seller_id', null)
+        .eq('is_active', true)
+        .order('is_featured', { ascending: false })
+        .order('title');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, is_featured }: { id: string; is_featured: boolean }) => {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_featured })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['manejo-destacados'] });
+      queryClient.invalidateQueries({ queryKey: ['home-inventory-products'] });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'No se pudo actualizar', variant: 'destructive' });
+    },
+  });
+
+  const filtered = products?.filter(p =>
+    p.title.toLowerCase().includes(search.toLowerCase()) ||
+    p.sku.toLowerCase().includes(search.toLowerCase()) ||
+    p.brand.toLowerCase().includes(search.toLowerCase())
+  ) || [];
+
+  const featuredCount = products?.filter(p => p.is_featured).length || 0;
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-card rounded-xl p-4 border border-border text-center">
+          <p className="text-2xl font-bold text-primary">{featuredCount}</p>
+          <p className="text-xs text-muted-foreground">Destacados en home</p>
+        </div>
+        <div className="bg-card rounded-xl p-4 border border-border text-center">
+          <p className="text-2xl font-bold">{products?.length || 0}</p>
+          <p className="text-xs text-muted-foreground">Productos activos</p>
+        </div>
+      </div>
+
+      {/* Info banner */}
+      <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 flex items-start gap-2">
+        <Star size={16} className="text-primary mt-0.5 shrink-0" />
+        <p className="text-sm text-muted-foreground">
+          Los productos marcados como <span className="font-semibold text-foreground">Destacados</span> aparecen en la sección "Destacados" de la página de inicio. Se muestran hasta 6 productos.
+        </p>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+        <Input placeholder="Buscar productos..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+      </div>
+
+      {/* Products list */}
+      <div className="bg-card rounded-xl shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-primary" /></div>
+        ) : filtered.length === 0 ? (
+          <p className="text-center py-12 text-muted-foreground">No hay productos</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {filtered.map(p => (
+              <div key={p.id} className={`flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors ${p.is_featured ? 'bg-primary/3' : ''}`}>
+                {p.images?.[0] ? (
+                  <img src={p.images[0]} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Package size={20} className="text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{p.title}</p>
+                  <p className="text-xs text-muted-foreground">{p.brand} · {p.sku}</p>
+                </div>
+                {p.is_featured && (
+                  <Star size={14} className="text-primary fill-primary shrink-0" />
+                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs text-muted-foreground hidden sm:block">
+                    {p.is_featured ? 'Destacado' : 'Normal'}
+                  </span>
+                  <Switch
+                    checked={p.is_featured ?? false}
+                    onCheckedChange={(checked) => toggleMutation.mutate({ id: p.id, is_featured: checked })}
+                    disabled={toggleMutation.isPending}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const AdminManejo = () => {
   return (
     <div className="space-y-6">
@@ -1257,7 +1375,7 @@ const AdminManejo = () => {
 
       <Tabs defaultValue="pedidos" className="space-y-6">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:grid-cols-5 sm:w-full sm:max-w-3xl">
+          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:grid-cols-6 sm:w-full sm:max-w-4xl">
             <TabsTrigger value="pedidos" className="flex items-center gap-1 whitespace-nowrap">
               <ShoppingCart size={14} />
               <span className="hidden sm:inline">Pedidos</span>
@@ -1278,6 +1396,10 @@ const AdminManejo = () => {
               <FileText size={14} />
               <span className="hidden sm:inline">Factura</span>
             </TabsTrigger>
+            <TabsTrigger value="destacados" className="flex items-center gap-1 whitespace-nowrap">
+              <Star size={14} />
+              <span className="hidden sm:inline">Destacados</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -1286,6 +1408,7 @@ const AdminManejo = () => {
         <TabsContent value="aprobaciones"><ManejoAprobaciones /></TabsContent>
         <TabsContent value="leads"><ManejoLeads /></TabsContent>
         <TabsContent value="facturacion"><ManejoFacturacion /></TabsContent>
+        <TabsContent value="destacados"><ManejoDestacados /></TabsContent>
       </Tabs>
     </div>
   );

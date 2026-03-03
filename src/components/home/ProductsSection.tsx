@@ -28,8 +28,8 @@ export const ProductsSection = () => {
       } else if (activeTab === 'Recientes') {
         query = query.order('created_at', { ascending: false });
       } else {
-        // "Más vistos" - for now just show featured or recent
-        query = query.order('updated_at', { ascending: false });
+      // "Más vistos" - order by real view_count
+        query = query.order('view_count', { ascending: false });
       }
       
       const { data, error } = await query;

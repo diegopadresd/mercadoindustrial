@@ -830,6 +830,7 @@ export type Database = {
           stock: number | null
           title: string
           updated_at: string
+          view_count: number
           warehouse_code: string | null
           warranty_conditions: string | null
           warranty_duration: string | null
@@ -871,6 +872,7 @@ export type Database = {
           stock?: number | null
           title: string
           updated_at?: string
+          view_count?: number
           warehouse_code?: string | null
           warranty_conditions?: string | null
           warranty_duration?: string | null
@@ -912,6 +914,7 @@ export type Database = {
           stock?: number | null
           title?: string
           updated_at?: string
+          view_count?: number
           warehouse_code?: string | null
           warranty_conditions?: string | null
           warranty_duration?: string | null
@@ -1150,6 +1153,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_product_view: {
+        Args: { _product_id: string }
+        Returns: undefined
       }
     }
     Enums: {
