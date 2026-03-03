@@ -1,51 +1,60 @@
-## Complete Implementation Plan — All Fixes
 
-### Database Migration (run first):
+## Quote Flow Audit — What I Found & What Needs Fixing
 
-```sql
--- Fast brand count function replacing 16K row download
-CREATE OR REPLACE FUNCTION public.get_brand_counts()
-RETURNS TABLE(brand text, product_count bigint)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT brand, COUNT(*)::bigint as product_count
-  FROM public.products
-  WHERE is_active = true
-    AND seller_id IS NULL
-    AND brand IS NOT NULL
-    AND trim(brand) != ''
-    AND brand NOT IN ('SIN MARCA', 'Sin marca')
-  GROUP BY brand
-  ORDER BY COUNT(*) DESC;
-$$;
+### The complete quote flow and where it breaks:
+
+```text
+1. User: adds contact_for_quote product → cart → QuoteOptionsDialog → submits form
+   ✅ Order created with order_type='quote', status='pending', total=0
+
+2. Admin: AdminPedidos → sees "Cotizar" button → QuoteResponseDialog → sets prices → submits
+   ✅ Order updated with prices, total > 0
+   ❌ BUG 1: Notification action_url = "/mi-cuenta/mis-ofertas"
+             This is the WRONG page — it shows price OFFERS (MakeOfferModal flow),
+             not quote orders. User clicks bell → empty page → confused.
+
+3. User: clicks notification bell → clicks "Ver más →"
+   ❌ BUG 1 lands them at MisOfertas (wrong page, shows product price negotiations)
+   ❌ BUG 2: Even if they navigate to /mi-cuenta/mis-compras manually and see the
+             quote with total > 0, the "Ver detalle" button does nothing useful —
+             there is NO "Pagar ahora" button for quote orders with a price set.
+
+4. User: wants to pay — no path exists from quote order to payment checkout
+   ❌ BUG 3: CheckoutContraoferta uses /checkout/contraoferta/:offerId and reads
+             from the "offers" table — this is the WRONG checkout for quote orders.
+             Quote orders are in the "orders" table. No checkout page handles
+             paying for a quote order.
 ```
 
-### Code Changes:
+### Three bugs to fix:
 
-**1. `src/pages/Marcas.tsx`**
-- Replace the `while (keepFetching)` loop with a single `supabase.rpc('get_brand_counts')` call
-- Result: page loads in <500ms instead of 5-10s
+**Bug 1 — Wrong notification URL**
+- In `QuoteResponseDialog.tsx` line 156: change `action_url` from `/mi-cuenta/mis-ofertas` to `/mi-cuenta/mis-compras`
 
-**2. `src/pages/admin/Dashboard.tsx`**
-- Add to `allSidebarItems`: "Extracción IA" (path `/admin/extraccion-ia`, adminOnly) and "Migración" (path `/admin/migracion`, adminOnly)
-- Add routes: `<Route path="extraccion-ia" element={<AdminExtraccionIA />} />` and `<Route path="migracion" element={<AdminMigracion />} />`
-- Import both components at the top
+**Bug 2 — No payment button in MisCompras for pending quotes**
+- In `MisCompras.tsx`: when `order.order_type === 'quote'` and `order.total > 0` and `order.status === 'pending'`, show a **"Pagar cotización"** button that navigates to the quote checkout
 
-**3. `src/pages/admin/AdminAjustes.tsx`**
-- Add a "Productos Destacados" tab using Tabs component
-- Tab 1: existing announcement settings
-- Tab 2: new featured products management — list from `featured_products` table with add/edit/delete/reorder (display_order) functionality
+**Bug 3 — No checkout page for quote orders**
+- Need a checkout page that loads an **order** (not an offer) by ID and handles payment
+- Can reuse the existing 2-step checkout UI pattern from `CheckoutContraoferta`
+- Route: `/checkout/cotizacion/:orderId` → loads from `orders` table, shows items + total, lets user pay via MercadoPago or SPEI
+- After payment: updates order status to `paid`
 
-**4. `src/pages/admin/AdminManejo.tsx`** and **`src/pages/admin/AdminPedidos.tsx`**
-- Verify `QuoteResponseDialog` is imported and accessible in both panels
-- Ensure when admin submits a quote response, the notification `action_url` is set to `/mi-cuenta/mis-ofertas` (the user's offers page) so they see the response
-- Add QuoteResponseDialog to AdminManejo's orders tab if missing
+### Files to change:
 
-**5. Verify quote flow works end-to-end:**
-- `contact_for_quote` product → cart with null price → quote order → admin responds → user notification with correct URL → user pays via contraoferta checkout
+| File | Change |
+|------|--------|
+| `src/components/admin/QuoteResponseDialog.tsx` | Fix `action_url` to `/mi-cuenta/mis-compras` |
+| `src/pages/mi-cuenta/MisCompras.tsx` | Add "Pagar cotización" button on quote orders with `total > 0` and `status === 'pending'` |
+| `src/pages/CheckoutCotizacion.tsx` | **New page** — checkout for quote orders, reads from `orders` table |
+| `src/App.tsx` | Register new route `/checkout/cotizacion/:orderId` |
 
-### Files edited: 4 source files + 1 DB migration
-### No breaking changes — all additions are additive
+### New checkout page behavior:
+- Loads order + order_items by orderId
+- Verifies `order.user_id === auth.uid()` (security)
+- Shows products, unit prices, shipping, total
+- 2 payment methods: MercadoPago (via existing edge function) or SPEI (manual transfer)
+- On SPEI confirm: sets order status to `processing` (pending manual verification)
+- On MercadoPago: creates preference with order total, redirects
+
+### No database migration needed — all fixes are code-only
