@@ -1,42 +1,48 @@
 
-## Plan: Expandable Order Detail in MisCompras
+## Plan: Status Timeline in Quote Checkout Page
+
+### What the order statuses map to
+
+The `orders.status` field drives which step is "active":
+- `pending` + `total = 0` → Step 1 active (Cotización enviada)
+- `pending` + `total > 0` → Step 2 active (Precio asignado)  
+- `processing` → Step 3 active (Pago recibido)
+- `confirmed` / `in_progress` → Step 4 active (En proceso)
+- `shipped` → Step 5 active (Enviado)
 
 ### What to build
 
-Replace the non-functional "Ver detalle" button with a toggle that expands an inline panel showing:
-- Full product list with thumbnails, SKU, quantity, unit price, and line total
-- Cost breakdown: subtotal + shipping + total
-- Shipping address
-- Admin notes (if any)
-- Tracking info (if any)
-
-### Approach
-
-Use a `useState` set to track which order IDs are expanded (`expandedOrders: Set<string>`). Clicking "Ver detalle" toggles the order's expanded state. The expanded section animates in below the existing thumbnail strip using `framer-motion`.
-
-The "Pagar cotización" button orders keep their behavior unchanged. The "Ver detalle" button becomes a toggle (chevron rotates when open).
-
-### Changes — `src/pages/mi-cuenta/MisCompras.tsx` only
-
-1. Add `useState` for `expandedOrders` (a `Set<string>`)
-2. Add `ChevronDown`, `Truck`, `MapPin`, `StickyNote` to lucide imports
-3. Replace the static "Ver detalle" button with a toggle button that flips chevron
-4. Add an animated expandable section below the thumbnail row containing:
+A horizontal (desktop) / vertical (mobile) step tracker added at the **top of the card** (above the quote summary) in `CheckoutCotizacion.tsx`, always visible regardless of `showPaymentStep`.
 
 ```text
-┌─────────────────────────────────────────────┐
-│ Productos                                    │
-│ [img] Nombre producto      x2   $1,200.00   │
-│ [img] Otro producto        x1   $800.00      │
-├─────────────────────────────────────────────┤
-│ Subtotal                         $2,000.00  │
-│ Envío                              $350.00  │
-│ Total                            $2,350.00  │
-├─────────────────────────────────────────────┤
-│ 📍 Dirección: Calle 123, CDMX               │
-│ 📦 Guía: ABC123 (Fedex)  [if present]       │
-│ 📝 Notas: [admin notes]  [if present]       │
-└─────────────────────────────────────────────┘
+[●]──────[●]──────[○]──────[○]──────[○]
+  Cotización    Precio     Pago      En        Enviado
+  enviada      asignado   recibido  proceso
+```
+
+- Completed steps: filled gold circle with checkmark
+- Current step: pulsing gold ring
+- Future steps: muted gray circle
+- Connecting lines fill with gold up to the current step
+
+### Changes — `src/pages/CheckoutCotizacion.tsx` only
+
+1. Add a `getActiveStep(order)` helper that returns 0–4 based on `order.status` and `order.total`
+2. Define a `STEPS` array with label, icon, and description for each stage
+3. Render the timeline component **above** the existing card, as its own `Card` with `p-6`
+4. On mobile: stack steps vertically with a connecting vertical line on the left
+5. On desktop: horizontal row with connecting lines between circles
+
+### Steps definition
+
+```typescript
+const STEPS = [
+  { label: 'Cotización enviada',  icon: FileText,     desc: 'Solicitud recibida' },
+  { label: 'Precio asignado',     icon: DollarSign,   desc: 'Cotización lista' },
+  { label: 'Pago recibido',       icon: CreditCard,   desc: 'Confirmando pago' },
+  { label: 'En proceso',          icon: Package,      desc: 'Preparando pedido' },
+  { label: 'Enviado',             icon: Truck,        desc: 'En camino' },
+];
 ```
 
 ### No new files, no DB changes — single file edit
