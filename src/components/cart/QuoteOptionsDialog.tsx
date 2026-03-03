@@ -121,11 +121,11 @@ export const QuoteOptionsDialog = ({ open, onOpenChange, items }: QuoteOptionsDi
 
       toast({
         title: '¡Cotización enviada!',
-        description: 'Un vendedor revisará tu solicitud y te contactará pronto.',
+        description: 'Te notificaremos cuando la cotización esté lista.',
       });
 
       onOpenChange(false);
-      navigate('/perfil');
+      navigate('/mi-cuenta/mis-compras');
     } catch (error) {
       console.error('Error creating quote:', error);
       toast({
