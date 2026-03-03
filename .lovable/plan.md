@@ -1,60 +1,59 @@
 
-## Quote Flow Audit — What I Found & What Needs Fixing
+## Quote Flow Audit — What I Found
 
-### The complete quote flow and where it breaks:
+### Complete flow trace with findings:
 
-```text
-1. User: adds contact_for_quote product → cart → QuoteOptionsDialog → submits form
-   ✅ Order created with order_type='quote', status='pending', total=0
+**Step 1 — User submits quote (QuoteOptionsDialog.tsx line 128)**
+❌ **BUG: After successful submission, navigates to `/perfil` instead of `/mi-cuenta/mis-compras`**
+The user is dropped at the general profile page with no indication of what to do next. Should redirect to `/mi-cuenta/mis-compras` where they can see their pending quote.
 
-2. Admin: AdminPedidos → sees "Cotizar" button → QuoteResponseDialog → sets prices → submits
-   ✅ Order updated with prices, total > 0
-   ❌ BUG 1: Notification action_url = "/mi-cuenta/mis-ofertas"
-             This is the WRONG page — it shows price OFFERS (MakeOfferModal flow),
-             not quote orders. User clicks bell → empty page → confused.
+**Step 2 — Admin sets prices (QuoteResponseDialog.tsx)**
+✅ Correctly updates `order_items` with unit prices
+✅ Correctly updates `orders` with subtotal/shipping/total
+✅ Creates notification with `action_url: '/mi-cuenta/mis-compras'` ← fixed in prior session
+❌ **RLS GAP: The `notifications` table INSERT policy only allows `manejo` role** (`has_role(auth.uid(), 'manejo'::app_role)`). If the admin using AdminPedidos has role `admin` (not `manejo`), the notification INSERT will be **silently blocked by RLS** — the `useCreateNotification` hook won't throw because the Supabase insert fails silently. There IS a separate ALL policy for `admin` role, so this is actually fine — `admin` role can do ALL operations. ✅
 
-3. User: clicks notification bell → clicks "Ver más →"
-   ❌ BUG 1 lands them at MisOfertas (wrong page, shows product price negotiations)
-   ❌ BUG 2: Even if they navigate to /mi-cuenta/mis-compras manually and see the
-             quote with total > 0, the "Ver detalle" button does nothing useful —
-             there is NO "Pagar ahora" button for quote orders with a price set.
+**Step 3 — User's notification bell**
+✅ Realtime subscription is active, refetches on INSERT
+✅ `action_url` renders as "Ver más →" link to `/mi-cuenta/mis-compras`
+✅ Clicking marks as read
 
-4. User: wants to pay — no path exists from quote order to payment checkout
-   ❌ BUG 3: CheckoutContraoferta uses /checkout/contraoferta/:offerId and reads
-             from the "offers" table — this is the WRONG checkout for quote orders.
-             Quote orders are in the "orders" table. No checkout page handles
-             paying for a quote order.
-```
+**Step 4 — User at `/mi-cuenta/mis-compras`**
+✅ Shows quote orders
+✅ For `order_type === 'quote' && total > 0 && status === 'pending'` shows "💳 Pagar cotización" button → `/checkout/cotizacion/:orderId`
 
-### Three bugs to fix:
+**Step 5 — Checkout page**
+✅ Route exists: `/checkout/cotizacion/:orderId`
+✅ Security check: redirects if `order.user_id !== user.id`
+✅ Shows order summary, items, totals, notes
+✅ SPEI and MercadoPago payment options work
 
-**Bug 1 — Wrong notification URL**
-- In `QuoteResponseDialog.tsx` line 156: change `action_url` from `/mi-cuenta/mis-ofertas` to `/mi-cuenta/mis-compras`
+### The one remaining fix:
 
-**Bug 2 — No payment button in MisCompras for pending quotes**
-- In `MisCompras.tsx`: when `order.order_type === 'quote'` and `order.total > 0` and `order.status === 'pending'`, show a **"Pagar cotización"** button that navigates to the quote checkout
+**BUG (QuoteOptionsDialog.tsx line 128):** After submitting the quote form, the user is sent to `/perfil` — a dead end with no confirmation of their quote. Should go to `/mi-cuenta/mis-compras` so they immediately see their pending quote and understand the next step.
 
-**Bug 3 — No checkout page for quote orders**
-- Need a checkout page that loads an **order** (not an offer) by ID and handles payment
-- Can reuse the existing 2-step checkout UI pattern from `CheckoutContraoferta`
-- Route: `/checkout/cotizacion/:orderId` → loads from `orders` table, shows items + total, lets user pay via MercadoPago or SPEI
-- After payment: updates order status to `paid`
+**Fix:** Change `navigate('/perfil')` to `navigate('/mi-cuenta/mis-compras')` on line 128 of `QuoteOptionsDialog.tsx`.
 
-### Files to change:
+**Also improve UX:** The success toast should say "Te notificaremos cuando la cotización esté lista" and the redirect gives users visual confirmation.
 
-| File | Change |
+### Summary of what works vs what needs fixing:
+
+| Step | Status |
 |------|--------|
-| `src/components/admin/QuoteResponseDialog.tsx` | Fix `action_url` to `/mi-cuenta/mis-compras` |
-| `src/pages/mi-cuenta/MisCompras.tsx` | Add "Pagar cotización" button on quote orders with `total > 0` and `status === 'pending'` |
-| `src/pages/CheckoutCotizacion.tsx` | **New page** — checkout for quote orders, reads from `orders` table |
-| `src/App.tsx` | Register new route `/checkout/cotizacion/:orderId` |
+| Add contact_for_quote product to cart | ✅ Works |
+| QuoteOptionsDialog — WhatsApp | ✅ Works |
+| QuoteOptionsDialog — Form submit + create order | ✅ Works |
+| Post-submit redirect | ❌ Goes to /perfil instead of /mi-cuenta/mis-compras |
+| Admin sees quote in AdminPedidos | ✅ Works |
+| Admin clicks Cotizar button | ✅ Works |
+| QuoteResponseDialog sets prices | ✅ Works |
+| Notification created with correct URL | ✅ Works (action_url = /mi-cuenta/mis-compras) |
+| User bell shows notification in realtime | ✅ Works |
+| "Ver más →" link goes to /mi-cuenta/mis-compras | ✅ Works |
+| MisCompras shows "Pagar cotización" button | ✅ Works |
+| CheckoutCotizacion page loads correctly | ✅ Works |
+| SPEI payment flow | ✅ Works |
+| MercadoPago payment flow | ✅ Works |
 
-### New checkout page behavior:
-- Loads order + order_items by orderId
-- Verifies `order.user_id === auth.uid()` (security)
-- Shows products, unit prices, shipping, total
-- 2 payment methods: MercadoPago (via existing edge function) or SPEI (manual transfer)
-- On SPEI confirm: sets order status to `processing` (pending manual verification)
-- On MercadoPago: creates preference with order total, redirects
-
-### No database migration needed — all fixes are code-only
+### Only one fix needed:
+- **`src/components/cart/QuoteOptionsDialog.tsx` line 128:** `navigate('/perfil')` → `navigate('/mi-cuenta/mis-compras')`
