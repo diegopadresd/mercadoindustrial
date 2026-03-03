@@ -1,41 +1,34 @@
 
-## Plan: Shipping Email Notification on Tracking Number Save
+## Problem
+The white flash between page navigations comes from the `Suspense` fallback in `App.tsx`:
+```tsx
+<Suspense fallback={<div className="min-h-screen bg-background" />}>
+```
+`bg-background` resolves to white in light mode (or whatever the CSS variable is), causing a jarring white screen during lazy chunk loading.
 
-### Where to change
+## Fix
+Replace the blank fallback with a visually consistent skeleton — a dark/branded background with a centered subtle spinner or pulse, matching the site's dark industrial aesthetic.
 
-Single file: `src/pages/admin/AdminPedidos.tsx`
+The site uses a dark theme (dark header, dark footer), so the fallback should use `bg-[#0a0a0a]` or `bg-zinc-950` (matching the actual page background) with a small centered gold-tinted pulse indicator so the transition feels smooth and branded.
 
-### What to add
+### Change: `src/App.tsx` only
 
-In `processOrderMutation.mutationFn`, right after the successful Supabase update, call `supabase.functions.invoke('send-email', ...)` to send a branded shipping notification to `processOrder.customer_email`.
+Replace:
+```tsx
+<Suspense fallback={<div className="min-h-screen bg-background" />}>
+```
 
-The email failure is **non-blocking** — wrapped in its own try/catch so if Resend fails the order still saves and the toast still fires.
+With:
+```tsx
+<Suspense fallback={
+  <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+    <div className="w-8 h-8 rounded-full border-2 border-yellow-500/30 border-t-yellow-500 animate-spin" />
+  </div>
+}>
+```
 
-### Email content
-
-- **Subject:** `Tu pedido ${order_number} está en camino — Mercado Industrial`
-- **Header:** Gold/dark branding (matching the quote email)
-- **Body:**
-  - "¡Tu pedido está en camino, [customer_name]!"
-  - Tracking number (monospaced)
-  - Shipping company
-  - Estimated info tip
-  - CTA button → `/mis-compras` (to see full order detail)
-- **Footer:** Legal copy
-
-### Data available at call time
-
-`processOrder` is in state at mutation time, so we have:
-- `processOrder.customer_email`
-- `processOrder.customer_name`
-- `processOrder.order_number`
-- `trackingNumber` (state var already populated)
-- `shippingCompany` (state var already populated)
-
-### Changes summary
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminPedidos.tsx` | Add `supabase.functions.invoke('send-email', ...)` inside `processOrderMutation.mutationFn` after the DB update, wrapped in a non-blocking try/catch |
-
-No edge function changes, no DB migration, no new files.
+This ensures:
+- Background matches the dark site theme (no white flash)
+- A subtle gold spinner shows loading is in progress
+- Matches the brand color (gold/yellow used throughout the site)
+- Single file, zero new dependencies
