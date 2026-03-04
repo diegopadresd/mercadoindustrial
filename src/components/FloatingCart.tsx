@@ -14,7 +14,7 @@ export const FloatingCart = () => {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          className="fixed bottom-6 right-6 z-50"
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50"
         >
           <Link
             to="/carrito"
