@@ -407,17 +407,9 @@ const ProductoDetalle = () => {
     navigate('/carrito');
   };
 
-  const handleQuoteRequest = async () => {
+  const handleQuoteRequest = () => {
     if (!productData) return;
-    await addToCart({
-      productId: productData.id,
-      title: productData.title,
-      sku: productData.sku,
-      brand: productData.brand,
-      price: null,
-      image: productData.images?.[0] || '/placeholder.svg',
-    });
-    navigate('/carrito');
+    navigate(`/cotizador?productoId=${productData.id}`);
   };
 
   return (
