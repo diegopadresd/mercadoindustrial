@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { BranchMapSection } from '@/components/contact/BranchMapSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { z } from 'zod';
 import { 
@@ -327,6 +328,9 @@ const Contacto = () => {
             </div>
           </div>
         </section>
+
+        {/* Branch Map Section */}
+        <BranchMapSection />
 
         {/* CTA */}
         <section className="py-12 bg-muted/50">
