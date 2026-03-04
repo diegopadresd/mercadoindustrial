@@ -1,72 +1,39 @@
 
-## What's done vs. pending
+## Hallazgos de la verificación
 
-**Already implemented (previous session):**
-- URL-based catalog state (filters, pagination, search persist in URL)
-- Scroll-to-top on pagination
-- Location filter values aligned to DB
-- Sort fix
-- FloatingCart component (global in App.tsx)
-- Image zoom/lightbox in ProductoDetalle
-- Category badges as links in ProductCard
-- allow_offers guard on offer buttons (ProductCard + ProductoDetalle)
-- Stock limit enforcement
-- Cotizar vs Carrito differentiation
-- Categories mapped as visible tags in product detail
-- DB migration: allow_offers column, GIN search index, get_category_list() RPC
+### ✅ Lo que funciona correctamente
 
-**Pending (3 items):**
+1. **FloatingCart en móvil** — Posicionado en `bottom-20 sm:bottom-6`, correctamente evita la barra de navegación del móvil. Implementado correctamente en `FloatingCart.tsx`.
 
-1. **JSON-LD Organization + WebSite schemas on homepage** — Index.tsx has no structured data. Need to add `@type: Organization` (name, url, logo, contactPoint, sameAs for social) and `@type: WebSite` (with SearchAction for sitelinks search box) via Helmet.
+2. **Botones de acción en detalle de producto** — En móvil se ven apilados verticalmente con `flex-col sm:flex-row`. Los botones "Agregar al carrito" y "Solicitar cotización" se muestran separados y en columna. `allow_offers` guard está en su lugar.
 
-2. **Interactive map with branch pins in ContactSection** — Currently only shows clickable list items linking to Google Maps. Need a visual map. Since we can't load Google Maps API without a key, best approach is an embedded OpenStreetMap (no API key needed) via a single iframe covering all 5 branches, OR a styled static visual showing branch pins with a "Ver en mapa" button. Given no external API key is available, will use a prominent visual card layout with a static map image or an iframe pointing to a public Google Maps embed URL (embed URLs are free without key for basic embeds).
+3. **Miniaturas de imágenes** — Implementado con `overflow-x-auto` para scroll horizontal en móvil, funcionando correctamente.
 
-3. **Responsive polish** — Catalog and ProductoDetalle need mobile fixes:
-   - Product detail: action buttons stack properly on mobile, image thumbnails scroll horizontally
-   - Catalog: grid adjusts better on small screens (currently `grid-cols-1 sm:grid-cols-2 xl:grid-cols-3` is fine, but the search bar and toolbar need mobile spacing fixes)
-   - FloatingCart should not overlap with page content on mobile
+4. **Etiquetas/Categorías visibles** — Se muestran correctamente en el detalle del producto.
 
-## Files to change
+5. **Mapa interactivo de sucursales** — Existe en `ContactSection.tsx` con selector de 5 sucursales (Hermosillo, Mexicali, Santa Catarina, Tijuana, Nogales) e iframe dinámico. Verificado por el extractor de página.
 
+### ⚠️ Problemas encontrados que requieren corrección
+
+1. **El mapa de sucursales no está accesible desde el navbar** — La sección está en la homepage pero no en `/contacto`. Los usuarios que vayan a la página de Contacto no ven el mapa de sucursales. Hay que agregar el selector de sucursales + mapa también en `src/pages/Contacto.tsx`.
+
+2. **`ContactSection.tsx` en homepage: el mapa y selector de sucursales NO es visible en móvil en el scroll** — Al hacer scroll en la homepage en 390px, la sección de contacto muestra el formulario pero el mapa y los botones de sucursal quedaron fuera del viewport visible durante la prueba. Necesita confirmar que los branch buttons (grilla de 5) no se desborden en `grid-cols-5` en pantallas pequeñas — actualmente usa `lg:grid-cols-5 gap-2` que en móvil collapsa a 1 columna, pero en tablet puede colapsar mal.
+
+3. **El número de teléfono de Santa Catarina parece un placeholder** — `81-2345-6789` parece inventado, no un número real de Mercado Industrial.
+
+## Plan de correcciones
+
+### Archivo 1: `src/pages/Contacto.tsx`
+- Importar y renderizar el componente `ContactSection` (con el mapa) dentro de la página de Contacto, debajo del formulario actual — o reemplazar la sección de info de sucursales actual con el componente compartido.
+
+### Archivo 2: `src/components/home/ContactSection.tsx`
+- Cambiar el grid de sucursales de `grid-cols-5` a `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5` para que en móvil no sean 5 botones apilados verticalmente sino 2 columnas.
+- Corregir el número placeholder de Santa Catarina si se tiene el número real (o marcar como "Próximamente").
+
+## Archivos a cambiar
 ```
-src/pages/Index.tsx                     — add Organization + WebSite JSON-LD
-src/components/home/ContactSection.tsx  — add map iframes for 5 branches
-src/pages/ProductoDetalle.tsx           — responsive fixes on action buttons + thumbnails
-src/pages/Catalogo.tsx                  — minor responsive toolbar fixes
-src/components/FloatingCart.tsx         — add bottom padding awareness
-```
-
-## Implementation details
-
-**Organization JSON-LD** (Index.tsx via Helmet):
-```json
-{
-  "@type": "Organization",
-  "name": "Mercado Industrial",
-  "url": "https://mercadoindustrial.com.mx",
-  "logo": "https://mercadoindustrial.com.mx/logo-mercado-industrial.webp",
-  "contactPoint": { "@type": "ContactPoint", "telephone": "+52-662-168-0047", "contactType": "customer service" },
-  "sameAs": ["https://www.facebook.com/mercadoindustrial", "..."]
-}
+src/pages/Contacto.tsx          — agregar mapa de sucursales
+src/components/home/ContactSection.tsx  — fix grid responsive en móvil
 ```
 
-**WebSite JSON-LD** with SearchAction:
-```json
-{
-  "@type": "WebSite",
-  "name": "Mercado Industrial",
-  "url": "https://mercadoindustrial.com.mx",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://mercadoindustrial.com.mx/catalogo?q={search_term_string}",
-    "query-input": "required name=search_term_string"
-  }
-}
-```
-
-**Map in ContactSection**: Replace the branch list with a grid of cards, each with an embedded `<iframe>` using Google Maps embed URL (no API key required for basic embeds). Each branch gets its own small map iframe or one combined map. Will use `<iframe src="https://maps.google.com/maps?q=...&output=embed">` format. Will show a 2-column grid of map iframes on desktop, stacked on mobile.
-
-**Responsive fixes**:
-- ProductoDetalle: wrap action buttons in `flex-col sm:flex-row` for small screens; thumbnails use `flex overflow-x-auto gap-2`
-- Catalog toolbar: `flex-col sm:flex-row` for sort+count bar on mobile
-- FloatingCart: add `mb-16 sm:mb-6` to avoid overlapping mobile browser nav bars
+Cambio pequeño y enfocado. Sin nuevas dependencias.
