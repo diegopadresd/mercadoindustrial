@@ -1,34 +1,18 @@
 
-## Diagnóstico
+## Root Cause
 
-El problema es puntual: `handleQuoteRequest` en `ProductoDetalle.tsx` (línea ~410) hace `addToCart(...)` + `navigate('/carrito')` — es decir, se comporta igual que "Agregar al carrito". **No se borró el sistema de ofertas** — `MakeOfferModal` sigue intacto en el archivo (líneas 831, 862, 895).
+All products have `allow_offers = false` in the database. The offer button is correctly guarded by `(productData as any).allow_offers` — but since **no product has `allow_offers = true`**, the button never appears.
 
-El usuario confundió "desapareció el botón de ofertas" con el hecho de que el botón "Solicitar cotización" redirige al carrito en vez del cotizador.
+This is a **data issue**, not a code bug. The `allow_offers` column exists and the code is correct, but it was never enabled for any product.
 
-## El único cambio necesario
+## Fix Options
 
-**`src/pages/ProductoDetalle.tsx`** — reemplazar el cuerpo de `handleQuoteRequest` para que navegue a `/cotizador?productoId={id}` en lugar de agregar al carrito:
+Two ways to solve this:
 
-```typescript
-// ANTES (incorrecto):
-const handleQuoteRequest = async () => {
-  if (!productData) return;
-  await addToCart({ ... });
-  navigate('/carrito');
-};
+**Option A — Enable `allow_offers` via the Admin panel** (ideal for production): The admin sets `allow_offers = true` per product in AdminInventario. But if that UI doesn't exist yet, the user can't do this easily.
 
-// DESPUÉS (correcto):
-const handleQuoteRequest = () => {
-  if (!productData) return;
-  navigate(`/cotizador?productoId=${productData.id}`);
-};
-```
+**Option B — Add a toggle in the admin product editor** so admins can enable/disable offers per product. This is the cleanest long-term solution.
 
-Esto aplica a los 3 lugares donde aparece el botón "Solicitar cotización" (productos sin precio, con `contact_for_quote`, y el caso genérico) — todos llaman al mismo `handleQuoteRequest`, así que con cambiar la función una sola vez queda resuelto.
+**Option C — Temporarily enable offers on all products** via a DB migration (quickest test, not recommended for production).
 
-**El sistema de ofertas (`MakeOfferModal`) no fue borrado y no necesita cambios.**
-
-## Archivos a cambiar
-```
-src/pages/ProductoDetalle.tsx  — solo la función handleQuoteRequest (~3 líneas)
-```
+Looking at the current admin panel to check if the toggle already exists:
