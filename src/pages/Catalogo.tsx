@@ -369,7 +369,7 @@ const Catalogo = () => {
           {/* Products Grid */}
           <div className="flex-1 min-w-0">
             {/* Toolbar */}
-            <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
               {/* Mobile Filter Button */}
               <Button
                 variant="outline"

@@ -810,7 +810,7 @@ const ProductoDetalle = () => {
               <div className="mt-6 space-y-3">
                 {!(productData as any).is_auction && productData.price && !(productData as any).contact_for_quote ? (
                   <>
-                    <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                       <Button className="flex-1 btn-gold" onClick={handleAddToCart}>
                         <ShoppingCart className="mr-2" size={18} />
                         Agregar al carrito
@@ -841,7 +841,7 @@ const ProductoDetalle = () => {
                   </>
                 ) : !(productData as any).is_auction && ((productData as any).contact_for_quote || !productData.price) ? (
                   <div className="space-y-4">
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <Button className="flex-1" variant="outline" onClick={handleAddToCart}>
                         <ShoppingCart className="mr-2" size={18} />
                         Agregar al carrito
