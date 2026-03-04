@@ -122,6 +122,7 @@ const AdminInventario = () => {
     auction_start: '',
     auction_end: '',
     contact_for_quote: false,
+    allow_offers: false,
   });
 
   // Get total count with same filters as product query
@@ -258,6 +259,7 @@ const AdminInventario = () => {
         auction_end: data.is_auction && data.auction_end ? data.auction_end : null,
         auction_status: data.is_auction ? 'scheduled' : 'inactive',
         contact_for_quote: !data.is_auction && data.contact_for_quote,
+        allow_offers: data.allow_offers,
         // Approval status: vendors and operators go through approval, admins publish directly
         ...(!isAdmin && !editingProduct ? { approval_status: 'draft' } : {}),
       };
@@ -421,6 +423,7 @@ const AdminInventario = () => {
       auction_start: '',
       auction_end: '',
       contact_for_quote: false,
+      allow_offers: false,
     });
     setEditingProduct(null);
     setAIResult(null);
@@ -454,6 +457,7 @@ const AdminInventario = () => {
       auction_start: product.auction_start ? new Date(product.auction_start).toISOString().slice(0, 16) : '',
       auction_end: product.auction_end ? new Date(product.auction_end).toISOString().slice(0, 16) : '',
       contact_for_quote: product.contact_for_quote ?? false,
+      allow_offers: product.allow_offers ?? false,
     });
     setShowAddDialog(true);
   };
@@ -789,19 +793,31 @@ const AdminInventario = () => {
                           />
                         </div>
                         <div className="flex items-end pb-2">
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              id="contact_for_quote"
-                              checked={formData.contact_for_quote}
-                              onCheckedChange={(checked) => setFormData({ 
-                                ...formData, 
-                                contact_for_quote: checked,
-                                price: checked ? '' : formData.price 
-                              })}
-                            />
-                            <Label htmlFor="contact_for_quote" className="text-sm">
-                              Contactar para cotización
-                            </Label>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id="contact_for_quote"
+                                checked={formData.contact_for_quote}
+                                onCheckedChange={(checked) => setFormData({ 
+                                  ...formData, 
+                                  contact_for_quote: checked,
+                                  price: checked ? '' : formData.price 
+                                })}
+                              />
+                              <Label htmlFor="contact_for_quote" className="text-sm">
+                                Contactar para cotización
+                              </Label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id="allow_offers"
+                                checked={formData.allow_offers}
+                                onCheckedChange={(checked) => setFormData({ ...formData, allow_offers: checked })}
+                              />
+                              <Label htmlFor="allow_offers" className="text-sm">
+                                Permitir ofertas / negociación
+                              </Label>
+                            </div>
                           </div>
                         </div>
                       </div>
