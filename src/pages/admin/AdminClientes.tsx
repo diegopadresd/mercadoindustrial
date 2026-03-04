@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import * as XLSX from 'xlsx';
+// xlsx removed — using CSV export to avoid prototype pollution vulnerability (GHSA-4r6h-8v6p-xvw6)
 import { 
   Users, Search, Mail, Phone, MapPin, Calendar, FileText,
   Filter, UserPlus, Building2,
@@ -296,24 +296,32 @@ const AdminClientes = () => {
       toast({ title: "Sin datos", description: "No hay clientes para exportar", variant: "destructive" });
       return;
     }
-    const exportData = filteredClients.map(client => ({
-      'Nombre': client.full_name,
-      'Email': client.email,
-      'Teléfono': client.phone || 'N/A',
-      'Empresa': client.company || 'N/A',
-      'País': client.country || 'N/A',
-      'Región': client.region || 'N/A',
-      'Ciudad': client.city || 'N/A',
-      'RFC/VAT': client.vat || 'N/A',
-      'Fuente': client.source || 'N/A',
-      'Tags': (client.tags || []).join(', '),
-      'Marketing': client.marketing_emails || 'N/A',
-      'Fecha': new Date(client.created_at).toLocaleDateString('es-MX'),
-    }));
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
-    XLSX.writeFile(wb, 'clientes_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    // Export as CSV to avoid xlsx prototype pollution vulnerability (GHSA-4r6h-8v6p-xvw6)
+    const headers = ['Nombre','Email','Teléfono','Empresa','País','Región','Ciudad','RFC/VAT','Fuente','Tags','Marketing','Fecha'];
+    const rows = filteredClients.map(client => [
+      client.full_name,
+      client.email,
+      client.phone || 'N/A',
+      client.company || 'N/A',
+      client.country || 'N/A',
+      client.region || 'N/A',
+      client.city || 'N/A',
+      client.vat || 'N/A',
+      client.source || 'N/A',
+      (client.tags || []).join('; '),
+      client.marketing_emails || 'N/A',
+      new Date(client.created_at).toLocaleDateString('es-MX'),
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'clientes_' + new Date().toISOString().split('T')[0] + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
     toast({ title: "Exportación exitosa", description: 'Se exportaron ' + filteredClients.length + ' clientes' });
   };
 

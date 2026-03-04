@@ -39,14 +39,53 @@ serve(async (req) => {
     console.log('API Key prefix:', ENVIA_API_KEY.substring(0, 10) + '...');
 
     const body: QuotationRequest = await req.json();
-    console.log('Quotation request:', body);
 
     const { zipFrom, zipTo, weight, height, width, length } = body;
 
-    // Validate required fields
+    // Validate required fields presence
     if (!zipFrom || !zipTo || !weight || !height || !width || !length) {
       return new Response(
         JSON.stringify({ error: 'Faltan campos requeridos' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate zip code format (5-digit Mexican postal codes)
+    const zipRegex = /^\d{5}$/;
+    if (!zipRegex.test(String(zipFrom)) || !zipRegex.test(String(zipTo))) {
+      return new Response(
+        JSON.stringify({ error: 'Código postal inválido. Debe ser de 5 dígitos.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate numeric ranges
+    const numWeight = Number(weight);
+    const numHeight = Number(height);
+    const numWidth = Number(width);
+    const numLength = Number(length);
+
+    if (isNaN(numWeight) || numWeight <= 0 || numWeight > 30000) {
+      return new Response(
+        JSON.stringify({ error: 'Peso inválido. Debe estar entre 0.1 y 30,000 kg.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (isNaN(numHeight) || numHeight <= 0 || numHeight > 500) {
+      return new Response(
+        JSON.stringify({ error: 'Alto inválido. Debe estar entre 1 y 500 cm.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (isNaN(numWidth) || numWidth <= 0 || numWidth > 500) {
+      return new Response(
+        JSON.stringify({ error: 'Ancho inválido. Debe estar entre 1 y 500 cm.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (isNaN(numLength) || numLength <= 0 || numLength > 500) {
+      return new Response(
+        JSON.stringify({ error: 'Largo inválido. Debe estar entre 1 y 500 cm.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
