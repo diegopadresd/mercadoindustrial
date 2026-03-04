@@ -795,6 +795,7 @@ export type Database = {
       }
       products: {
         Row: {
+          allow_offers: boolean | null
           alto_aprox_cm: number | null
           ancho_aprox_cm: number | null
           approval_status: string
@@ -837,6 +838,7 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          allow_offers?: boolean | null
           alto_aprox_cm?: number | null
           ancho_aprox_cm?: number | null
           approval_status?: string
@@ -879,6 +881,7 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          allow_offers?: boolean | null
           alto_aprox_cm?: number | null
           ancho_aprox_cm?: number | null
           approval_status?: string
@@ -1144,6 +1147,13 @@ export type Database = {
         Args: never
         Returns: {
           brand: string
+          product_count: number
+        }[]
+      }
+      get_category_list: {
+        Args: never
+        Returns: {
+          category: string
           product_count: number
         }[]
       }

@@ -46,6 +46,8 @@ import {
   PhoneCall,
   Award,
   HelpCircle,
+  ZoomIn,
+  X,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getProductById } from '@/data/products';
@@ -190,6 +192,7 @@ const ProductoDetalle = () => {
   const createOffer = useCreateOffer();
   const queryClient = useQueryClient();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [zoomOpen, setZoomOpen] = useState(false);
   const [newQuestion, setNewQuestion] = useState('');
   const [offerAmount, setOfferAmount] = useState('');
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
@@ -241,7 +244,8 @@ const ProductoDetalle = () => {
     image: dbProduct.images?.[0] || '/placeholder.svg',
     images: dbProduct.images?.length ? dbProduct.images : ['/placeholder.svg'],
     categories: dbProduct.categories || [],
-    tags: [],
+    tags: dbProduct.categories || [],
+    allow_offers: (dbProduct as any).allow_offers ?? false,
     description: dbProduct.description || `${dbProduct.title}\n\nDescripción general:\n• Marca: ${dbProduct.brand}\n• SKU: ${dbProduct.sku}\n• Categorías: ${(dbProduct.categories || []).join(', ')}`,
     specs: dbProduct.specifications as Record<string, string> | undefined,
     youtubeUrl: undefined,
@@ -454,7 +458,7 @@ const ProductoDetalle = () => {
             animate={{ opacity: 1, x: 0 }}
           >
             {/* Main Image */}
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-muted mb-4">
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-muted mb-4 cursor-zoom-in" onClick={() => setZoomOpen(true)}>
               <AnimatePresence mode="wait">
                 <motion.img
                   key={currentImageIndex}
@@ -469,13 +473,13 @@ const ProductoDetalle = () => {
               </AnimatePresence>
               
               <button
-                onClick={prevImage}
+                onClick={(e) => { e.stopPropagation(); prevImage(); }}
                 className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 hover:bg-background rounded-full flex items-center justify-center shadow-lg transition-colors"
               >
                 <ChevronLeft size={24} />
               </button>
               <button
-                onClick={nextImage}
+                onClick={(e) => { e.stopPropagation(); nextImage(); }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 hover:bg-background rounded-full flex items-center justify-center shadow-lg transition-colors"
               >
                 <ChevronRight size={24} />
@@ -485,13 +489,63 @@ const ProductoDetalle = () => {
                 {currentImageIndex + 1} / {productData.images.length}
               </div>
 
+              {/* Zoom hint */}
+              <div className="absolute top-4 left-4 bg-background/80 rounded-full p-1.5 opacity-70">
+                <ZoomIn size={16} />
+              </div>
+
               <button
-                onClick={shareProduct}
+                onClick={(e) => { e.stopPropagation(); shareProduct(); }}
                 className="absolute top-4 right-4 w-10 h-10 bg-background/80 hover:bg-background rounded-full flex items-center justify-center shadow-lg transition-colors"
               >
                 <Share2 size={20} />
               </button>
             </div>
+
+            {/* Image Zoom Lightbox */}
+            <AnimatePresence>
+              {zoomOpen && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[100] bg-foreground/90 flex items-center justify-center p-4"
+                  onClick={() => setZoomOpen(false)}
+                >
+                  <button
+                    onClick={() => setZoomOpen(false)}
+                    className="absolute top-4 right-4 w-10 h-10 bg-background/20 hover:bg-background/40 rounded-full flex items-center justify-center text-white transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-background/20 hover:bg-background/40 rounded-full flex items-center justify-center text-white transition-colors"
+                  >
+                    <ChevronLeft size={28} />
+                  </button>
+                  <motion.img
+                    key={currentImageIndex}
+                    src={productData.images[currentImageIndex]}
+                    alt={productData.title}
+                    className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-background/20 hover:bg-background/40 rounded-full flex items-center justify-center text-white transition-colors"
+                  >
+                    <ChevronRight size={28} />
+                  </button>
+                  <div className="absolute bottom-4 text-white/70 text-sm">
+                    {currentImageIndex + 1} / {productData.images.length}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Thumbnails */}
             <div className="flex gap-2 overflow-x-auto pb-2">
@@ -765,6 +819,7 @@ const ProductoDetalle = () => {
                         Comprar ahora
                       </Button>
                     </div>
+                    {(productData as any).allow_offers && (
                     <Button 
                       className="w-full btn-offer"
                       onClick={() => setOfferDialogOpen(true)}
@@ -772,6 +827,7 @@ const ProductoDetalle = () => {
                       <DollarSign size={18} className="mr-2" />
                       Hacer una oferta
                     </Button>
+                    )}
                     <MakeOfferModal
                       open={offerDialogOpen}
                       onOpenChange={setOfferDialogOpen}
@@ -794,6 +850,7 @@ const ProductoDetalle = () => {
                         Solicitar cotización
                       </Button>
                     </div>
+                    {(productData as any).allow_offers && (
                     <Button 
                       className="w-full btn-offer"
                       onClick={() => setOfferDialogOpen(true)}
@@ -801,6 +858,7 @@ const ProductoDetalle = () => {
                       <DollarSign size={18} className="mr-2" />
                       Hacer una oferta
                     </Button>
+                    )}
                     <MakeOfferModal
                       open={offerDialogOpen}
                       onOpenChange={setOfferDialogOpen}

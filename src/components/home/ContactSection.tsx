@@ -1,17 +1,44 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, CheckCircle, MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { Send, CheckCircle, MapPin, Phone, Mail, Clock, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
-const locations = [
-  { city: 'Hermosillo', address: 'Sonora, México', phone: '662-168-0047' },
-  { city: 'Monterrey', address: 'Nuevo León, México', phone: '81-1234-5678' },
-  { city: 'CDMX', address: 'Ciudad de México', phone: '55-1234-5678' },
-  { city: 'McAllen', address: 'Texas, USA', phone: '956-321-8438' },
+const branches = [
+  {
+    city: 'Hermosillo',
+    state: 'Sonora, México',
+    phone: '662-168-0047',
+    mapUrl: 'https://maps.google.com/?q=Mercado+Industrial+Hermosillo+Sonora',
+    embedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3695.8!2d-110.9559!3d29.0729!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sMercado+Industrial!5e0!3m2!1ses!2smx!4v1',
+  },
+  {
+    city: 'Mexicali',
+    state: 'Baja California, México',
+    phone: '686-553-7070',
+    mapUrl: 'https://maps.google.com/?q=Mercado+Industrial+Mexicali+Baja+California',
+  },
+  {
+    city: 'Santa Catarina',
+    state: 'Nuevo León, México',
+    phone: '81-2345-6789',
+    mapUrl: 'https://maps.google.com/?q=Mercado+Industrial+Santa+Catarina+Nuevo+Leon',
+  },
+  {
+    city: 'Tijuana',
+    state: 'Baja California, México',
+    phone: '664-123-4567',
+    mapUrl: 'https://maps.google.com/?q=Mercado+Industrial+Tijuana+Baja+California',
+  },
+  {
+    city: 'Nogales',
+    state: 'Sonora / Arizona',
+    phone: '631-314-0019',
+    mapUrl: 'https://maps.google.com/?q=Mercado+Industrial+Nogales+Sonora',
+  },
 ];
 
 export const ContactSection = () => {
@@ -86,15 +113,35 @@ export const ContactSection = () => {
               </div>
             </div>
 
-            {/* Locations */}
+            {/* Branch Map Pins */}
             <div>
-              <p className="font-semibold text-foreground mb-4">Nuestras ubicaciones</p>
-              <div className="grid grid-cols-2 gap-4">
-                {locations.map((loc) => (
-                  <div key={loc.city} className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin size={16} className="text-primary shrink-0" />
-                    <span className="text-sm">{loc.city}</span>
-                  </div>
+              <p className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <MapPin size={16} className="text-primary" />
+                Nuestras 5 sucursales
+              </p>
+              <div className="grid grid-cols-1 gap-3">
+                {branches.map((branch) => (
+                  <a
+                    key={branch.city}
+                    href={branch.mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                        <MapPin size={14} className="text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground text-sm">{branch.city}</p>
+                        <p className="text-xs text-muted-foreground">{branch.state}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{branch.phone}</span>
+                      <ExternalLink size={12} className="text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </a>
                 ))}
               </div>
             </div>
