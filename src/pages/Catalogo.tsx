@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useEffect, useCallback } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -25,7 +25,6 @@ import { Input } from '@/components/ui/input';
 import { useBrands, useCategories } from '@/hooks/useProducts';
 import { useCatalogProducts } from '@/hooks/useCatalogProducts';
 
-
 // Mapeo de slugs URL a nombres de categorías
 const categorySlugMap: Record<string, string> = {
   'maquinaria-pesada': 'Maquinaria pesada',
@@ -48,7 +47,6 @@ const categorySlugMap: Record<string, string> = {
 
 const sectors = ['Industrial', 'Minería', 'Construcción', 'Alimenticio', 'Eléctrico', 'Agroindustria'];
 
-// Mapeo de sectores a categorías relacionadas
 const sectorCategoriesMap: Record<string, string[]> = {
   'Industrial': ['Industrial', 'Bombas', 'Válvulas', 'Compresores', 'Tanques', 'Bandas transportadoras', 'Reductores', 'Motorreductores', 'Blowers', 'Pistones neumáticos', 'Coples', 'Transmisiones', 'Tubería', 'Conexiones', 'Sellos', 'Baleros', 'Baleros y rodamientos', 'Chumaceras', 'Flechas', 'Bujes', 'Resortes', 'Rodillo', 'Rodillos', 'Soportes', 'Abrazaderas', 'Tornillería', 'Tuercas', 'Pernos', 'Bombas centrífugas', 'Bombas hidráulicas', 'Bombas de lodo', 'Ciclones', 'Secadores', 'Prensas', 'Hornos', 'Molinos', 'Transportadores', 'Tanque vertical', 'Tanques / Silos', 'Maquilador', 'Consumibles', 'Manómetro'],
   'Minería': ['Minería', 'Equipo minero', 'Quebradores / Trituradores', 'Quebradores Trituradores', 'Cribas', 'Mallas para cribas', 'Filtros prensas', 'Bombas de lodo', 'Ciclones', 'Centrífugos', 'Tamices', 'Molinos', 'Maquinaria pesada'],
@@ -57,27 +55,122 @@ const sectorCategoriesMap: Record<string, string[]> = {
   'Eléctrico': ['Eléctrico', 'Equipos Eléctricos', 'Equipo eléctrico', 'Equipos electrónicos', 'Motores eléctricos', 'Interruptores', 'Fusibles', 'Contactores', 'Arrancadores', 'Transformadores', 'Transformadores de Control', 'Variadores de velocidad / Variadores de Frecuencia', 'Tableros de distribución', 'Tableros de control', 'Centros de Carga', 'Controles eléctricos', 'Controladores', 'Gabinetes', 'Sensores', 'Bobinas', 'Lámparas', 'Cables', 'Conectores', 'Clavijas', 'Botones', 'Tomacorrientes', 'Terminales', 'Placas', 'Relevadores de Sobrecarga', 'Reles/ Relevadores de sobrecarga', 'Elementos térmicos', 'Contadores', 'Medidor digital', 'Fuentes de poder', 'Servomotores (Actuadores)', 'Protectores Manuales', 'Capacitores', 'Tarjeta electrónica', 'Banda motriz'],
   'Agroindustria': ['Agrícola', 'Agroindustria', 'Ganadero', 'Pesquero'],
 };
-const locations = ['Hermosillo, Sonora', 'Mexicali, Baja California', 'Santa Catarina, Nuevo León', 'Tijuana, Baja California', 'Virtual'];
+
+// Correct DB location values
+const LOCATION_OPTIONS = [
+  { label: 'Hermosillo', value: 'Hermosillo' },
+  { label: 'Mexicali', value: 'Mexicali' },
+  { label: 'Santa Catarina', value: 'Santa Catarina' },
+  { label: 'Tijuana', value: 'Tijuana' },
+  { label: 'Nogales', value: 'Nogales' },
+];
 
 const PRODUCTS_PER_PAGE = 12;
 
-const Catalogo = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [sortBy, setSortBy] = useState('sin-ordenar');
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+const sectorSlugMap: Record<string, string> = {
+  'industrial': 'Industrial',
+  'mineria': 'Minería',
+  'construccion': 'Construcción',
+  'alimenticio': 'Alimenticio',
+  'electrico': 'Eléctrico',
+  'agroindustria': 'Agroindustria',
+};
 
-  // Debounce search query
+const Catalogo = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read all state from URL
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const searchQuery = searchParams.get('q') || '';
+  const sortBy = searchParams.get('sort') || 'recientes';
+  const selectedSectors = searchParams.getAll('sector');
+  const selectedCategories = searchParams.getAll('categoria');
+  const selectedBrands = searchParams.getAll('marca');
+  const selectedLocations = searchParams.getAll('sucursal');
+  const mobileFiltersOpen = searchParams.get('filtros') === '1';
+
+  // Debounced search is handled via URL param change
+  // We update the URL's 'q' only after a debounce
+  const setSearchQuery = useCallback((val: string) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (val) {
+        next.set('q', val);
+      } else {
+        next.delete('q');
+      }
+      next.set('page', '1');
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setPage = useCallback((page: number) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('page', String(page));
+      return next;
+    }, { replace: true });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [setSearchParams]);
+
+  const setSortBy = useCallback((val: string) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('sort', val);
+      next.set('page', '1');
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const toggleFilter = useCallback((paramKey: string, value: string) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      const current = next.getAll(paramKey);
+      if (current.includes(value)) {
+        // Remove it — rebuild without this value
+        next.delete(paramKey);
+        current.filter(v => v !== value).forEach(v => next.append(paramKey, v));
+      } else {
+        next.append(paramKey, value);
+      }
+      next.set('page', '1');
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const clearFilters = useCallback(() => {
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
+  // Read category from URL slug on first load (for links like /catalogo?categoria=refacciones)
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+    const categorySlug = searchParams.get('categoria');
+    if (categorySlug && categorySlugMap[categorySlug]) {
+      // If the value is a slug, replace with canonical name
+      const canonical = categorySlugMap[categorySlug];
+      if (canonical !== categorySlug) {
+        setSearchParams(prev => {
+          const next = new URLSearchParams(prev);
+          next.delete('categoria');
+          next.append('categoria', canonical);
+          return next;
+        }, { replace: true });
+      }
+    }
+    const sectorSlug = searchParams.get('sector');
+    if (sectorSlug && sectorSlugMap[sectorSlug]) {
+      const canonical = sectorSlugMap[sectorSlug];
+      if (canonical !== sectorSlug) {
+        setSearchParams(prev => {
+          const next = new URLSearchParams(prev);
+          next.delete('sector');
+          next.append('sector', canonical);
+          return next;
+        }, { replace: true });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Build server-side category filter: merge selected categories + sector-mapped categories
   const serverCategories = (() => {
@@ -89,11 +182,10 @@ const Catalogo = () => {
     return cats.length > 0 ? [...new Set(cats)] : undefined;
   })();
 
-  // Fetch ONLY the current page from the server
   const { data, isLoading } = useCatalogProducts({
     page: currentPage,
     perPage: PRODUCTS_PER_PAGE,
-    search: debouncedSearch || undefined,
+    search: searchQuery || undefined,
     categories: serverCategories,
     brands: selectedBrands.length > 0 ? selectedBrands : undefined,
     locations: selectedLocations.length > 0 ? selectedLocations : undefined,
@@ -108,64 +200,15 @@ const Catalogo = () => {
   const { data: brands = [] } = useBrands();
   const { data: allCategories = [] } = useCategories();
 
-  // Map sector slugs to display names
-  const sectorSlugMap: Record<string, string> = {
-    'industrial': 'Industrial',
-    'mineria': 'Minería',
-    'construccion': 'Construcción',
-    'alimenticio': 'Alimenticio',
-    'electrico': 'Eléctrico',
-    'agroindustria': 'Agroindustria',
-  };
-
-  // Read category, sector, brand and search from URL on load
-  useEffect(() => {
-    const categorySlug = searchParams.get('categoria');
-    if (categorySlug && categorySlugMap[categorySlug]) {
-      setSelectedCategories([categorySlugMap[categorySlug]]);
-    }
-    
-    const sectorSlug = searchParams.get('sector');
-    if (sectorSlug && sectorSlugMap[sectorSlug]) {
-      setSelectedSectors([sectorSlugMap[sectorSlug]]);
-    }
-
-    const brandParam = searchParams.get('marca');
-    if (brandParam) {
-      setSelectedBrands([brandParam]);
-    }
-
-    const searchParam = searchParams.get('search');
-    if (searchParam) {
-      setSearchQuery(searchParam);
-    }
-  }, [searchParams]);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedSectors, selectedCategories, selectedBrands, selectedLocations, debouncedSearch, sortBy]);
-
-  const toggleFilter = (value: string, list: string[], setList: (v: string[]) => void) => {
-    if (list.includes(value)) {
-      setList(list.filter(v => v !== value));
-    } else {
-      setList([...list, value]);
-    }
-  };
-
-  const clearFilters = () => {
-    setSelectedSectors([]);
-    setSelectedCategories([]);
-    setSelectedBrands([]);
-    setSelectedLocations([]);
-    setSearchQuery('');
-    // Limpiar parámetros de URL
-    setSearchParams({});
-  };
-
   const hasActiveFilters = selectedSectors.length > 0 || selectedCategories.length > 0 || 
-                           selectedBrands.length > 0 || selectedLocations.length > 0 || searchQuery.trim() !== '';
+                           selectedBrands.length > 0 || selectedLocations.length > 0 || searchQuery !== '';
+
+  const allActiveFilters = [
+    ...selectedSectors.map(v => ({ key: 'sector', value: v })),
+    ...selectedCategories.map(v => ({ key: 'categoria', value: v })),
+    ...selectedBrands.map(v => ({ key: 'marca', value: v })),
+    ...selectedLocations.map(v => ({ key: 'sucursal', value: v })),
+  ];
 
   const FilterSidebar = () => (
     <div className="space-y-6">
@@ -179,7 +222,7 @@ const Catalogo = () => {
             className="text-muted-foreground hover:text-foreground"
           >
             <RotateCcw size={14} className="mr-1" />
-            Limpiar filtros
+            Limpiar
           </Button>
         )}
       </div>
@@ -196,7 +239,7 @@ const Catalogo = () => {
                   <Checkbox 
                     id={`sector-${sector}`} 
                     checked={selectedSectors.includes(sector)}
-                    onCheckedChange={() => toggleFilter(sector, selectedSectors, setSelectedSectors)}
+                    onCheckedChange={() => toggleFilter('sector', sector)}
                   />
                   <Label htmlFor={`sector-${sector}`} className="font-normal cursor-pointer text-sm">
                     {sector}
@@ -218,7 +261,7 @@ const Catalogo = () => {
                   <Checkbox 
                     id={`category-${category}`} 
                     checked={selectedCategories.includes(category)}
-                    onCheckedChange={() => toggleFilter(category, selectedCategories, setSelectedCategories)}
+                    onCheckedChange={() => toggleFilter('categoria', category)}
                   />
                   <Label htmlFor={`category-${category}`} className="font-normal cursor-pointer text-sm">
                     {category}
@@ -240,7 +283,7 @@ const Catalogo = () => {
                   <Checkbox 
                     id={`brand-${brand}`} 
                     checked={selectedBrands.includes(brand)}
-                    onCheckedChange={() => toggleFilter(brand, selectedBrands, setSelectedBrands)}
+                    onCheckedChange={() => toggleFilter('marca', brand)}
                   />
                   <Label htmlFor={`brand-${brand}`} className="font-normal cursor-pointer text-sm">
                     {brand}
@@ -257,15 +300,15 @@ const Catalogo = () => {
           </AccordionTrigger>
           <AccordionContent className="pb-4">
             <div className="space-y-3">
-              {locations.map((location) => (
-                <div key={location} className="flex items-center space-x-2">
+              {LOCATION_OPTIONS.map(({ label, value }) => (
+                <div key={value} className="flex items-center space-x-2">
                   <Checkbox 
-                    id={`location-${location}`} 
-                    checked={selectedLocations.includes(location)}
-                    onCheckedChange={() => toggleFilter(location, selectedLocations, setSelectedLocations)}
+                    id={`location-${value}`} 
+                    checked={selectedLocations.includes(value)}
+                    onCheckedChange={() => toggleFilter('sucursal', value)}
                   />
-                  <Label htmlFor={`location-${location}`} className="font-normal cursor-pointer text-sm">
-                    {location}
+                  <Label htmlFor={`location-${value}`} className="font-normal cursor-pointer text-sm">
+                    {label}
                   </Label>
                 </div>
               ))}
@@ -298,7 +341,7 @@ const Catalogo = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
               <Input
                 type="text"
-                placeholder="Buscar por nombre, SKU, marca o descripción..."
+                placeholder="Buscar por nombre, SKU o marca..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-4 py-6 text-base rounded-xl border-border bg-card"
@@ -324,14 +367,18 @@ const Catalogo = () => {
           </aside>
 
           {/* Products Grid */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {/* Toolbar */}
-            <div className="flex items-center justify-between mb-6 gap-4">
+            <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
               {/* Mobile Filter Button */}
               <Button
                 variant="outline"
                 className="lg:hidden"
-                onClick={() => setMobileFiltersOpen(true)}
+                onClick={() => setSearchParams(prev => {
+                  const next = new URLSearchParams(prev);
+                  next.set('filtros', '1');
+                  return next;
+                })}
               >
                 <Filter size={18} className="mr-2" />
                 Filtros
@@ -343,8 +390,8 @@ const Catalogo = () => {
               </Button>
 
               {/* Results Count */}
-              <p className="text-sm text-muted-foreground hidden lg:block">
-                Mostrando {products.length} de {totalCount} productos
+              <p className="text-sm text-muted-foreground hidden sm:block">
+                {isLoading ? 'Cargando...' : `${totalCount.toLocaleString('es-MX')} productos`}
               </p>
 
               {/* Sort */}
@@ -353,7 +400,6 @@ const Catalogo = () => {
                   <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sin-ordenar">Sin ordenar</SelectItem>
                   <SelectItem value="recientes">Más recientes</SelectItem>
                   <SelectItem value="destacados">Destacados</SelectItem>
                   <SelectItem value="precio-asc">Precio: menor a mayor</SelectItem>
@@ -366,30 +412,33 @@ const Catalogo = () => {
             {/* Active Filters */}
             {hasActiveFilters && (
               <div className="flex flex-wrap gap-2 mb-6">
-                {[...selectedSectors, ...selectedCategories, ...selectedBrands, ...selectedLocations].map((filter) => (
+                {allActiveFilters.map(({ key, value }) => (
                   <span 
-                    key={filter} 
+                    key={`${key}-${value}`} 
                     className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                   >
-                    {filter}
+                    {value}
                     <button 
-                      onClick={() => {
-                        setSelectedSectors(s => s.filter(v => v !== filter));
-                        setSelectedCategories(s => s.filter(v => v !== filter));
-                        setSelectedBrands(s => s.filter(v => v !== filter));
-                        setSelectedLocations(s => s.filter(v => v !== filter));
-                      }}
+                      onClick={() => toggleFilter(key, value)}
                       className="hover:bg-primary/20 rounded-full p-0.5"
                     >
                       <X size={14} />
                     </button>
                   </span>
                 ))}
+                {searchQuery && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                    "{searchQuery}"
+                    <button onClick={() => setSearchQuery('')} className="hover:bg-primary/20 rounded-full p-0.5">
+                      <X size={14} />
+                    </button>
+                  </span>
+                )}
                 <button 
                   onClick={clearFilters}
                   className="text-sm text-muted-foreground hover:text-foreground underline"
                 >
-                  Limpiar filtros
+                  Limpiar todos
                 </button>
               </div>
             )}
@@ -421,6 +470,8 @@ const Catalogo = () => {
                       auctionMinPrice={(product as any).auction_min_price}
                       auctionEnd={(product as any).auction_end}
                       contactForQuote={(product as any).contact_for_quote || false}
+                      allowOffers={(product as any).allow_offers || false}
+                      stock={(product as any).stock ?? 1}
                     />
                   ))}
                 </div>
@@ -436,14 +487,14 @@ const Catalogo = () => {
                   </div>
                 )}
 
-                {/* Real Pagination */}
+                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex justify-center mt-12">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap justify-center">
                       <Button 
                         variant="outline" 
                         disabled={currentPage === 1}
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        onClick={() => setPage(Math.max(1, currentPage - 1))}
                       >
                         Anterior
                       </Button>
@@ -464,7 +515,7 @@ const Catalogo = () => {
                             key={pageNum}
                             variant={currentPage === pageNum ? "default" : "outline"}
                             className={currentPage === pageNum ? "btn-gold" : ""}
-                            onClick={() => setCurrentPage(pageNum)}
+                            onClick={() => setPage(pageNum)}
                           >
                             {pageNum}
                           </Button>
@@ -474,7 +525,7 @@ const Catalogo = () => {
                       <Button 
                         variant="outline"
                         disabled={currentPage === totalPages}
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
                       >
                         Siguiente
                       </Button>
@@ -486,12 +537,16 @@ const Catalogo = () => {
           </div>
         </div>
 
-        {/* Mobile Filters Modal */}
+        {/* Mobile Filters Drawer */}
         {mobileFiltersOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <div 
               className="absolute inset-0 bg-foreground/50"
-              onClick={() => setMobileFiltersOpen(false)}
+              onClick={() => setSearchParams(prev => {
+                const next = new URLSearchParams(prev);
+                next.delete('filtros');
+                return next;
+              })}
             />
             <motion.div
               initial={{ x: '-100%' }}
@@ -504,7 +559,11 @@ const Catalogo = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setMobileFiltersOpen(false)}
+                  onClick={() => setSearchParams(prev => {
+                    const next = new URLSearchParams(prev);
+                    next.delete('filtros');
+                    return next;
+                  })}
                 >
                   <X size={24} />
                 </Button>
@@ -513,9 +572,13 @@ const Catalogo = () => {
               <div className="mt-6 pt-6 border-t">
                 <Button 
                   className="btn-gold w-full"
-                  onClick={() => setMobileFiltersOpen(false)}
+                  onClick={() => setSearchParams(prev => {
+                    const next = new URLSearchParams(prev);
+                    next.delete('filtros');
+                    return next;
+                  })}
                 >
-                  Ver {totalCount} resultados
+                  Ver {totalCount.toLocaleString('es-MX')} resultados
                 </Button>
               </div>
             </motion.div>

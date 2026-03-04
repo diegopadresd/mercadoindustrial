@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, MapPin, Gavel, Timer, Store } from 'lucide-react';
+import { ShoppingCart, MapPin, Gavel, Timer, Store, DollarSign, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useLocale } from '@/contexts/LocaleContext';
@@ -22,7 +22,9 @@ export interface ProductCardProps {
   auctionMinPrice?: number | null;
   auctionEnd?: string | null;
   contactForQuote?: boolean;
-  isExternal?: boolean; // Product from external seller
+  isExternal?: boolean;
+  allowOffers?: boolean;
+  stock?: number;
 }
 
 export const ProductCard = ({
@@ -41,43 +43,31 @@ export const ProductCard = ({
   auctionEnd,
   contactForQuote,
   isExternal,
+  allowOffers,
+  stock = 1,
 }: ProductCardProps) => {
-  const { addToCart } = useCart();
+  const { addToCart, items } = useCart();
   const { formatPrice, t, language } = useLocale();
+  const navigate = useNavigate();
+
+  const cartItem = items.find(item => item.productId === id);
+  const currentQtyInCart = cartItem?.quantity ?? 0;
+  const isAtStockLimit = currentQtyInCart >= stock;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Don't add auction products to cart
-    if (isAuction) return;
-    
-    await addToCart({
-      productId: id,
-      title,
-      sku,
-      brand,
-      price,
-      image,
-    });
+    if (isAuction || isAtStockLimit) return;
+    await addToCart({ productId: id, title, sku, brand, price, image });
   };
 
-  const handleQuote = (e: React.MouseEvent) => {
+  // "Cotizar" = navigate directly to cotizador with this single product
+  const handleCotizar = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Add to cart for quote
-    addToCart({
-      productId: id,
-      title,
-      sku,
-      brand,
-      price: null,
-      image,
-    });
+    navigate(`/cotizador?productoId=${id}`);
   };
 
-  // Check if auction is active
   const auctionEndDate = auctionEnd ? new Date(auctionEnd) : null;
   const isAuctionActive = isAuction && auctionEndDate && auctionEndDate > new Date();
 
@@ -117,9 +107,25 @@ export const ProductCard = ({
           {isNew && <span className="badge-new">{language === 'es' ? 'Nuevo' : 'New'}</span>}
           {isFeatured && <span className="badge-featured">{language === 'es' ? 'Destacado' : 'Featured'}</span>}
           {!isAuction && !isExternal && categories.slice(0, 2).map((cat) => (
-            <span key={cat} className="badge-category">{cat}</span>
+            <Link
+              key={cat}
+              to={`/catalogo?categoria=${encodeURIComponent(cat)}`}
+              onClick={e => e.stopPropagation()}
+              className="badge-category hover:opacity-80 transition-opacity"
+            >
+              {cat}
+            </Link>
           ))}
         </div>
+
+        {/* Stock warning */}
+        {stock <= 3 && stock > 0 && (
+          <div className="absolute bottom-10 left-3">
+            <Badge variant="destructive" className="text-xs">
+              Solo {stock} disponible{stock !== 1 ? 's' : ''}
+            </Badge>
+          </div>
+        )}
 
         {/* Watermark */}
         <div className="absolute bottom-3 right-3 opacity-50">
@@ -184,7 +190,7 @@ export const ProductCard = ({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-col">
           {isAuction ? (
             <Button 
               asChild
@@ -197,31 +203,36 @@ export const ProductCard = ({
               </Link>
             </Button>
           ) : contactForQuote || !price ? (
-            <>
+            <div className="flex gap-2">
               <Button 
-                variant="outline" 
                 size="sm" 
                 className="flex-1"
-                onClick={handleQuote}
+                variant="outline"
+                onClick={handleAddToCart}
+                disabled={isAtStockLimit}
+                title={isAtStockLimit ? 'Stock máximo alcanzado' : undefined}
               >
-                <ShoppingCart size={16} className="mr-1" />
-                {t('common.addToCart')}
+                <ShoppingCart size={14} className="mr-1" />
+                Carrito
               </Button>
               <Button 
                 size="sm" 
                 className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                onClick={handleQuote}
+                onClick={handleCotizar}
               >
-                {t('common.requestQuote')}
+                <FileText size={14} className="mr-1" />
+                Cotizar
               </Button>
-            </>
+            </div>
           ) : (
-            <>
+            <div className="flex gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
                 className="flex-1"
                 onClick={handleAddToCart}
+                disabled={isAtStockLimit}
+                title={isAtStockLimit ? 'Stock máximo alcanzado' : undefined}
               >
                 <ShoppingCart size={16} className="mr-1" />
                 {t('common.addToCart')}
@@ -229,11 +240,27 @@ export const ProductCard = ({
               <Button 
                 size="sm" 
                 className="flex-1 btn-gold"
-                onClick={handleAddToCart}
+                onClick={handleCotizar}
               >
-                {t('common.buyNow')}
+                <FileText size={14} className="mr-1" />
+                Cotizar
               </Button>
-            </>
+            </div>
+          )}
+
+          {/* Offer button — only if allow_offers is true */}
+          {allowOffers && !isAuction && (
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="w-full border-secondary text-secondary hover:bg-secondary/10"
+            >
+              <Link to={generateProductUrl(title, id)}>
+                <DollarSign size={14} className="mr-1" />
+                Hacer una oferta
+              </Link>
+            </Button>
           )}
         </div>
 

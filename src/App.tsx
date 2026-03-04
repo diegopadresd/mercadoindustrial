@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { LocaleProvider } from "@/contexts/LocaleContext";
 import WelcomeAnnouncementOverlay from "./components/WelcomeAnnouncementOverlay";
+import { FloatingCart } from "./components/FloatingCart";
 
 import Index from "./pages/Index";
 import Catalogo from "./pages/Catalogo";
@@ -63,6 +64,7 @@ const App = () => (
             <BrowserRouter>
               <ScrollToTop />
               <WelcomeAnnouncementOverlay />
+              <FloatingCart />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/catalogo" element={<Catalogo />} />

@@ -94,37 +94,28 @@ export const useProduct = (id: string) => {
   });
 };
 
+// Uses server-side RPC for efficiency — avoids fetching 16k rows
 export const useBrands = () => {
   return useQuery({
-    queryKey: ['brands'],
+    queryKey: ['brands-rpc'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('brand')
-        .eq('is_active', true);
-
+      const { data, error } = await supabase.rpc('get_brand_counts');
       if (error) throw error;
-      
-      const uniqueBrands = [...new Set(data.map(p => p.brand))];
-      return uniqueBrands.sort();
+      return (data || []).map((row: { brand: string }) => row.brand);
     },
+    staleTime: 24 * 60 * 60 * 1000, // 24h — brands don't change often
   });
 };
 
+// Uses server-side RPC for efficiency — avoids fetching 16k rows
 export const useCategories = () => {
   return useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories-rpc'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('categories')
-        .eq('is_active', true);
-
+      const { data, error } = await supabase.rpc('get_category_list');
       if (error) throw error;
-      
-      const allCategories = data.flatMap(p => p.categories || []);
-      const uniqueCategories = [...new Set(allCategories)];
-      return uniqueCategories.sort();
+      return (data || []).map((row: { category: string }) => row.category);
     },
+    staleTime: 24 * 60 * 60 * 1000, // 24h
   });
 };
