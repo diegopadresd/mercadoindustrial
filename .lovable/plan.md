@@ -1,39 +1,34 @@
 
-## Hallazgos de la verificación
+## Diagnóstico
 
-### ✅ Lo que funciona correctamente
+El problema es puntual: `handleQuoteRequest` en `ProductoDetalle.tsx` (línea ~410) hace `addToCart(...)` + `navigate('/carrito')` — es decir, se comporta igual que "Agregar al carrito". **No se borró el sistema de ofertas** — `MakeOfferModal` sigue intacto en el archivo (líneas 831, 862, 895).
 
-1. **FloatingCart en móvil** — Posicionado en `bottom-20 sm:bottom-6`, correctamente evita la barra de navegación del móvil. Implementado correctamente en `FloatingCart.tsx`.
+El usuario confundió "desapareció el botón de ofertas" con el hecho de que el botón "Solicitar cotización" redirige al carrito en vez del cotizador.
 
-2. **Botones de acción en detalle de producto** — En móvil se ven apilados verticalmente con `flex-col sm:flex-row`. Los botones "Agregar al carrito" y "Solicitar cotización" se muestran separados y en columna. `allow_offers` guard está en su lugar.
+## El único cambio necesario
 
-3. **Miniaturas de imágenes** — Implementado con `overflow-x-auto` para scroll horizontal en móvil, funcionando correctamente.
+**`src/pages/ProductoDetalle.tsx`** — reemplazar el cuerpo de `handleQuoteRequest` para que navegue a `/cotizador?productoId={id}` en lugar de agregar al carrito:
 
-4. **Etiquetas/Categorías visibles** — Se muestran correctamente en el detalle del producto.
+```typescript
+// ANTES (incorrecto):
+const handleQuoteRequest = async () => {
+  if (!productData) return;
+  await addToCart({ ... });
+  navigate('/carrito');
+};
 
-5. **Mapa interactivo de sucursales** — Existe en `ContactSection.tsx` con selector de 5 sucursales (Hermosillo, Mexicali, Santa Catarina, Tijuana, Nogales) e iframe dinámico. Verificado por el extractor de página.
+// DESPUÉS (correcto):
+const handleQuoteRequest = () => {
+  if (!productData) return;
+  navigate(`/cotizador?productoId=${productData.id}`);
+};
+```
 
-### ⚠️ Problemas encontrados que requieren corrección
+Esto aplica a los 3 lugares donde aparece el botón "Solicitar cotización" (productos sin precio, con `contact_for_quote`, y el caso genérico) — todos llaman al mismo `handleQuoteRequest`, así que con cambiar la función una sola vez queda resuelto.
 
-1. **El mapa de sucursales no está accesible desde el navbar** — La sección está en la homepage pero no en `/contacto`. Los usuarios que vayan a la página de Contacto no ven el mapa de sucursales. Hay que agregar el selector de sucursales + mapa también en `src/pages/Contacto.tsx`.
-
-2. **`ContactSection.tsx` en homepage: el mapa y selector de sucursales NO es visible en móvil en el scroll** — Al hacer scroll en la homepage en 390px, la sección de contacto muestra el formulario pero el mapa y los botones de sucursal quedaron fuera del viewport visible durante la prueba. Necesita confirmar que los branch buttons (grilla de 5) no se desborden en `grid-cols-5` en pantallas pequeñas — actualmente usa `lg:grid-cols-5 gap-2` que en móvil collapsa a 1 columna, pero en tablet puede colapsar mal.
-
-3. **El número de teléfono de Santa Catarina parece un placeholder** — `81-2345-6789` parece inventado, no un número real de Mercado Industrial.
-
-## Plan de correcciones
-
-### Archivo 1: `src/pages/Contacto.tsx`
-- Importar y renderizar el componente `ContactSection` (con el mapa) dentro de la página de Contacto, debajo del formulario actual — o reemplazar la sección de info de sucursales actual con el componente compartido.
-
-### Archivo 2: `src/components/home/ContactSection.tsx`
-- Cambiar el grid de sucursales de `grid-cols-5` a `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5` para que en móvil no sean 5 botones apilados verticalmente sino 2 columnas.
-- Corregir el número placeholder de Santa Catarina si se tiene el número real (o marcar como "Próximamente").
+**El sistema de ofertas (`MakeOfferModal`) no fue borrado y no necesita cambios.**
 
 ## Archivos a cambiar
 ```
-src/pages/Contacto.tsx          — agregar mapa de sucursales
-src/components/home/ContactSection.tsx  — fix grid responsive en móvil
+src/pages/ProductoDetalle.tsx  — solo la función handleQuoteRequest (~3 líneas)
 ```
-
-Cambio pequeño y enfocado. Sin nuevas dependencias.
