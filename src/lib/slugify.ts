@@ -15,11 +15,11 @@ export function slugify(text: string, maxLength = 80): string {
 
 /**
  * Generate an SEO-friendly product URL.
- * Format: /productos/title-slug--PRODUCT_ID
- * The double dash separates the human-readable slug from the technical ID.
+ * Prefers the stored slug field. Falls back to slugifying the title.
+ * Format: /productos/stored-slug--PRODUCT_ID
  */
-export function generateProductUrl(title: string, id: string): string {
-  const slug = slugify(title);
+export function generateProductUrl(titleOrSlug: string, id: string, useAsSlug = false): string {
+  const slug = useAsSlug ? titleOrSlug : slugify(titleOrSlug);
   return `/productos/${slug}--${id}`;
 }
 

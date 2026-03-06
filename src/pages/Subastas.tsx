@@ -190,7 +190,7 @@ const Subastas = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
                     >
-                      <Link to={generateProductUrl(auction.title, auction.id)}>
+                      <Link to={generateProductUrl((auction as any).slug || auction.title, auction.id, !!(auction as any).slug)}>
                         <div className="bg-card rounded-2xl overflow-hidden border hover:shadow-xl transition-all duration-300 group">
                           {/* Image */}
                           <div className="relative aspect-video overflow-hidden">
@@ -249,7 +249,7 @@ const Subastas = () => {
                 <p className="text-muted-foreground mb-6">
                   Próximamente tendremos nuevas subastas. ¡Mantente atento!
                 </p>
-                <Link to="/catalogo">
+                <Link to="/catalogo-mi">
                   <Button>Explorar Catálogo</Button>
                 </Link>
               </motion.div>

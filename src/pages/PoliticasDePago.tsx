@@ -226,7 +226,7 @@ const PoliticasDePago = () => {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button asChild size="lg" className="gap-2">
-                    <Link to="/catalogo">
+                    <Link to="/catalogo-mi">
                       Ver catálogo
                       <ArrowRight size={18} />
                     </Link>

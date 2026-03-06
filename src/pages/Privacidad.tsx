@@ -84,7 +84,7 @@ const Privacidad = () => {
 
               <div className="mt-12 text-center">
                 <Button asChild size="lg" className="gap-2">
-                  <Link to="/catalogo">
+                  <Link to="/catalogo-mi">
                     Ir al catálogo
                     <ArrowRight size={18} />
                   </Link>

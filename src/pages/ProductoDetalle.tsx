@@ -277,7 +277,7 @@ const ProductoDetalle = () => {
   }
 
   if (!productData) {
-    return <Navigate to="/catalogo" replace />;
+    return <Navigate to="/catalogo-mi" replace />;
   }
 
   const handleQuoteShipping = () => {
@@ -361,7 +361,10 @@ const ProductoDetalle = () => {
   };
 
   const shareProduct = async () => {
-    const productPath = generateProductUrl(productData.title, productData.id);
+    const dbSlug = (dbProduct as any)?.slug;
+    const productPath = dbSlug
+      ? generateProductUrl(dbSlug, productData.id, true)
+      : generateProductUrl(productData.title, productData.id);
     const shareUrl = getSocialShareUrl(productPath);
     
     if (navigator.share) {
@@ -418,7 +421,7 @@ const ProductoDetalle = () => {
         title={`${productData.title} - ${productData.brand}`}
         description={`${productData.title} marca ${productData.brand}. SKU: ${productData.sku}. ${'contact_for_quote' in productData && productData.contact_for_quote || !productData.price ? 'Solicita cotización.' : `Precio: $${productData.price?.toLocaleString('es-MX')} MXN.`} Compra en Mercado Industrial.`}
         image={productData.images?.[0] || undefined}
-        url={`${SITE_URL}${generateProductUrl(productData.title, productData.id)}`}
+        url={`${SITE_URL}${(dbProduct as any)?.slug ? generateProductUrl((dbProduct as any).slug, productData.id, true) : generateProductUrl(productData.title, productData.id)}`}
         type="product"
       />
       <ProductJsonLd
@@ -428,7 +431,7 @@ const ProductoDetalle = () => {
         brand={productData.brand}
         image={productData.images?.[0] || '/placeholder.svg'}
         price={productData.price}
-        url={`${SITE_URL}${generateProductUrl(productData.title, productData.id)}`}
+        url={`${SITE_URL}${(dbProduct as any)?.slug ? generateProductUrl((dbProduct as any).slug, productData.id, true) : generateProductUrl(productData.title, productData.id)}`}
         condition={productData.isNew ? 'NewCondition' : 'UsedCondition'}
       />
       <Header />
@@ -436,7 +439,7 @@ const ProductoDetalle = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <Link 
-          to="/catalogo" 
+          to="/catalogo-mi" 
           className="inline-flex items-center gap-2 text-primary hover:underline mb-6"
         >
           <ArrowLeft size={18} />

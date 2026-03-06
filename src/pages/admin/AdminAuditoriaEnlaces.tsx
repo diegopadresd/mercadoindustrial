@@ -22,7 +22,7 @@ import AccessDenied from '@/components/admin/AccessDenied';
 // All known app routes to audit
 const appRoutes = [
   { path: '/', name: 'Inicio' },
-  { path: '/catalogo', name: 'Catálogo' },
+  { path: '/catalogo-mi', name: 'Catálogo' },
   { path: '/marcas', name: 'Marcas' },
   { path: '/blog', name: 'Blog' },
   { path: '/nosotros', name: 'Quiénes Somos' },

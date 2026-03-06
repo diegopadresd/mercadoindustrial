@@ -93,7 +93,7 @@ const Carrito = () => {
               Explora nuestro catálogo y agrega productos a tu carrito
             </p>
             <Button asChild className="btn-gold">
-              <Link to="/catalogo">
+              <Link to="/catalogo-mi">
                 <ArrowLeft size={18} className="mr-2" />
                 Ir al catálogo
               </Link>
@@ -170,7 +170,7 @@ const Carrito = () => {
               ))}
 
               <Link
-                to="/catalogo"
+                to="/catalogo-mi"
                 className="inline-flex items-center gap-2 text-primary hover:underline mt-4"
               >
                 <ArrowLeft size={18} />

@@ -109,7 +109,7 @@ const Catalogo = () => {
       const next = new URLSearchParams(prev);
       next.set('page', String(page));
       return next;
-    }, { replace: true });
+    }); // replace: false (default) — pushes history entry so back/forward works
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [setSearchParams]);
 
@@ -119,7 +119,7 @@ const Catalogo = () => {
       next.set('sort', val);
       next.set('page', '1');
       return next;
-    }, { replace: true });
+    }); // push history
   }, [setSearchParams]);
 
   const toggleFilter = useCallback((paramKey: string, value: string) => {
@@ -135,11 +135,11 @@ const Catalogo = () => {
       }
       next.set('page', '1');
       return next;
-    }, { replace: true });
+    }); // push history
   }, [setSearchParams]);
 
   const clearFilters = useCallback(() => {
-    setSearchParams({}, { replace: true });
+    setSearchParams({});  // push history
   }, [setSearchParams]);
 
   // Read category from URL slug on first load (for links like /catalogo?categoria=refacciones)
@@ -472,6 +472,7 @@ const Catalogo = () => {
                       contactForQuote={(product as any).contact_for_quote || false}
                       allowOffers={(product as any).allow_offers || false}
                       stock={(product as any).stock ?? 1}
+                      slug={(product as any).slug || null}
                     />
                   ))}
                 </div>
