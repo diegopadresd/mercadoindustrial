@@ -51,7 +51,7 @@ export const Header = () => {
   // Navigation with translations
   const navigation = language === 'es' ? [
     { name: 'Inicio', href: '/' },
-    { name: 'Catálogo', href: '/catalogo' },
+    { name: 'Catálogo', href: '/catalogo-mi' },
     { name: 'Marcas', href: '/marcas' },
     { name: 'Blog', href: '/blog' },
     { name: 'Quiénes Somos', href: '/nosotros' },
@@ -59,7 +59,7 @@ export const Header = () => {
     { name: 'Publicaciones Recientes', href: '/recientes' },
   ] : [
     { name: 'Home', href: '/' },
-    { name: 'Catalog', href: '/catalogo' },
+    { name: 'Catalog', href: '/catalogo-mi' },
     { name: 'Brands', href: '/marcas' },
     { name: 'Blog', href: '/blog' },
     { name: 'About Us', href: '/nosotros' },
@@ -76,7 +76,7 @@ export const Header = () => {
     if (selectedSector !== 'Todos los sectores' && selectedSector !== 'All sectors') {
       params.set('sector', selectedSector.toLowerCase());
     }
-    navigate(`/catalogo?${params.toString()}`);
+    navigate(`/catalogo-mi?${params.toString()}`);
     setSearchQuery('');
     setMobileMenuOpen(false);
   };

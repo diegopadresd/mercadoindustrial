@@ -13,6 +13,7 @@ import { FloatingCart } from "./components/FloatingCart";
 
 import Index from "./pages/Index";
 import Catalogo from "./pages/Catalogo";
+import { Navigate } from "react-router-dom";
 import ProductoDetalle from "./pages/ProductoDetalle";
 import Marcas from "./pages/Marcas";
 import Blog from "./pages/Blog";
