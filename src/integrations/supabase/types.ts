@@ -827,6 +827,7 @@ export type Database = {
           review_notes: string | null
           seller_id: string | null
           sku: string
+          slug: string | null
           specifications: Json | null
           stock: number | null
           title: string
@@ -870,6 +871,7 @@ export type Database = {
           review_notes?: string | null
           seller_id?: string | null
           sku: string
+          slug?: string | null
           specifications?: Json | null
           stock?: number | null
           title: string
@@ -913,6 +915,7 @@ export type Database = {
           review_notes?: string | null
           seller_id?: string | null
           sku?: string
+          slug?: string | null
           specifications?: Json | null
           stock?: number | null
           title?: string
