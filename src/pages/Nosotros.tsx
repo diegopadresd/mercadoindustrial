@@ -293,7 +293,7 @@ const Nosotros = () => {
                 Contáctanos hoy y descubre cómo podemos ayudarte a encontrar el equipo que necesitas
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/catalogo" className="btn-gold">
+                <Link to="/catalogo-mi" className="btn-gold">
                   Explorar catálogo
                   <ArrowRight size={18} className="ml-2" />
                 </Link>

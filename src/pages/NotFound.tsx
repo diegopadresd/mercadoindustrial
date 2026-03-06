@@ -30,7 +30,7 @@ const NotFound = () => {
             </Link>
           </Button>
           <Button asChild variant="outline">
-            <Link to="/catalogo">
+            <Link to="/catalogo-mi">
               <Search size={18} className="mr-2" />
               Explorar catálogo
             </Link>

@@ -99,7 +99,7 @@ export const SellerProfileCard = ({ seller, productId, sellerId }: SellerProfile
       {/* Action Buttons */}
       <div className="space-y-3 mb-6">
         <Button asChild className="w-full">
-          <Link to={`/catalogo?vendedor=${seller.id}`}>
+          <Link to={`/catalogo-mi?vendedor=${seller.id}`}>
             <Store size={18} className="mr-2" />
             Visitar tienda
           </Link>

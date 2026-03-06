@@ -66,7 +66,7 @@ export const MIComponentsSection = () => {
               <p className="section-subtitle">Nuestra línea de productos propios con la mejor calidad</p>
             </div>
             <Link 
-              to="/catalogo?marca=mi-components" 
+              to="/catalogo-mi?marca=mi-components" 
               className="flex items-center gap-2 text-primary font-semibold hover:gap-3 transition-all"
             >
               Ver todos los productos
