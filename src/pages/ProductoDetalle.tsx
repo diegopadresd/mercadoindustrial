@@ -277,7 +277,7 @@ const ProductoDetalle = () => {
   }
 
   if (!productData) {
-    return <Navigate to="/catalogo" replace />;
+    return <Navigate to="/catalogo-mi" replace />;
   }
 
   const handleQuoteShipping = () => {
@@ -436,7 +436,7 @@ const ProductoDetalle = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <Link 
-          to="/catalogo" 
+          to="/catalogo-mi" 
           className="inline-flex items-center gap-2 text-primary hover:underline mb-6"
         >
           <ArrowLeft size={18} />
