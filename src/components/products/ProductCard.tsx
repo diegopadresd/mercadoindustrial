@@ -25,6 +25,7 @@ export interface ProductCardProps {
   isExternal?: boolean;
   allowOffers?: boolean;
   stock?: number;
+  slug?: string | null;
 }
 
 export const ProductCard = ({
@@ -45,6 +46,7 @@ export const ProductCard = ({
   isExternal,
   allowOffers,
   stock = 1,
+  slug,
 }: ProductCardProps) => {
   const { addToCart, items } = useCart();
   const { formatPrice, t, language } = useLocale();
@@ -53,6 +55,11 @@ export const ProductCard = ({
   const cartItem = items.find(item => item.productId === id);
   const currentQtyInCart = cartItem?.quantity ?? 0;
   const isAtStockLimit = currentQtyInCart >= stock;
+
+  // Use stored slug if available, otherwise fallback to slugifying title
+  const productUrl = slug
+    ? generateProductUrl(slug, id, true)
+    : generateProductUrl(title, id);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -80,7 +87,7 @@ export const ProductCard = ({
       className="product-card group"
     >
       {/* Image Container */}
-      <Link to={generateProductUrl(title, id)} className="block relative aspect-[4/3] overflow-hidden">
+      <Link to={productUrl} className="block relative aspect-[4/3] overflow-hidden">
         <img
           src={image}
           alt={title}
@@ -109,7 +116,7 @@ export const ProductCard = ({
           {!isAuction && !isExternal && categories.slice(0, 2).map((cat) => (
             <Link
               key={cat}
-              to={`/catalogo?categoria=${encodeURIComponent(cat)}`}
+              to={`/catalogo-mi?categoria=${encodeURIComponent(cat)}`}
               onClick={e => e.stopPropagation()}
               className="badge-category hover:opacity-80 transition-opacity"
             >
@@ -137,7 +144,7 @@ export const ProductCard = ({
 
       {/* Content */}
       <div className="p-4">
-        <Link to={generateProductUrl(title, id)}>
+        <Link to={productUrl}>
           <h3 className="font-semibold text-foreground line-clamp-2 mb-3 group-hover:text-primary transition-colors">
             {title}
           </h3>
@@ -197,7 +204,7 @@ export const ProductCard = ({
               size="sm" 
               className="w-full btn-gold"
             >
-              <Link to={generateProductUrl(title, id)}>
+              <Link to={productUrl}>
                 <Gavel size={16} className="mr-1" />
                 {t('auction.bidNow')}
               </Link>
@@ -256,7 +263,7 @@ export const ProductCard = ({
               variant="outline"
               className="w-full border-secondary text-secondary hover:bg-secondary/10"
             >
-              <Link to={generateProductUrl(title, id)}>
+              <Link to={productUrl}>
                 <DollarSign size={14} className="mr-1" />
                 Hacer una oferta
               </Link>
