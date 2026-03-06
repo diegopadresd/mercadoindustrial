@@ -47,14 +47,14 @@ Deno.serve(async (req) => {
 
     // Fetch all active products (paginated)
     const PAGE_SIZE = 1000;
-    let allProducts: { id: string; title: string; updated_at: string }[] = [];
+    let allProducts: { id: string; title: string; slug: string | null; updated_at: string }[] = [];
     let from = 0;
     let keepFetching = true;
 
     while (keepFetching) {
       const { data, error } = await supabase
         .from("products")
-        .select("id, title, updated_at")
+        .select("id, title, slug, updated_at")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .range(from, from + PAGE_SIZE - 1);
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
 
     // Product pages
     for (const product of allProducts) {
-      const slug = slugify(product.title);
+      const slug = product.slug || slugify(product.title);
       const lastmod = product.updated_at
         ? new Date(product.updated_at).toISOString().split("T")[0]
         : new Date().toISOString().split("T")[0];
