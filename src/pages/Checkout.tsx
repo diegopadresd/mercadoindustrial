@@ -281,8 +281,6 @@ const Checkout = () => {
 
   // ---- Shared order creation ----
   const createOrder = async (notes: string, status: 'pending' | 'paid' = 'pending') => {
-    const orderNumber = `MI-${Date.now()}`;
-    
     const shippingAddr = paymentMethod === 'terminal'
       ? `Recoger en sucursal: ${SUCURSALES.find(s => s.id === selectedSucursal)?.name}`
       : shippingInfo.address;
@@ -290,7 +288,6 @@ const Checkout = () => {
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
-        order_number: orderNumber,
         user_id: user!.id,
         customer_name: shippingInfo.fullName,
         customer_email: shippingInfo.email,

@@ -186,7 +186,7 @@ export const ProductsSection = () => {
           className="text-center"
         >
           <Link
-            to="/catalogo"
+            to="/catalogo-mi"
             className="inline-flex items-center gap-2 px-8 py-4 bg-secondary text-secondary-foreground font-bold rounded-xl hover:bg-secondary/90 transition-all group"
           >
             Ver todo el catálogo
