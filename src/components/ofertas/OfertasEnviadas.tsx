@@ -129,7 +129,7 @@ export const OfertasEnviadas = ({ userId }: OfertasEnviadasProps) => {
           <CardContent className="p-0">
             <div className="flex gap-4 p-4">
               {/* Product Image */}
-              <Link to={generateProductUrl(offer.product?.title || 'producto', offer.product_id, offer.product?.slug || undefined)} className="shrink-0">
+              <Link to={generateProductUrl(offer.product?.slug || offer.product?.title || 'producto', offer.product_id, !!(offer.product?.slug))} className="shrink-0">
                 <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted">
                   {offer.product?.images?.[0] ? (
                     <img
