@@ -126,10 +126,10 @@ const CheckoutContraoferta = () => {
           total_price: finalPrice,
         });
 
-      // Update offer status
+      // Update offer status to 'accepted' — will be set to 'paid' after payment confirmed
       await supabase
         .from('offers')
-        .update({ status: 'paid' })
+        .update({ status: 'accepted' })
         .eq('id', offerId);
 
       setCreatedOrder(order);
