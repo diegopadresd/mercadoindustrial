@@ -17,7 +17,7 @@ export const ProductsSection = () => {
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('id, title, sku, brand, images, location, is_featured, is_new, created_at, seller_id')
+        .select('id, title, sku, brand, images, location, is_featured, is_new, created_at, seller_id, slug')
         .eq('is_active', true)
         .is('seller_id', null) // Only official Mercado Industrial products
         .limit(6);
