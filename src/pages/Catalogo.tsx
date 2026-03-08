@@ -603,7 +603,18 @@ const FilterSidebar = ({
                   <X size={24} />
                 </Button>
               </div>
-              <FilterSidebar />
+              <FilterSidebar
+                hasActiveFilters={hasActiveFilters}
+                clearFilters={clearFilters}
+                sectors={sectors}
+                selectedSectors={selectedSectors}
+                allCategories={allCategories}
+                selectedCategories={selectedCategories}
+                brands={brands}
+                selectedBrands={selectedBrands}
+                selectedLocations={selectedLocations}
+                toggleFilter={toggleFilter}
+              />
               <div className="mt-6 pt-6 border-t">
                 <Button 
                   className="btn-gold w-full"
