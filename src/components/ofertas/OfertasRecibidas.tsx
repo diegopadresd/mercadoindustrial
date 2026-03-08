@@ -39,6 +39,7 @@ interface ReceivedOffer {
     title: string;
     images: string[];
     brand: string;
+    slug?: string | null;
   };
 }
 
