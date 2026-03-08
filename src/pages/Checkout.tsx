@@ -285,11 +285,6 @@ const Checkout = () => {
 
   // ---- Shared order creation ----
   const createOrder = async (notes: string, status: 'pending' | 'paid' = 'pending') => {
-    const now = new Date();
-    const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
-    const randPart = Math.floor(1000 + Math.random() * 9000);
-    const orderNumber = `MI-${datePart}-${randPart}`;
-
     const shippingAddr = paymentMethod === 'terminal'
       ? `Recoger en sucursal: ${SUCURSALES.find(s => s.id === selectedSucursal)?.name}`
       : shippingInfo.address;
