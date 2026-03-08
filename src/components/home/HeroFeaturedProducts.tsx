@@ -72,7 +72,7 @@ export const HeroFeaturedProducts = () => {
               transition={{ delay: index * 0.1 }}
             >
               <Link
-                to={product.link || generateProductUrl(product.title, product.id)}
+                to={product.link || '#'}
                 className="block bg-white/10 hover:bg-white/20 rounded-2xl p-5 transition-all duration-300 group hover:shadow-xl hover:shadow-primary/20 border border-white/10 hover:border-primary/30"
               >
                 <div className="flex gap-5">
