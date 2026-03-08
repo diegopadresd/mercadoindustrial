@@ -25,6 +25,7 @@ interface OfferWithProduct {
     title: string;
     images: string[];
     brand: string;
+    slug: string | null;
   };
 }
 
