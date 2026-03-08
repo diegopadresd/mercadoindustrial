@@ -58,7 +58,9 @@ const OfferProductInfo = ({ productId }: { productId: string }) => {
 
 const Perfil = () => {
   const { user, profile, isLoading: authLoading, signOut, updateProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'offers' | 'notifications' | 'profile' | 'fiscal'>('overview');
+  const [searchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as 'overview' | 'orders' | 'offers' | 'notifications' | 'profile' | 'fiscal') || 'overview';
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'offers' | 'notifications' | 'profile' | 'fiscal'>(initialTab);
   const [isUpdating, setIsUpdating] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
