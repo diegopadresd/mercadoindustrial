@@ -47,7 +47,7 @@ export const FeaturedProductsSection = () => {
             </h2>
           </div>
           <Link 
-            to="/catalogo"
+            to="/catalogo-mi"
             className="hidden md:flex items-center gap-2 text-primary hover:text-primary/80 font-semibold transition-colors"
           >
             Ver todos
