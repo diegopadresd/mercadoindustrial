@@ -11,6 +11,7 @@ export interface CartItem {
   price?: number | null;
   image: string;
   quantity: number;
+  slug?: string | null;
 }
 
 interface CartContextType {
@@ -74,7 +75,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             sku,
             brand,
             price,
-            images
+            images,
+            slug
           )
         `);
 
@@ -100,6 +102,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         price: item.products?.price,
         image: item.products?.images?.[0] || '',
         quantity: item.quantity,
+        slug: item.products?.slug || null,
       }));
 
       setItems(cartItems);

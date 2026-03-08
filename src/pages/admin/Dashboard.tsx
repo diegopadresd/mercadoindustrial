@@ -98,6 +98,7 @@ const AdminDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [adminSearch, setAdminSearch] = useState('');
 
   const isLoading = authLoading || roleLoading;
 
@@ -364,9 +365,17 @@ const AdminDashboard = () => {
               </button>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                <Input 
-                  placeholder="Buscar en el panel..." 
+                <Input
+                  placeholder="Buscar en el panel..."
                   className="pl-10 w-80 bg-muted/50 border-0 focus-visible:ring-1"
+                  value={adminSearch}
+                  onChange={(e) => setAdminSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && adminSearch.trim()) {
+                      navigate(`/admin/inventario?search=${encodeURIComponent(adminSearch.trim())}`);
+                      setAdminSearch('');
+                    }
+                  }}
                 />
               </div>
             </div>

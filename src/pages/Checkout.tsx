@@ -67,6 +67,7 @@ const Checkout = () => {
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mercadopago');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [transferReference, setTransferReference] = useState('');
@@ -83,15 +84,16 @@ const Checkout = () => {
     country: 'México',
   });
 
-  // Redirect if no items or not logged in
+  // Redirect if no items or not logged in — but don't redirect while checkout is in progress
   useEffect(() => {
+    if (isCheckingOut) return;
     if (items.length === 0) {
       navigate('/carrito');
     }
     if (!user) {
       navigate('/auth');
     }
-  }, [items, user, navigate]);
+  }, [items, user, navigate, isCheckingOut]);
 
   // Pre-fill with profile data
   useEffect(() => {
@@ -171,6 +173,7 @@ const Checkout = () => {
     }
 
     setIsProcessing(true);
+    setIsCheckingOut(true);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -204,6 +207,7 @@ const Checkout = () => {
     } catch (error) {
       console.error('MercadoPago checkout error:', error);
       toast({ title: 'Error', description: 'No se pudo procesar el pago. Intenta de nuevo.', variant: 'destructive' });
+      setIsCheckingOut(false);
     } finally {
       setIsProcessing(false);
     }
@@ -281,19 +285,14 @@ const Checkout = () => {
 
   // ---- Shared order creation ----
   const createOrder = async (notes: string, status: 'pending' | 'paid' = 'pending') => {
-    const now = new Date();
-    const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
-    const randPart = Math.floor(1000 + Math.random() * 9000);
-    const orderNumber = `MI-${datePart}-${randPart}`;
-
     const shippingAddr = paymentMethod === 'terminal'
       ? `Recoger en sucursal: ${SUCURSALES.find(s => s.id === selectedSucursal)?.name}`
       : shippingInfo.address;
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .insert({
-        order_number: orderNumber,
+      .insert([{
+        order_number: '' as any, // DB trigger generate_order_number() will override this
         user_id: user!.id,
         customer_name: shippingInfo.fullName,
         customer_email: shippingInfo.email,
@@ -309,7 +308,7 @@ const Checkout = () => {
         status: status as any,
         order_type: 'purchase' as any,
         notes,
-      })
+      }])
       .select()
       .single();
 

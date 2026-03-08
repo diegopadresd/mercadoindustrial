@@ -63,13 +63,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Set up auth state listener BEFORE checking session
+    // onAuthStateChange fires for INITIAL_SESSION on mount, so no need
+    // for a separate getSession() call (avoids double fetch race condition).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Use setTimeout to avoid potential race conditions
+        // Use setTimeout to avoid potential Supabase deadlock
         setTimeout(async () => {
           const profileData = await fetchProfile(session.user.id);
           setProfile(profileData);
@@ -82,18 +83,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAdmin(false);
         setIsLoading(false);
       }
-    });
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
-        checkAdminRole(session.user.id).then(setIsAdmin);
-      }
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();

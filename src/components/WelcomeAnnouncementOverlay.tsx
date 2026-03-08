@@ -53,6 +53,7 @@ const WelcomeAnnouncementOverlay = () => {
 
     fetchAnnouncement();
 
+    // Always restore scroll on unmount, regardless of visible state
     return () => {
       document.body.style.overflow = '';
     };

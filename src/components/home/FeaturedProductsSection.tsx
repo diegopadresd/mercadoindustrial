@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Star, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { generateProductUrl } from '@/lib/slugify';
 import {
   Carousel,
   CarouselContent,
@@ -67,7 +66,7 @@ export const FeaturedProductsSection = () => {
               {products.map((product) => (
                 <CarouselItem key={product.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
                   <Link
-                    to={product.link || generateProductUrl(product.title, product.id)}
+                    to={product.link || '#'}
                     className="block bg-white/5 hover:bg-white/10 rounded-2xl p-5 transition-all duration-300 group border border-white/10 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 h-full"
                   >
                     <div className="flex flex-col gap-4">

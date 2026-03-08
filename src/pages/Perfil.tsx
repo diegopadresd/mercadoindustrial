@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -58,7 +58,9 @@ const OfferProductInfo = ({ productId }: { productId: string }) => {
 
 const Perfil = () => {
   const { user, profile, isLoading: authLoading, signOut, updateProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'offers' | 'notifications' | 'profile' | 'fiscal'>('overview');
+  const [searchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as 'overview' | 'orders' | 'offers' | 'notifications' | 'profile' | 'fiscal') || 'overview';
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'offers' | 'notifications' | 'profile' | 'fiscal'>(initialTab);
   const [isUpdating, setIsUpdating] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);

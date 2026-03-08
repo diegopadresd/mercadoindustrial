@@ -275,7 +275,8 @@ const Catalogo = () => {
     setSearchParams({});  // push history
   }, [setSearchParams]);
 
-  // Read category from URL slug on first load (for links like /catalogo?categoria=refacciones)
+  // Read category from URL slug on mount and whenever searchParams change
+  // (handles SPA navigation from one category to another on the same page)
   useEffect(() => {
     const categorySlug = searchParams.get('categoria');
     if (categorySlug && categorySlugMap[categorySlug]) {
@@ -303,7 +304,7 @@ const Catalogo = () => {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams.get('categoria'), searchParams.get('sector')]);
 
   // Build server-side category filter: merge selected categories + sector-mapped categories
   const serverCategories = (() => {
