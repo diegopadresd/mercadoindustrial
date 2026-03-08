@@ -292,7 +292,7 @@ const Checkout = () => {
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert([{
-        order_number: '' as any, // DB trigger generate_order_number() will override this
+        order_number: `MI-${new Date().toISOString().slice(0,10).replace(/-/g,'')}` as any, // DB trigger set_order_number overrides this
         user_id: user!.id,
         customer_name: shippingInfo.fullName,
         customer_email: shippingInfo.email,

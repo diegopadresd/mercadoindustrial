@@ -179,9 +179,23 @@ const CheckoutContraoferta = () => {
     }
   };
 
-  const handleConfirmSPEI = () => {
+  const handleConfirmSPEI = async () => {
+    if (!createdOrder) return;
+    try {
+      await supabase
+        .from('orders')
+        .update({ status: 'processing' })
+        .eq('id', createdOrder.id);
+      // Mark offer as paid now that SPEI transfer was declared
+      await supabase
+        .from('offers')
+        .update({ status: 'paid' })
+        .eq('id', offerId);
+    } catch (err) {
+      console.error('Error updating order status:', err);
+    }
     toast.success('¡Gracias! Procesaremos tu pedido al confirmar la transferencia.');
-    navigate(`/checkout/success?order=${createdOrder?.order_number}`);
+    navigate(`/checkout/success?order=${createdOrder.order_number}`);
   };
 
   if (offerLoading || productLoading) {
