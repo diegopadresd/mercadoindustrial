@@ -385,7 +385,18 @@ const FilterSidebar = ({
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-72 shrink-0">
             <div className="sticky top-32">
-              <FilterSidebar />
+              <FilterSidebar
+                hasActiveFilters={hasActiveFilters}
+                clearFilters={clearFilters}
+                sectors={sectors}
+                selectedSectors={selectedSectors}
+                allCategories={allCategories}
+                selectedCategories={selectedCategories}
+                brands={brands}
+                selectedBrands={selectedBrands}
+                selectedLocations={selectedLocations}
+                toggleFilter={toggleFilter}
+              />
             </div>
           </aside>
 
