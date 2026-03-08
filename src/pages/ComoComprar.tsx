@@ -84,7 +84,7 @@ const ComoComprar = () => {
                 Comprar maquinaria y equipo industrial nunca fue tan fácil. Sigue estos pasos y encuentra lo que tu negocio necesita.
               </p>
               <Button asChild size="lg" className="gap-2">
-                <Link to="/catalogo">
+                 <Link to="/catalogo-mi">
                   Ver productos
                   <ArrowRight size={18} />
                 </Link>
