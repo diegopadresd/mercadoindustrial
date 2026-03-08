@@ -58,7 +58,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
       // First get seller's products
       const { data: products } = await supabase
         .from('products')
-        .select('id, title, images, brand')
+        .select('id, title, images, brand, slug')
         .eq('seller_id', sellerId);
 
       if (!products?.length) return [];
