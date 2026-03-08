@@ -150,7 +150,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
         .eq('seller_id', sellerId!)
         .eq('buyer_id', offer.user_id)
         .eq('product_id', offer.product_id)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         navigate(`/mi-cuenta/chats?conversation=${existing.id}`);
