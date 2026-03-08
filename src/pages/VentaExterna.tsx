@@ -300,7 +300,19 @@ const VentaExterna = () => {
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-72 shrink-0">
             <div className="sticky top-32">
-              <FilterSidebar />
+              <FilterSidebar
+                hasActiveFilters={hasActiveFilters}
+                clearFilters={clearFilters}
+                allCategories={allCategories}
+                brands={brands}
+                selectedCategories={selectedCategories}
+                setSelectedCategories={setSelectedCategories}
+                selectedBrands={selectedBrands}
+                setSelectedBrands={setSelectedBrands}
+                selectedLocations={selectedLocations}
+                setSelectedLocations={setSelectedLocations}
+                toggleFilter={toggleFilter}
+              />
             </div>
           </aside>
 
