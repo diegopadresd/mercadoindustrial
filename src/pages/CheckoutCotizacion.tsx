@@ -525,7 +525,7 @@ const CheckoutCotizacion = () => {
                 ) : (
                   <Button
                     onClick={handleConfirmSPEI}
-                    disabled={isProcessing}
+                    disabled={isProcessing || !speiReference.trim()}
                     className="w-full py-6 text-lg btn-gold"
                   >
                     {isProcessing ? (
