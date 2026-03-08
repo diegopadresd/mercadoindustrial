@@ -137,13 +137,9 @@ const AdminFacturacion = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get signed URL for the file (valid for 1 year)
-      const { data: signedUrlData, error: signedError } = await supabase.storage
-        .from('invoices')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
-
-      if (signedError) throw signedError;
-      const fileUrl = signedUrlData.signedUrl;
+      // Store the storage path (not a signed URL) so it never expires.
+      // We generate fresh signed URLs on demand when viewing/downloading.
+      const fileUrl = filePath;
 
       // Check if invoice record exists for this order
       const existingInvoice = getInvoiceForOrder(uploadingOrderId);
