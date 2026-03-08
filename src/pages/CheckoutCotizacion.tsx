@@ -498,8 +498,8 @@ const CheckoutCotizacion = () => {
                       <Input
                         id="spei-reference"
                         placeholder="Ej: 123456789012"
-                        value={copiedField === 'spei-ref-input' ? '' : ''}
-                        onChange={() => {}}
+                        value={speiReference}
+                        onChange={(e) => setSpeiReference(e.target.value)}
                         className="font-mono"
                       />
                       <p className="text-xs text-muted-foreground">
