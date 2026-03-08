@@ -46,7 +46,7 @@ export const OfertasEnviadas = ({ userId }: OfertasEnviadasProps) => {
       const productIds = [...new Set(offersData.map(o => o.product_id))];
       const { data: products } = await supabase
         .from('products')
-        .select('id, title, images, brand')
+        .select('id, title, images, brand, slug')
         .in('id', productIds);
 
       const productsMap = new Map(products?.map(p => [p.id, p]) || []);

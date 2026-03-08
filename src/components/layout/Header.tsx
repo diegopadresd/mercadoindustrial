@@ -72,7 +72,7 @@ export const Header = () => {
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
     const params = new URLSearchParams();
-    params.set('search', searchQuery.trim());
+    params.set('q', searchQuery.trim());
     if (selectedSector !== 'Todos los sectores' && selectedSector !== 'All sectors') {
       params.set('sector', selectedSector.toLowerCase());
     }
