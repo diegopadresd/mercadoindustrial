@@ -211,7 +211,7 @@ const AdminPedidos = () => {
             <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
               <tr>
                 <td align="center" style="background:#D4AF37;border-radius:6px;">
-                  <a href="${appUrl}/mis-compras" style="display:inline-block;padding:14px 32px;color:#1a1a1a;font-weight:700;font-size:14px;text-decoration:none;letter-spacing:0.3px;">Ver mis compras →</a>
+                  <a href="${appUrl}/mi-cuenta/mis-compras" style="display:inline-block;padding:14px 32px;color:#1a1a1a;font-weight:700;font-size:14px;text-decoration:none;letter-spacing:0.3px;">Ver mis compras →</a>
                 </td>
               </tr>
             </table>

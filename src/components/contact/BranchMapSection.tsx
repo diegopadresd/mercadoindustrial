@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, ExternalLink } from 'lucide-react';
@@ -40,11 +41,12 @@ const branches = [
   },
 ];
 
-export const BranchMapSection = () => {
+export const BranchMapSection = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [activeBranch, setActiveBranch] = useState(0);
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -112,4 +114,6 @@ export const BranchMapSection = () => {
       </div>
     </motion.div>
   );
-};
+});
+
+BranchMapSection.displayName = 'BranchMapSection';

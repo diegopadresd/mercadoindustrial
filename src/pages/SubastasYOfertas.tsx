@@ -79,7 +79,7 @@ const SubastasYOfertas = () => {
                     Subastas Activas
                   </h2>
                   <Button asChild variant="outline" size="sm">
-                    <Link to="/catalogo?subasta=true">Ver todas</Link>
+                    <Link to="/subastas">Ver todas</Link>
                   </Button>
                 </div>
                 
@@ -123,7 +123,7 @@ const SubastasYOfertas = () => {
                             </div>
                           )}
                           <Button asChild size="sm" className="w-full">
-                            <Link to={`/producto/${product.id}`}>
+                            <Link to={`/productos/${product.id}`}>
                               Ver subasta
                             </Link>
                           </Button>

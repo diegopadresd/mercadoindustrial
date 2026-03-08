@@ -137,13 +137,9 @@ const AdminFacturacion = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get signed URL for the file (valid for 1 year)
-      const { data: signedUrlData, error: signedError } = await supabase.storage
-        .from('invoices')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
-
-      if (signedError) throw signedError;
-      const fileUrl = signedUrlData.signedUrl;
+      // Store the storage path (not a signed URL) so it never expires.
+      // We generate fresh signed URLs on demand when viewing/downloading.
+      const fileUrl = filePath;
 
       // Check if invoice record exists for this order
       const existingInvoice = getInvoiceForOrder(uploadingOrderId);
@@ -221,10 +217,7 @@ const AdminFacturacion = () => {
                     Puedes descargar tu factura desde el siguiente enlace:
                   </p>
                   <div style="text-align: center; margin: 20px 0;">
-                    <a href="${fileUrl}" 
-                       style="display: inline-block; background: #d69e2e; color: white; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: bold;">
-                      📄 Descargar Factura (${ext.toUpperCase()})
-                    </a>
+                    <p style="color: #444; font-size: 14px;">Tu factura está disponible en tu cuenta en la sección <strong>Mis Compras</strong>.</p>
                   </div>
                 </div>
                 
@@ -272,8 +265,19 @@ const AdminFacturacion = () => {
     window.open(url, '_blank');
   };
 
-  const handleViewInvoice = (url: string) => {
-    setPreviewUrl(url);
+  const handleViewInvoice = async (storagePath: string) => {
+    // Generate a fresh short-lived signed URL on demand (60 min)
+    const { data } = await supabase.storage
+      .from('invoices')
+      .createSignedUrl(storagePath, 3600);
+    if (data?.signedUrl) setPreviewUrl(data.signedUrl);
+  };
+
+  const handleDownloadInvoice = async (storagePath: string) => {
+    const { data } = await supabase.storage
+      .from('invoices')
+      .createSignedUrl(storagePath, 3600);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
   };
 
   const paidPendingCount = pendingInvoices?.filter(o => {
@@ -524,13 +528,13 @@ const AdminFacturacion = () => {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           {inv.pdf_url && (
-                            <Button variant="ghost" size="sm" onClick={() => window.open(inv.pdf_url!, '_blank')}>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(inv.pdf_url!)}>
                               <FileText size={14} className="mr-1" />
                               PDF
                             </Button>
                           )}
                           {inv.xml_url && (
-                            <Button variant="ghost" size="sm" onClick={() => window.open(inv.xml_url!, '_blank')}>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(inv.xml_url!)}>
                               <FileText size={14} className="mr-1" />
                               XML
                             </Button>

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -137,6 +138,7 @@ const CheckoutCotizacion = () => {
   const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'spei'>('spei');
   const [showPaymentStep, setShowPaymentStep] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [speiReference, setSpeiReference] = useState('');
 
   const { data: order, isLoading: orderLoading } = useQuery({
     queryKey: ['quote-order', orderId],
@@ -489,6 +491,21 @@ const CheckoutCotizacion = () => {
                     <p className="text-xs text-muted-foreground mt-2">
                       Tu pedido será procesado una vez confirmada la transferencia (24–48 hrs hábiles)
                     </p>
+                    <div className="space-y-2 mt-2">
+                      <Label htmlFor="spei-reference" className="text-sm font-medium">
+                        Número de referencia de tu transferencia *
+                      </Label>
+                      <Input
+                        id="spei-reference"
+                        placeholder="Ej: 123456789012"
+                        value={speiReference}
+                        onChange={(e) => setSpeiReference(e.target.value)}
+                        className="font-mono"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Ingresa el folio o referencia de tu transferencia SPEI para confirmar tu pedido.
+                      </p>
+                    </div>
                   </div>
                 )}
 
@@ -508,7 +525,7 @@ const CheckoutCotizacion = () => {
                 ) : (
                   <Button
                     onClick={handleConfirmSPEI}
-                    disabled={isProcessing}
+                    disabled={isProcessing || !speiReference.trim()}
                     className="w-full py-6 text-lg btn-gold"
                   >
                     {isProcessing ? (

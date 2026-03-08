@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -26,6 +26,119 @@ import { useProducts, useBrands, useCategories } from '@/hooks/useProducts';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const locations = ['Hermosillo, Sonora', 'Mexicali, Baja California', 'Santa Catarina, Nuevo León', 'Tijuana, Baja California', 'Virtual'];
+
+interface FilterSidebarProps {
+  hasActiveFilters: boolean;
+  clearFilters: () => void;
+  allCategories: string[];
+  brands: string[];
+  selectedCategories: string[];
+  setSelectedCategories: (v: string[]) => void;
+  selectedBrands: string[];
+  setSelectedBrands: (v: string[]) => void;
+  selectedLocations: string[];
+  setSelectedLocations: (v: string[]) => void;
+  toggleFilter: (value: string, list: string[], setList: (v: string[]) => void) => void;
+}
+
+const FilterSidebar = ({
+  hasActiveFilters,
+  clearFilters,
+  allCategories,
+  brands,
+  selectedCategories,
+  setSelectedCategories,
+  selectedBrands,
+  setSelectedBrands,
+  selectedLocations,
+  setSelectedLocations,
+  toggleFilter,
+}: FilterSidebarProps) => (
+  <div className="space-y-6">
+    <div className="flex items-center justify-between">
+      <h3 className="font-display font-bold text-lg">Filtro</h3>
+      {hasActiveFilters && (
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={clearFilters}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <RotateCcw size={14} className="mr-1" />
+          Limpiar
+        </Button>
+      )}
+    </div>
+
+    <Accordion type="multiple" defaultValue={['categoria', 'marca', 'sucursal']} className="space-y-2">
+      <AccordionItem value="categoria" className="border rounded-lg px-4">
+        <AccordionTrigger className="hover:no-underline py-3">
+          <span className="font-semibold">Categoría</span>
+        </AccordionTrigger>
+        <AccordionContent className="pb-4">
+          <div className="space-y-3 max-h-48 overflow-y-auto">
+            {allCategories.map((category) => (
+              <div key={category} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`category-${category}`} 
+                  checked={selectedCategories.includes(category)}
+                  onCheckedChange={() => toggleFilter(category, selectedCategories, setSelectedCategories)}
+                />
+                <Label htmlFor={`category-${category}`} className="font-normal cursor-pointer text-sm">
+                  {category}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="marca" className="border rounded-lg px-4">
+        <AccordionTrigger className="hover:no-underline py-3">
+          <span className="font-semibold">Marca</span>
+        </AccordionTrigger>
+        <AccordionContent className="pb-4">
+          <div className="space-y-3 max-h-48 overflow-y-auto">
+            {brands.map((brand) => (
+              <div key={brand} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`brand-${brand}`} 
+                  checked={selectedBrands.includes(brand)}
+                  onCheckedChange={() => toggleFilter(brand, selectedBrands, setSelectedBrands)}
+                />
+                <Label htmlFor={`brand-${brand}`} className="font-normal cursor-pointer text-sm">
+                  {brand}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="sucursal" className="border rounded-lg px-4">
+        <AccordionTrigger className="hover:no-underline py-3">
+          <span className="font-semibold">Ubicación</span>
+        </AccordionTrigger>
+        <AccordionContent className="pb-4">
+          <div className="space-y-3">
+            {locations.map((location) => (
+              <div key={location} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`location-${location}`} 
+                  checked={selectedLocations.includes(location)}
+                  onCheckedChange={() => toggleFilter(location, selectedLocations, setSelectedLocations)}
+                />
+                <Label htmlFor={`location-${location}`} className="font-normal cursor-pointer text-sm">
+                  {location}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  </div>
+);
 
 const PRODUCTS_PER_PAGE = 12;
 
@@ -132,92 +245,6 @@ const VentaExterna = () => {
   const hasActiveFilters = selectedCategories.length > 0 || 
                            selectedBrands.length > 0 || selectedLocations.length > 0 || searchQuery.trim() !== '';
 
-  const FilterSidebar = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="font-display font-bold text-lg">Filtro</h3>
-        {hasActiveFilters && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={clearFilters}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw size={14} className="mr-1" />
-            Limpiar
-          </Button>
-        )}
-      </div>
-
-      <Accordion type="multiple" defaultValue={['categoria', 'marca', 'sucursal']} className="space-y-2">
-        <AccordionItem value="categoria" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Categoría</span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            <div className="space-y-3 max-h-48 overflow-y-auto">
-              {allCategories.map((category) => (
-                <div key={category} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`category-${category}`} 
-                    checked={selectedCategories.includes(category)}
-                    onCheckedChange={() => toggleFilter(category, selectedCategories, setSelectedCategories)}
-                  />
-                  <Label htmlFor={`category-${category}`} className="font-normal cursor-pointer text-sm">
-                    {category}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="marca" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Marca</span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            <div className="space-y-3 max-h-48 overflow-y-auto">
-              {brands.map((brand) => (
-                <div key={brand} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`brand-${brand}`} 
-                    checked={selectedBrands.includes(brand)}
-                    onCheckedChange={() => toggleFilter(brand, selectedBrands, setSelectedBrands)}
-                  />
-                  <Label htmlFor={`brand-${brand}`} className="font-normal cursor-pointer text-sm">
-                    {brand}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="sucursal" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Ubicación</span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            <div className="space-y-3">
-              {locations.map((location) => (
-                <div key={location} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`location-${location}`} 
-                    checked={selectedLocations.includes(location)}
-                    onCheckedChange={() => toggleFilter(location, selectedLocations, setSelectedLocations)}
-                  />
-                  <Label htmlFor={`location-${location}`} className="font-normal cursor-pointer text-sm">
-                    {location}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -273,7 +300,19 @@ const VentaExterna = () => {
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-72 shrink-0">
             <div className="sticky top-32">
-              <FilterSidebar />
+              <FilterSidebar
+                hasActiveFilters={hasActiveFilters}
+                clearFilters={clearFilters}
+                allCategories={allCategories}
+                brands={brands}
+                selectedCategories={selectedCategories}
+                setSelectedCategories={setSelectedCategories}
+                selectedBrands={selectedBrands}
+                setSelectedBrands={setSelectedBrands}
+                selectedLocations={selectedLocations}
+                setSelectedLocations={setSelectedLocations}
+                toggleFilter={toggleFilter}
+              />
             </div>
           </aside>
 
@@ -385,7 +424,7 @@ const VentaExterna = () => {
                     <p className="text-muted-foreground text-lg">No hay productos de vendedores externos disponibles.</p>
                     <p className="text-muted-foreground text-sm mt-2">¿Quieres vender tu equipo? Activa tu cuenta de vendedor.</p>
                     <Button variant="outline" className="mt-4" asChild>
-                      <a href="/mi-cuenta/vender">Quiero vender</a>
+                      <Link to="/mi-cuenta/vender">Quiero vender</Link>
                     </Button>
                   </div>
                 )}
@@ -454,7 +493,19 @@ const VentaExterna = () => {
                   <X size={20} />
                 </Button>
               </div>
-              <FilterSidebar />
+              <FilterSidebar
+                hasActiveFilters={hasActiveFilters}
+                clearFilters={clearFilters}
+                allCategories={allCategories}
+                brands={brands}
+                selectedCategories={selectedCategories}
+                setSelectedCategories={setSelectedCategories}
+                selectedBrands={selectedBrands}
+                setSelectedBrands={setSelectedBrands}
+                selectedLocations={selectedLocations}
+                setSelectedLocations={setSelectedLocations}
+                toggleFilter={toggleFilter}
+              />
             </div>
           </div>
         )}
