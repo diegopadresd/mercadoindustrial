@@ -67,7 +67,7 @@ export const CategoriesSection = () => {
             </h2>
           </div>
           <Link 
-            to="/catalogo" 
+            to="/catalogo-mi" 
             className="inline-flex items-center gap-2 text-secondary font-semibold hover:text-primary transition-colors group"
           >
             Ver todo el catálogo
