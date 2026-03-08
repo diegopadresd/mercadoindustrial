@@ -289,9 +289,10 @@ const Checkout = () => {
       ? `Recoger en sucursal: ${SUCURSALES.find(s => s.id === selectedSucursal)?.name}`
       : shippingInfo.address;
 
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error: orderError } = await (supabase
       .from('orders')
       .insert([{
+        order_number: '' as any, // DB trigger generate_order_number() will override this
         user_id: user!.id,
         customer_name: shippingInfo.fullName,
         customer_email: shippingInfo.email,
