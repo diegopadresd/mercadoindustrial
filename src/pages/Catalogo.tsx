@@ -208,6 +208,8 @@ const FilterSidebar = ({
     </Accordion>
   </div>
 );
+
+const Catalogo = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Read all state from URL
