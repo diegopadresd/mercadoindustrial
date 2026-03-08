@@ -489,6 +489,21 @@ const CheckoutCotizacion = () => {
                     <p className="text-xs text-muted-foreground mt-2">
                       Tu pedido será procesado una vez confirmada la transferencia (24–48 hrs hábiles)
                     </p>
+                    <div className="space-y-2 mt-2">
+                      <Label htmlFor="spei-reference" className="text-sm font-medium">
+                        Número de referencia de tu transferencia *
+                      </Label>
+                      <Input
+                        id="spei-reference"
+                        placeholder="Ej: 123456789012"
+                        value={copiedField === 'spei-ref-input' ? '' : ''}
+                        onChange={() => {}}
+                        className="font-mono"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Ingresa el folio o referencia de tu transferencia SPEI para confirmar tu pedido.
+                      </p>
+                    </div>
                   </div>
                 )}
 

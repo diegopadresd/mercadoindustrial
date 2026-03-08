@@ -46,6 +46,7 @@ export const BranchMapSection = React.forwardRef<HTMLDivElement>((_, ref) => {
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
