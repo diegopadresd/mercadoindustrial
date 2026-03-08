@@ -445,6 +445,9 @@ const AdminDashboard = () => {
                 isAdmin ? <AdminMigracion /> : <AccessDenied message="Solo administradores pueden acceder a la migración de datos." />
               } />
               <Route path="cotizador" element={<AdminCotizador />} />
+              <Route path="importar-slugs" element={
+                isAdmin ? <AdminImportSlugs /> : <AccessDenied message="Solo administradores pueden importar slugs." />
+              } />
             </Routes>
           </div>
         </main>
