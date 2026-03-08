@@ -98,6 +98,7 @@ const AdminDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [adminSearch, setAdminSearch] = useState('');
 
   const isLoading = authLoading || roleLoading;
 
