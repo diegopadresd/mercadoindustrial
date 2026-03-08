@@ -113,4 +113,6 @@ export const BranchMapSection = React.forwardRef<HTMLDivElement>((_, ref) => {
       </div>
     </motion.div>
   );
-};
+});
+
+BranchMapSection.displayName = 'BranchMapSection';
