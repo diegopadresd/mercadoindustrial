@@ -217,10 +217,7 @@ const AdminFacturacion = () => {
                     Puedes descargar tu factura desde el siguiente enlace:
                   </p>
                   <div style="text-align: center; margin: 20px 0;">
-                    <a href="${fileUrl}" 
-                       style="display: inline-block; background: #d69e2e; color: white; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: bold;">
-                      📄 Descargar Factura (${ext.toUpperCase()})
-                    </a>
+                    <p style="color: #444; font-size: 14px;">Tu factura está disponible en tu cuenta en la sección <strong>Mis Compras</strong>.</p>
                   </div>
                 </div>
                 
