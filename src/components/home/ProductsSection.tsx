@@ -17,7 +17,7 @@ export const ProductsSection = () => {
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('id, title, sku, brand, images, location, is_featured, is_new, created_at, seller_id')
+        .select('id, title, sku, brand, images, location, is_featured, is_new, created_at, seller_id, slug')
         .eq('is_active', true)
         .is('seller_id', null) // Only official Mercado Industrial products
         .limit(6);
@@ -102,7 +102,7 @@ export const ProductsSection = () => {
                   transition={{ delay: index * 0.05 }}
                 >
                   <Link
-                    to={generateProductUrl(product.title, product.id)}
+                    to={generateProductUrl((product as any).slug || product.title, product.id, !!(product as any).slug)}
                     className="group block bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                   >
                     {/* Image */}
@@ -186,7 +186,7 @@ export const ProductsSection = () => {
           className="text-center"
         >
           <Link
-            to="/catalogo"
+            to="/catalogo-mi"
             className="inline-flex items-center gap-2 px-8 py-4 bg-secondary text-secondary-foreground font-bold rounded-xl hover:bg-secondary/90 transition-all group"
           >
             Ver todo el catálogo

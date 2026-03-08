@@ -172,7 +172,7 @@ const Recientes = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild className="btn-gold">
-              <a href="/catalogo">Ir al catálogo completo</a>
+              <a href="/catalogo-mi">Ir al catálogo completo</a>
             </Button>
             <Button asChild variant="outline">
               <a href="https://wa.me/526621680047" target="_blank" rel="noopener noreferrer">

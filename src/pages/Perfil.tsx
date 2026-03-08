@@ -406,7 +406,7 @@ const Perfil = () => {
                         <DollarSign size={48} className="mx-auto text-muted-foreground/30 mb-4" />
                         <h3 className="text-lg font-semibold mb-2">No has hecho ofertas</h3>
                         <p className="text-muted-foreground mb-4">Envía ofertas en productos con precio</p>
-                        <Button onClick={() => navigate('/catalogo')} className="btn-gold">Ver Catálogo</Button>
+                        <Button onClick={() => navigate('/catalogo-mi')} className="btn-gold">Ver Catálogo</Button>
                       </div>
                     ) : (
                       <div className="space-y-4">

@@ -339,7 +339,7 @@ const Contacto = () => {
               ¿Prefieres explorar nuestros productos primero?
             </p>
             <Button asChild variant="outline" size="lg" className="gap-2">
-              <Link to="/catalogo">
+              <Link to="/catalogo-mi">
                 Ver catálogo
                 <ArrowRight size={18} />
               </Link>

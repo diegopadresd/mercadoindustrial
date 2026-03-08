@@ -47,7 +47,7 @@ export const FeaturedProductsSection = () => {
             </h2>
           </div>
           <Link 
-            to="/catalogo"
+            to="/catalogo-mi"
             className="hidden md:flex items-center gap-2 text-primary hover:text-primary/80 font-semibold transition-colors"
           >
             Ver todos
@@ -109,7 +109,7 @@ export const FeaturedProductsSection = () => {
         </div>
 
         <Link 
-          to="/catalogo"
+          to="/catalogo-mi"
           className="flex md:hidden items-center justify-center gap-2 text-primary hover:text-primary/80 font-semibold transition-colors mt-8"
         >
           Ver todos los productos

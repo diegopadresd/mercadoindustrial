@@ -213,7 +213,7 @@ const BlogDetalle = () => {
                   <Share2 size={16} /> Compartir
                 </Button>
                 <Button asChild size="sm" className="btn-gold">
-                  <Link to="/catalogo">Ver catálogo</Link>
+                  <Link to="/catalogo-mi">Ver catálogo</Link>
                 </Button>
               </div>
             </div>

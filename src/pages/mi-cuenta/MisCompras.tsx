@@ -95,7 +95,7 @@ const MisCompras = () => {
               <ShoppingBag size={64} className="mx-auto text-muted-foreground/30 mb-4" />
               <h2 className="text-xl font-semibold mb-2">No tienes compras aún</h2>
               <p className="text-muted-foreground mb-6">Explora nuestro catálogo y encuentra lo que necesitas</p>
-              <Link to="/catalogo">
+              <Link to="/catalogo-mi">
                 <Button className="btn-gold">Ver Catálogo</Button>
               </Link>
             </motion.div>

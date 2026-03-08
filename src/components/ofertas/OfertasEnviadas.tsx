@@ -25,6 +25,7 @@ interface OfferWithProduct {
     title: string;
     images: string[];
     brand: string;
+    slug: string | null;
   };
 }
 
@@ -46,7 +47,7 @@ export const OfertasEnviadas = ({ userId }: OfertasEnviadasProps) => {
       const productIds = [...new Set(offersData.map(o => o.product_id))];
       const { data: products } = await supabase
         .from('products')
-        .select('id, title, images, brand')
+        .select('id, title, images, brand, slug')
         .in('id', productIds);
 
       const productsMap = new Map(products?.map(p => [p.id, p]) || []);
@@ -128,7 +129,7 @@ export const OfertasEnviadas = ({ userId }: OfertasEnviadasProps) => {
           <CardContent className="p-0">
             <div className="flex gap-4 p-4">
               {/* Product Image */}
-              <Link to={generateProductUrl(offer.product?.title || 'producto', offer.product_id)} className="shrink-0">
+              <Link to={generateProductUrl(offer.product?.slug || offer.product?.title || 'producto', offer.product_id, !!(offer.product?.slug))} className="shrink-0">
                 <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted">
                   {offer.product?.images?.[0] ? (
                     <img
@@ -149,7 +150,7 @@ export const OfertasEnviadas = ({ userId }: OfertasEnviadasProps) => {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <Link 
-                      to={generateProductUrl(offer.product?.title || 'producto', offer.product_id)}
+                      to={generateProductUrl(offer.product?.slug || offer.product?.title || 'producto', offer.product_id, !!(offer.product?.slug))}
                       className="font-semibold hover:text-primary line-clamp-1"
                     >
                       {offer.product?.title || 'Producto'}

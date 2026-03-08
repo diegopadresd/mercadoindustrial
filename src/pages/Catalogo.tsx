@@ -76,6 +76,139 @@ const sectorSlugMap: Record<string, string> = {
   'agroindustria': 'Agroindustria',
 };
 
+interface FilterSidebarProps {
+  hasActiveFilters: boolean;
+  clearFilters: () => void;
+  sectors: string[];
+  selectedSectors: string[];
+  allCategories: string[];
+  selectedCategories: string[];
+  brands: string[];
+  selectedBrands: string[];
+  selectedLocations: string[];
+  toggleFilter: (key: string, value: string) => void;
+}
+
+const FilterSidebar = ({
+  hasActiveFilters,
+  clearFilters,
+  sectors,
+  selectedSectors,
+  allCategories,
+  selectedCategories,
+  brands,
+  selectedBrands,
+  selectedLocations,
+  toggleFilter,
+}: FilterSidebarProps) => (
+  <div className="space-y-6">
+    <div className="flex items-center justify-between">
+      <h3 className="font-display font-bold text-lg">Filtros</h3>
+      {hasActiveFilters && (
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={clearFilters}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <RotateCcw size={14} className="mr-1" />
+          Limpiar
+        </Button>
+      )}
+    </div>
+
+    <Accordion type="multiple" defaultValue={['sector', 'categoria', 'marca', 'sucursal']} className="space-y-2">
+      <AccordionItem value="sector" className="border rounded-lg px-4">
+        <AccordionTrigger className="hover:no-underline py-3">
+          <span className="font-semibold">Sector</span>
+        </AccordionTrigger>
+        <AccordionContent className="pb-4">
+          <div className="space-y-3">
+            {sectors.map((sector) => (
+              <div key={sector} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`sector-${sector}`} 
+                  checked={selectedSectors.includes(sector)}
+                  onCheckedChange={() => toggleFilter('sector', sector)}
+                />
+                <Label htmlFor={`sector-${sector}`} className="font-normal cursor-pointer text-sm">
+                  {sector}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="categoria" className="border rounded-lg px-4">
+        <AccordionTrigger className="hover:no-underline py-3">
+          <span className="font-semibold">Categoría</span>
+        </AccordionTrigger>
+        <AccordionContent className="pb-4">
+          <div className="space-y-3 max-h-48 overflow-y-auto">
+            {allCategories.map((category) => (
+              <div key={category} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`category-${category}`} 
+                  checked={selectedCategories.includes(category)}
+                  onCheckedChange={() => toggleFilter('categoria', category)}
+                />
+                <Label htmlFor={`category-${category}`} className="font-normal cursor-pointer text-sm">
+                  {category}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="marca" className="border rounded-lg px-4">
+        <AccordionTrigger className="hover:no-underline py-3">
+          <span className="font-semibold">Marca</span>
+        </AccordionTrigger>
+        <AccordionContent className="pb-4">
+          <div className="space-y-3 max-h-48 overflow-y-auto">
+            {brands.map((brand) => (
+              <div key={brand} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`brand-${brand}`} 
+                  checked={selectedBrands.includes(brand)}
+                  onCheckedChange={() => toggleFilter('marca', brand)}
+                />
+                <Label htmlFor={`brand-${brand}`} className="font-normal cursor-pointer text-sm">
+                  {brand}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="sucursal" className="border rounded-lg px-4">
+        <AccordionTrigger className="hover:no-underline py-3">
+          <span className="font-semibold">Sucursal</span>
+        </AccordionTrigger>
+        <AccordionContent className="pb-4">
+          <div className="space-y-3">
+            {LOCATION_OPTIONS.map(({ label, value }) => (
+              <div key={value} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`location-${value}`} 
+                  checked={selectedLocations.includes(value)}
+                  onCheckedChange={() => toggleFilter('sucursal', value)}
+                />
+                <Label htmlFor={`location-${value}`} className="font-normal cursor-pointer text-sm">
+                  {label}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  </div>
+);
+
 const Catalogo = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -210,114 +343,6 @@ const Catalogo = () => {
     ...selectedLocations.map(v => ({ key: 'sucursal', value: v })),
   ];
 
-  const FilterSidebar = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="font-display font-bold text-lg">Filtros</h3>
-        {hasActiveFilters && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={clearFilters}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw size={14} className="mr-1" />
-            Limpiar
-          </Button>
-        )}
-      </div>
-
-      <Accordion type="multiple" defaultValue={['sector', 'categoria', 'marca', 'sucursal']} className="space-y-2">
-        <AccordionItem value="sector" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Sector</span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            <div className="space-y-3">
-              {sectors.map((sector) => (
-                <div key={sector} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`sector-${sector}`} 
-                    checked={selectedSectors.includes(sector)}
-                    onCheckedChange={() => toggleFilter('sector', sector)}
-                  />
-                  <Label htmlFor={`sector-${sector}`} className="font-normal cursor-pointer text-sm">
-                    {sector}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="categoria" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Categoría</span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            <div className="space-y-3 max-h-48 overflow-y-auto">
-              {allCategories.map((category) => (
-                <div key={category} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`category-${category}`} 
-                    checked={selectedCategories.includes(category)}
-                    onCheckedChange={() => toggleFilter('categoria', category)}
-                  />
-                  <Label htmlFor={`category-${category}`} className="font-normal cursor-pointer text-sm">
-                    {category}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="marca" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Marca</span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            <div className="space-y-3 max-h-48 overflow-y-auto">
-              {brands.map((brand) => (
-                <div key={brand} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`brand-${brand}`} 
-                    checked={selectedBrands.includes(brand)}
-                    onCheckedChange={() => toggleFilter('marca', brand)}
-                  />
-                  <Label htmlFor={`brand-${brand}`} className="font-normal cursor-pointer text-sm">
-                    {brand}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="sucursal" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline py-3">
-            <span className="font-semibold">Sucursal</span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            <div className="space-y-3">
-              {LOCATION_OPTIONS.map(({ label, value }) => (
-                <div key={value} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`location-${value}`} 
-                    checked={selectedLocations.includes(value)}
-                    onCheckedChange={() => toggleFilter('sucursal', value)}
-                  />
-                  <Label htmlFor={`location-${value}`} className="font-normal cursor-pointer text-sm">
-                    {label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -362,7 +387,18 @@ const Catalogo = () => {
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-72 shrink-0">
             <div className="sticky top-32">
-              <FilterSidebar />
+              <FilterSidebar
+                hasActiveFilters={hasActiveFilters}
+                clearFilters={clearFilters}
+                sectors={sectors}
+                selectedSectors={selectedSectors}
+                allCategories={allCategories}
+                selectedCategories={selectedCategories}
+                brands={brands}
+                selectedBrands={selectedBrands}
+                selectedLocations={selectedLocations}
+                toggleFilter={toggleFilter}
+              />
             </div>
           </aside>
 
@@ -569,7 +605,18 @@ const Catalogo = () => {
                   <X size={24} />
                 </Button>
               </div>
-              <FilterSidebar />
+              <FilterSidebar
+                hasActiveFilters={hasActiveFilters}
+                clearFilters={clearFilters}
+                sectors={sectors}
+                selectedSectors={selectedSectors}
+                allCategories={allCategories}
+                selectedCategories={selectedCategories}
+                brands={brands}
+                selectedBrands={selectedBrands}
+                selectedLocations={selectedLocations}
+                toggleFilter={toggleFilter}
+              />
               <div className="mt-6 pt-6 border-t">
                 <Button 
                   className="btn-gold w-full"

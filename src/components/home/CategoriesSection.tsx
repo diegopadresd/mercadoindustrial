@@ -7,42 +7,42 @@ const categories = [
     title: 'Maquinaria Pesada',
     description: 'Excavadoras, cargadores, tractores y más',
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2024/08/VEHI-008-NAV_ECV_9_med_thumb.webp',
-    href: '/catalogo?categoria=maquinaria-pesada',
+    href: '/catalogo-mi?categoria=maquinaria-pesada',
     count: 312,
   },
   {
     title: 'Quebradores y Trituradoras',
     description: 'Equipos de procesamiento minero',
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2024/11/CONO_TRI-009_3_med_thumb.webp',
-    href: '/catalogo?categoria=quebradores',
+    href: '/catalogo-mi?categoria=quebradores',
     count: 198,
   },
   {
     title: 'Motores Eléctricos',
     description: 'Motores industriales de alta potencia',
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/07/PMN-1690_Motoresel%C3%A9ctricos_3_med_thumb.webp',
-    href: '/catalogo?categoria=motores-electricos',
+    href: '/catalogo-mi?categoria=motores-electricos',
     count: 245,
   },
   {
     title: 'Cribas y Zarandas',
     description: 'Clasificación y separación de materiales',
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/06/CRIB-038_NEWSSS_2_med_thumb.webp',
-    href: '/catalogo?categoria=cribas',
+    href: '/catalogo-mi?categoria=cribas',
     count: 145,
   },
   {
     title: 'Compresores',
     description: 'Compresores de aire industriales',
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/11/1000555805_med_thumb.webp',
-    href: '/catalogo?categoria=compresores',
+    href: '/catalogo-mi?categoria=compresores',
     count: 156,
   },
   {
     title: 'Tanques y Contenedores',
     description: 'Almacenamiento industrial',
     image: 'https://mercadoindustrial-files.s3.amazonaws.com/files/2025/07/TAN-002-NACZ_6_med_thumb.webp',
-    href: '/catalogo?categoria=tanques',
+    href: '/catalogo-mi?categoria=tanques',
     count: 78,
   },
 ];
@@ -67,7 +67,7 @@ export const CategoriesSection = () => {
             </h2>
           </div>
           <Link 
-            to="/catalogo" 
+            to="/catalogo-mi" 
             className="inline-flex items-center gap-2 text-secondary font-semibold hover:text-primary transition-colors group"
           >
             Ver todo el catálogo
@@ -140,7 +140,7 @@ export const CategoriesSection = () => {
             ¿No encuentras lo que buscas?
           </p>
           <Link
-            to="/catalogo"
+            to="/catalogo-mi"
             className="inline-flex items-center gap-2 px-6 py-3 border-2 border-secondary text-secondary font-semibold rounded-xl hover:bg-secondary hover:text-secondary-foreground transition-all"
           >
             Explorar todas las categorías
