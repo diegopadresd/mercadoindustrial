@@ -62,7 +62,7 @@ const MisOfertas = () => {
               </TabsContent>
 
               <TabsContent value="recibidas">
-                {isVendedor ? (
+                {isVendedor || isVendedorOficial ? (
                   <OfertasRecibidas sellerId={user?.id} />
                 ) : (
                   <div className="text-center py-12 bg-muted/30 rounded-xl">
