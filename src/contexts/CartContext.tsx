@@ -102,6 +102,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         price: item.products?.price,
         image: item.products?.images?.[0] || '',
         quantity: item.quantity,
+        slug: item.products?.slug || null,
       }));
 
       setItems(cartItems);
