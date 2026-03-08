@@ -424,7 +424,7 @@ const VentaExterna = () => {
                     <p className="text-muted-foreground text-lg">No hay productos de vendedores externos disponibles.</p>
                     <p className="text-muted-foreground text-sm mt-2">¿Quieres vender tu equipo? Activa tu cuenta de vendedor.</p>
                     <Button variant="outline" className="mt-4" asChild>
-                      <a href="/mi-cuenta/vender">Quiero vender</a>
+                      <Link to="/mi-cuenta/vender">Quiero vender</Link>
                     </Button>
                   </div>
                 )}
