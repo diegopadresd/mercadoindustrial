@@ -74,7 +74,8 @@ import { useProductAI, ProductAIResult } from '@/hooks/useProductAI';
 const AdminInventario = () => {
   const { user } = useAuth();
   const { isVendedor, isStaff, isAdmin, sellerId, permissions } = useUserRole();
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'draft'>('all');
   const [filterPrice, setFilterPrice] = useState<'all' | 'with_price' | 'no_price'>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');

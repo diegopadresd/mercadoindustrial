@@ -65,7 +65,7 @@ export const ProductCard = ({
     e.preventDefault();
     e.stopPropagation();
     if (isAuction || isAtStockLimit) return;
-    await addToCart({ productId: id, title, sku, brand, price, image });
+    await addToCart({ productId: id, title, sku, brand, price, image, slug: slug || null });
   };
 
   // "Cotizar" = navigate directly to cotizador with this single product

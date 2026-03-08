@@ -747,7 +747,7 @@ const ProductoDetalle = () => {
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Marca</span>
-                  <Link to={`/catalogo?marca=${productData.brand}`} className="font-semibold text-primary hover:underline">
+                  <Link to={`/catalogo-mi?marca=${encodeURIComponent(productData.brand)}`} className="font-semibold text-primary hover:underline">
                     {productData.brand}
                   </Link>
                 </div>

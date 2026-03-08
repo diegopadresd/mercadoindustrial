@@ -271,7 +271,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <Link 
-                        to={generateProductUrl(offer.product?.title || 'producto', offer.product_id)}
+                        to={offer.product?.slug ? generateProductUrl(offer.product.slug, offer.product_id, true) : generateProductUrl(offer.product?.title || 'producto', offer.product_id)}
                         className="font-semibold hover:text-primary line-clamp-1"
                       >
                         {offer.product?.title || 'Producto'}
