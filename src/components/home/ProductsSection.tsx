@@ -102,7 +102,7 @@ export const ProductsSection = () => {
                   transition={{ delay: index * 0.05 }}
                 >
                   <Link
-                    to={generateProductUrl(product.title, product.id, (product as any).slug || undefined)}
+                    to={generateProductUrl((product as any).slug || product.title, product.id, !!(product as any).slug)}
                     className="group block bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                   >
                     {/* Image */}
