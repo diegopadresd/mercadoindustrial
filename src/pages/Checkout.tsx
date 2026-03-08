@@ -173,6 +173,7 @@ const Checkout = () => {
     }
 
     setIsProcessing(true);
+    setIsCheckingOut(true);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
