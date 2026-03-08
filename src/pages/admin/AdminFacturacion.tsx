@@ -265,8 +265,19 @@ const AdminFacturacion = () => {
     window.open(url, '_blank');
   };
 
-  const handleViewInvoice = (url: string) => {
-    setPreviewUrl(url);
+  const handleViewInvoice = async (storagePath: string) => {
+    // Generate a fresh short-lived signed URL on demand (60 min)
+    const { data } = await supabase.storage
+      .from('invoices')
+      .createSignedUrl(storagePath, 3600);
+    if (data?.signedUrl) setPreviewUrl(data.signedUrl);
+  };
+
+  const handleDownloadInvoice = async (storagePath: string) => {
+    const { data } = await supabase.storage
+      .from('invoices')
+      .createSignedUrl(storagePath, 3600);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
   };
 
   const paidPendingCount = pendingInvoices?.filter(o => {
