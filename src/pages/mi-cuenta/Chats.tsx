@@ -85,7 +85,7 @@ const Chats = () => {
             .from('profiles')
             .select('full_name, email')
             .eq('user_id', otherUserId)
-            .single();
+            .maybeSingle();
 
           // Get last message
           const { data: lastMessageData } = await supabase
@@ -94,7 +94,7 @@ const Chats = () => {
             .eq('conversation_id', conv.id)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           // Get unread count
           const { count } = await supabase

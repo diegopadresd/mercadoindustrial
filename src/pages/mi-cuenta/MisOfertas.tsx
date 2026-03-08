@@ -12,7 +12,7 @@ import { OfertasRecibidas } from '@/components/ofertas/OfertasRecibidas';
 
 const MisOfertas = () => {
   const { user, isLoading: authLoading } = useAuth();
-  const { isVendedor, isLoading: roleLoading } = useUserRole();
+  const { isVendedor, isVendedorOficial, isLoading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('enviadas');
 

@@ -40,7 +40,7 @@ export const useConversations = () => {
         .eq('product_id', productId)
         .eq('buyer_id', user.id)
         .eq('seller_id', sellerId)
-        .single();
+        .maybeSingle();
 
       if (existingConversation) {
         navigate(`/mi-cuenta/chats?chat=${existingConversation.id}`);

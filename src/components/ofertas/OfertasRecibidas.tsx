@@ -154,7 +154,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
         .maybeSingle();
 
       if (existing) {
-        navigate(`/mi-cuenta/chats?conversation=${existing.id}`);
+        navigate(`/mi-cuenta/chats?chat=${existing.id}`);
         return;
       }
 
@@ -171,7 +171,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
 
       if (error) throw error;
       
-      navigate(`/mi-cuenta/chats?conversation=${newConvo.id}`);
+      navigate(`/mi-cuenta/chats?chat=${newConvo.id}`);
     } catch (error) {
       toast({
         title: 'Error',

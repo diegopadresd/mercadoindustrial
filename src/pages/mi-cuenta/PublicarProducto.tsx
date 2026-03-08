@@ -226,6 +226,7 @@ const PublicarProducto = () => {
           .insert({
             ...productData,
             id: uuidv4(),
+            approval_status: 'pending',
           });
 
         if (error) throw error;
