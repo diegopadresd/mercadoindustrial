@@ -250,7 +250,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
             <CardContent className="p-0">
               <div className="flex gap-4 p-4">
                 {/* Product Image */}
-                <Link to={generateProductUrl(offer.product?.title || 'producto', offer.product_id)} className="shrink-0">
+                <Link to={offer.product?.slug ? generateProductUrl(offer.product.slug, offer.product_id, true) : generateProductUrl(offer.product?.title || 'producto', offer.product_id)} className="shrink-0">
                   <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted">
                     {offer.product?.images?.[0] ? (
                       <img
