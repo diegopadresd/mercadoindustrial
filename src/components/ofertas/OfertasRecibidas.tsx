@@ -39,6 +39,7 @@ interface ReceivedOffer {
     title: string;
     images: string[];
     brand: string;
+    slug?: string | null;
   };
 }
 
@@ -58,7 +59,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
       // First get seller's products
       const { data: products } = await supabase
         .from('products')
-        .select('id, title, images, brand')
+        .select('id, title, images, brand, slug')
         .eq('seller_id', sellerId);
 
       if (!products?.length) return [];
@@ -150,7 +151,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
         .eq('seller_id', sellerId!)
         .eq('buyer_id', offer.user_id)
         .eq('product_id', offer.product_id)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         navigate(`/mi-cuenta/chats?conversation=${existing.id}`);
@@ -250,7 +251,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
             <CardContent className="p-0">
               <div className="flex gap-4 p-4">
                 {/* Product Image */}
-                <Link to={generateProductUrl(offer.product?.title || 'producto', offer.product_id)} className="shrink-0">
+                <Link to={offer.product?.slug ? generateProductUrl(offer.product.slug, offer.product_id, true) : generateProductUrl(offer.product?.title || 'producto', offer.product_id)} className="shrink-0">
                   <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted">
                     {offer.product?.images?.[0] ? (
                       <img
@@ -271,7 +272,7 @@ export const OfertasRecibidas = ({ sellerId }: OfertasRecibidasProps) => {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <Link 
-                        to={generateProductUrl(offer.product?.title || 'producto', offer.product_id)}
+                        to={offer.product?.slug ? generateProductUrl(offer.product.slug, offer.product_id, true) : generateProductUrl(offer.product?.title || 'producto', offer.product_id)}
                         className="font-semibold hover:text-primary line-clamp-1"
                       >
                         {offer.product?.title || 'Producto'}

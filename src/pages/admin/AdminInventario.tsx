@@ -1,4 +1,5 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -73,7 +74,8 @@ import { useProductAI, ProductAIResult } from '@/hooks/useProductAI';
 const AdminInventario = () => {
   const { user } = useAuth();
   const { isVendedor, isStaff, isAdmin, sellerId, permissions } = useUserRole();
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'draft'>('all');
   const [filterPrice, setFilterPrice] = useState<'all' | 'with_price' | 'no_price'>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');

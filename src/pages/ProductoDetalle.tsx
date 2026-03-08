@@ -394,6 +394,7 @@ const ProductoDetalle = () => {
       brand: productData.brand,
       price: productData.price ?? null,
       image: productData.images?.[0] || '/placeholder.svg',
+      slug: (dbProduct as any)?.slug || null,
     });
   };
 
@@ -406,6 +407,7 @@ const ProductoDetalle = () => {
       brand: productData.brand,
       price: productData.price ?? null,
       image: productData.images?.[0] || '/placeholder.svg',
+      slug: (dbProduct as any)?.slug || null,
     });
     navigate('/carrito');
   };
@@ -566,7 +568,9 @@ const ProductoDetalle = () => {
                 </h3>
                 <div className="aspect-video rounded-xl overflow-hidden bg-muted">
                   <iframe
-                    src={`https://www.youtube.com/embed/${productData.youtubeUrl.split('v=')[1]}`}
+                    src={`https://www.youtube.com/embed/${
+                      productData.youtubeUrl.match(/(?:youtu\.be\/|[?&]v=)([^&\s]+)/)?.[1] ?? ''
+                    }`}
                     title="Video del producto"
                     className="w-full h-full"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -743,7 +747,7 @@ const ProductoDetalle = () => {
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Marca</span>
-                  <Link to={`/catalogo?marca=${productData.brand}`} className="font-semibold text-primary hover:underline">
+                  <Link to={`/catalogo-mi?marca=${encodeURIComponent(productData.brand)}`} className="font-semibold text-primary hover:underline">
                     {productData.brand}
                   </Link>
                 </div>
