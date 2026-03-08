@@ -54,6 +54,7 @@ import AdminBlog from './AdminBlog';
 import AdminExtraccionIA from './AdminExtraccionIA';
 import AdminMigracion from './AdminMigracion';
 import AdminCotizador from './AdminCotizador';
+import AdminImportSlugs from './AdminImportSlugs';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -444,6 +445,9 @@ const AdminDashboard = () => {
                 isAdmin ? <AdminMigracion /> : <AccessDenied message="Solo administradores pueden acceder a la migración de datos." />
               } />
               <Route path="cotizador" element={<AdminCotizador />} />
+              <Route path="importar-slugs" element={
+                isAdmin ? <AdminImportSlugs /> : <AccessDenied message="Solo administradores pueden importar slugs." />
+              } />
             </Routes>
           </div>
         </main>
