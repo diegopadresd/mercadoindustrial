@@ -138,6 +138,7 @@ const CheckoutCotizacion = () => {
   const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'spei'>('spei');
   const [showPaymentStep, setShowPaymentStep] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [speiReference, setSpeiReference] = useState('');
 
   const { data: order, isLoading: orderLoading } = useQuery({
     queryKey: ['quote-order', orderId],
