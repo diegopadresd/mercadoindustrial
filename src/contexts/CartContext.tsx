@@ -75,7 +75,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             sku,
             brand,
             price,
-            images
+            images,
+            slug
           )
         `);
 
