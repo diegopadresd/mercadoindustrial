@@ -394,6 +394,7 @@ const ProductoDetalle = () => {
       brand: productData.brand,
       price: productData.price ?? null,
       image: productData.images?.[0] || '/placeholder.svg',
+      slug: productData.slug || null,
     });
   };
 
@@ -406,6 +407,7 @@ const ProductoDetalle = () => {
       brand: productData.brand,
       price: productData.price ?? null,
       image: productData.images?.[0] || '/placeholder.svg',
+      slug: productData.slug || null,
     });
     navigate('/carrito');
   };
