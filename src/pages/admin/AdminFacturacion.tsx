@@ -528,13 +528,13 @@ const AdminFacturacion = () => {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           {inv.pdf_url && (
-                            <Button variant="ghost" size="sm" onClick={() => window.open(inv.pdf_url!, '_blank')}>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(inv.pdf_url!)}>
                               <FileText size={14} className="mr-1" />
                               PDF
                             </Button>
                           )}
                           {inv.xml_url && (
-                            <Button variant="ghost" size="sm" onClick={() => window.open(inv.xml_url!, '_blank')}>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(inv.xml_url!)}>
                               <FileText size={14} className="mr-1" />
                               XML
                             </Button>
