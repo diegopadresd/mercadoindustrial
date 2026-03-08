@@ -54,6 +54,7 @@ import AdminBlog from './AdminBlog';
 import AdminExtraccionIA from './AdminExtraccionIA';
 import AdminMigracion from './AdminMigracion';
 import AdminCotizador from './AdminCotizador';
+import AdminImportSlugs from './AdminImportSlugs';
 
 interface SidebarItem {
   icon: React.ElementType;
