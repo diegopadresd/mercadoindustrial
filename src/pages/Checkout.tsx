@@ -67,6 +67,7 @@ const Checkout = () => {
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mercadopago');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [transferReference, setTransferReference] = useState('');
