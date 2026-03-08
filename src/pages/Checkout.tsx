@@ -84,15 +84,16 @@ const Checkout = () => {
     country: 'México',
   });
 
-  // Redirect if no items or not logged in
+  // Redirect if no items or not logged in — but don't redirect while checkout is in progress
   useEffect(() => {
+    if (isCheckingOut) return;
     if (items.length === 0) {
       navigate('/carrito');
     }
     if (!user) {
       navigate('/auth');
     }
-  }, [items, user, navigate]);
+  }, [items, user, navigate, isCheckingOut]);
 
   // Pre-fill with profile data
   useEffect(() => {
