@@ -111,7 +111,7 @@ const Carrito = () => {
                   transition={{ delay: index * 0.1 }}
                   className="bg-card rounded-2xl p-6 shadow-card flex flex-col sm:flex-row gap-6"
                 >
-                  <Link to={generateProductUrl(item.title, item.productId)} className="shrink-0">
+                  <Link to={generateProductUrl(item.slug || item.title, item.productId, !!item.slug)} className="shrink-0">
                     <img
                       src={item.image}
                       alt={item.title}
