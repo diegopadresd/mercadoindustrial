@@ -1,27 +1,66 @@
 
-The user wants to know if the 3 issues from the WhatsApp message are 100% fixed. Based on my investigation:
+The user is asking: "can't the synchronization be done with current access?" — referring to syncing the production slugs (e.g. `toma-corriente-y-clavija`) into this project's database.
 
-**Issue 1 - Product URLs use stored slug:**
-- ✅ `slug` column added to products table (migration confirmed)
-- ✅ All 15,834 products now have a slug populated (100% coverage confirmed via DB query)
-- ✅ `ProductCard.tsx` correctly uses `slug` prop when available: `slug ? generateProductUrl(slug, id, true) : generateProductUrl(title, id)`
-- ✅ `useCatalogProducts.ts` includes `slug` in CATALOG_COLUMNS
-- ⚠️ CAVEAT: The slugs generated were built FROM the title (e.g. `filtro-prensa-23-placas-de-72x72-cm...`), NOT from the original production short slugs (e.g. `toma-corriente-y-clavija`). The user mentioned that production uses short slugs stored independently. This means the URL format is correct but the slug VALUES still don't match production unless the production DB's slug field already had short slugs imported. The user needs to import/sync the production slugs manually — this cannot be auto-fixed without access to the production DB.
+## What I found:
 
-**Issue 2 - Catalog URL is /catalogo-mi:**
-- ✅ `src/App.tsx` line 71: `<Route path="/catalogo-mi" element={<Catalogo />} />`
-- ✅ `src/App.tsx` line 72: redirect from `/catalogo` → `/catalogo-mi`
-- ✅ Header and internal links updated
+**Production sitemap structure:**
+- `mercadoindustrial.com.mx/sitemap/prods-sm.xml` = index of 26 sub-sitemaps
+- Each sub-sitemap (`/sitemap/products/1` through `/sitemap/products/26`) contains full product URLs like:
+  - `https://mercadoindustrial.com.mx/productos/planta-de-asfalto-ano-2008-modelo-magnum-140-marca-terex`
+  - `https://mercadoindustrial.com.mx/productos/motor-electrico-40-hp-3-polos-1770-rpm-marca-baldor`
 
-**Issue 3 - Browser back/forward navigation:**
-- ✅ `setPage` uses no `replace` option (defaults to push) - line 107-114
-- ✅ `setSortBy`, `toggleFilter`, `clearFilters` all use default push behavior
-- ✅ Only `setSearchQuery` keeps `replace: true` (intentional - no history spam from typing)
+**Current state of this project's DB:**
+- 12,829 products have a slug (all auto-generated from title)
+- Product IDs are numeric text (e.g. "3145", "13896")
+- The production URLs contain the slug but NO ID
 
-So: Issues 2 and 3 are 100% fixed. Issue 1 is architecturally correct but the slug VALUES depend on the production database having the correct short slugs already stored in the `slug` column. If the production site has custom short slugs (like `toma-corriente-y-clavija`), those need to be imported/synced into this environment's DB `slug` column.
+**The problem with auto-sync:**
+The production sitemap gives us slug → URL but NO product ID. There's no reliable way to match production slugs to our product IDs without the production DB's `id → slug` mapping. We can't match by title alone because the slug is sometimes shortened (e.g. `toma-corriente-y-clavija` vs the full title `TOMACORRIENTE Y CLAVIJA 90 AMP 220V MODELO S-90-220TC MARCA CUTLER-HAMMER`).
 
-I'll present this clearly to the user without writing a full plan (it's a status report, not an implementation task). BUT since there's a partial issue, I should clarify. I'll present what's done and what still needs attention.
+**What CAN be done:**
+1. **Best approach**: The user provides a CSV/SQL export from the production Django DB with two columns: `id` and `slug`. We then run an UPDATE to replace slugs in bulk. This would be a one-time import using the existing `AdminImportClients`-style pattern.
 
-Actually, per the instructions: "Present plans for implementation tasks (add feature, refactor). Skip for research." This is a verification/status question, not an implementation task. I should respond directly without a presentation-plan block. But let me re-read: "Plan mode - I cannot make changes." OK so I need to just report status.
+2. **Partial automated approach**: Fetch all 26 sitemap pages, extract slugs, attempt fuzzy matching against our products by SKU (since SKUs are likely the same in both systems). This is risky due to potential mismatches.
 
-Wait - the instructions say I must put ALL thinking inside the presentation-plan tag if I'm writing one. But for a status/research question I don't need one. Let me respond directly.
+3. **Key insight**: Since the product IDs in our DB ARE the Django IDs (the migration stripped the `django-` prefix — see memory: "Se eliminó el prefijo 'django-' de todos los IDs"), we could potentially crawl each production product page to get SKU or use the sitemap slugs + ID matching. But the sitemap doesn't expose IDs.
+
+**Recommendation**: Ask the user for a simple CSV export from their production DB with just `id` and `slug` (two columns), then we build a small import tool to update slugs in bulk.
+
+This is a clear, actionable plan to present.
+
+## Plan
+
+### What's needed
+
+The production site's slugs (like `toma-corriente-y-clavija`) are stored in the Django production database. The public sitemap gives us the slug strings but **not the product IDs**, so there's no automated way to reliably match them without an ID-to-slug mapping.
+
+The good news: since our product IDs **are the same numeric IDs** as Django's (the `django-` prefix was removed during migration), a simple 2-column CSV export from production is all we need.
+
+### Plan
+
+1. **Build a slug import tool** in the admin panel (`/admin/importar-slugs`) that:
+   - Accepts a CSV with two columns: `id` and `slug`
+   - Batch-updates the `slug` column in the `products` table using `upsert`
+   - Shows progress and a summary
+
+2. **The user exports a CSV** from their production Django admin or DB with format:
+   ```
+   id,slug
+   1961,toma-corriente-y-clavija
+   1234,filtro-prensa-23-placas
+   ...
+   ```
+
+3. **After import**, all product URLs will match production exactly.
+
+### Files to change
+
+```
+src/pages/admin/AdminImportSlugs.tsx   → new page (CSV upload + batch update)
+supabase/functions/import-slugs/index.ts → new edge function (batch UPDATE products.slug)
+src/App.tsx                             → add route /admin/importar-slugs
+src/pages/admin/Dashboard.tsx           → add link to the new tool
+supabase/config.toml                    → register new function
+```
+
+The edge function will validate admin role, then do batch `UPDATE products SET slug = $slug WHERE id = $id` for each row.
