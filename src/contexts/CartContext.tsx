@@ -11,6 +11,7 @@ export interface CartItem {
   price?: number | null;
   image: string;
   quantity: number;
+  slug?: string | null;
 }
 
 interface CartContextType {
