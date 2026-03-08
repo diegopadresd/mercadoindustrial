@@ -2,12 +2,12 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 const sectors = [
-  { name: 'Minería', href: '/catalogo?sector=mineria' },
-  { name: 'Industrial', href: '/catalogo?sector=industrial' },
-  { name: 'Construcción', href: '/catalogo?sector=construccion' },
-  { name: 'Alimenticio', href: '/catalogo?sector=alimenticio' },
-  { name: 'Eléctrico', href: '/catalogo?sector=electrico' },
-  { name: 'Agroindustria', href: '/catalogo?sector=agroindustria' },
+  { name: 'Minería', href: '/catalogo-mi?sector=mineria' },
+  { name: 'Industrial', href: '/catalogo-mi?sector=industrial' },
+  { name: 'Construcción', href: '/catalogo-mi?sector=construccion' },
+  { name: 'Alimenticio', href: '/catalogo-mi?sector=alimenticio' },
+  { name: 'Eléctrico', href: '/catalogo-mi?sector=electrico' },
+  { name: 'Agroindustria', href: '/catalogo-mi?sector=agroindustria' },
 ];
 
 export const SectorsSection = () => {

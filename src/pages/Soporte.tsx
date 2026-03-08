@@ -149,7 +149,7 @@ const Soporte = () => {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="/catalogo">Ver catálogo</Link>
+                <Link to="/catalogo-mi">Ver catálogo</Link>
               </Button>
             </div>
           </div>

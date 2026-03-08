@@ -60,7 +60,7 @@ const CheckoutPending = () => {
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to="/catalogo">
+              <Link to="/catalogo-mi">
                 Seguir comprando
               </Link>
             </Button>

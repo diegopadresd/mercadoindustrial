@@ -140,7 +140,7 @@ export const CategoriesSection = () => {
             ¿No encuentras lo que buscas?
           </p>
           <Link
-            to="/catalogo"
+            to="/catalogo-mi"
             className="inline-flex items-center gap-2 px-6 py-3 border-2 border-secondary text-secondary font-semibold rounded-xl hover:bg-secondary hover:text-secondary-foreground transition-all"
           >
             Explorar todas las categorías

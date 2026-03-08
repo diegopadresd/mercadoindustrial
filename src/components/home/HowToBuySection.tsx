@@ -116,7 +116,7 @@ export const HowToBuySection = () => {
           className="text-center"
         >
           <Link
-            to="/catalogo"
+            to="/catalogo-mi"
             className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-secondary font-bold rounded-xl hover:bg-primary/90 transition-all shadow-gold group"
           >
             Empezar a explorar
