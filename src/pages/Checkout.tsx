@@ -207,6 +207,7 @@ const Checkout = () => {
     } catch (error) {
       console.error('MercadoPago checkout error:', error);
       toast({ title: 'Error', description: 'No se pudo procesar el pago. Intenta de nuevo.', variant: 'destructive' });
+      setIsCheckingOut(false);
     } finally {
       setIsProcessing(false);
     }
