@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Star, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { generateProductUrl } from '@/lib/slugify';
 import {
   Carousel,
   CarouselContent,

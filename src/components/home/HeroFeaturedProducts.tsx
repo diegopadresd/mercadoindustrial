@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useState } from 'react';
 import { useLocale } from '@/contexts/LocaleContext';
-import { generateProductUrl } from '@/lib/slugify';
 
 export const HeroFeaturedProducts = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
