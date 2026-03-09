@@ -116,9 +116,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [userId]);
 
+  // Only load cart after auth state is known to avoid the double-fire AbortError
   useEffect(() => {
-    loadCart();
-  }, [loadCart]);
+    if (authInitialized) {
+      loadCart();
+    }
+  }, [loadCart, authInitialized]);
 
   const addToCart = async (product: Omit<CartItem, 'id' | 'quantity'>, quantity = 1) => {
     try {
