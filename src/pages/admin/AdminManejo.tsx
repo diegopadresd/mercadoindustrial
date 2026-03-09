@@ -951,6 +951,17 @@ const ManejoFacturacion = () => {
 
   const getInvoiceForOrder = (orderId: string) => invoices?.find(inv => inv.order_id === orderId);
 
+  const handleViewInvoice = async (filePath: string) => {
+    const { data, error } = await supabase.storage
+      .from('invoices')
+      .createSignedUrl(filePath, 60 * 60); // 1-hour URL generated at click time
+    if (error || !data) {
+      toast({ title: 'Error', description: 'No se pudo abrir la factura.', variant: 'destructive' });
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
+  };
+
   const pendingOrders = invoiceOrders?.filter(o => {
     const inv = getInvoiceForOrder(o.id);
     return o.fiscal_document_url && (!inv || inv.status === 'pending');
