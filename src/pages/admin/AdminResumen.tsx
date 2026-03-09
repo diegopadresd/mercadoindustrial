@@ -561,7 +561,7 @@ const AdminResumen = () => {
                 <span className="text-sm font-medium">Facturas pendientes</span>
               </div>
               <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-500">
-                {orders?.filter(o => o.requires_invoice && o.status !== 'cancelled').length || 0}
+                {orders?.filter(o => o.requires_invoice && ['paid', 'processing', 'shipped'].includes(o.status)).length || 0}
               </span>
             </Link>
             <Link to="/admin/pedidos" className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors group">

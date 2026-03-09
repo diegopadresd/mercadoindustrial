@@ -27,6 +27,7 @@ export const AuctionSection = ({ product }: AuctionSectionProps) => {
   const { toast } = useToast();
   const [bidAmount, setBidAmount] = useState('');
   const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const finalizedRef = useRef(false);
   
   const { data: bids } = useBids(product.id);
   const { data: highestBid } = useHighestBid(product.id);
@@ -51,12 +52,13 @@ export const AuctionSection = ({ product }: AuctionSectionProps) => {
     return 'inactive';
   }, [product.auction_status, auctionStart, auctionEnd]);
 
-  // Check and finalize auction when viewing
+  // Check and finalize auction when viewing — guard with ref to prevent spam on every re-render
   useEffect(() => {
-    if (auctionState === 'ended' && product.id) {
+    if (auctionState === 'ended' && product.id && !finalizedRef.current && !finalizeAuction.isPending && !finalizeAuction.isSuccess) {
+      finalizedRef.current = true;
       finalizeAuction.mutate(product.id);
     }
-  }, [auctionState, product.id]);
+  }, [auctionState, product.id, finalizeAuction.isPending, finalizeAuction.isSuccess]);
 
   // Countdown timer
   useEffect(() => {
