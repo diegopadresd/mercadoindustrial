@@ -30,6 +30,7 @@ const CheckoutContraoferta = () => {
   const [showPaymentStep, setShowPaymentStep] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
+  const [speiReference, setSpeiReference] = useState('');
 
   const { data: offer, isLoading: offerLoading } = useQuery({
     queryKey: ['counter-offer', offerId],
