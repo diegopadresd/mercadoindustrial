@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Timer, Gavel, DollarSign, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
