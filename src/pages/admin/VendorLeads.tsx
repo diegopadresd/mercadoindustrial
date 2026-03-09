@@ -120,7 +120,9 @@ const VendorLeads = () => {
   };
 
   const handleContactWhatsApp = (lead: any) => {
-    const phone = (lead.client_phone || '').replace(/\D/g, '');
+    const raw = (lead.client_phone || '').replace(/\D/g, '');
+    // Prepend Mexico country code (52) if not already present
+    const phone = raw.startsWith('52') ? raw : `52${raw}`;
     const message = encodeURIComponent(
       `Hola ${lead.client_name}, soy del equipo de Mercado Industrial. Me pongo en contacto contigo respecto a tu interés en nuestros productos. ¿En qué puedo ayudarte?`
     );

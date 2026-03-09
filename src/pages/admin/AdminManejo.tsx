@@ -374,7 +374,7 @@ const ManejoAprobaciones = () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .in('approval_status', ['pending_approval', 'rejected'])
+        .in('approval_status', ['pending', 'pending_approval', 'rejected'])
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return data;
@@ -951,6 +951,17 @@ const ManejoFacturacion = () => {
 
   const getInvoiceForOrder = (orderId: string) => invoices?.find(inv => inv.order_id === orderId);
 
+  const handleViewInvoice = async (filePath: string) => {
+    const { data, error } = await supabase.storage
+      .from('invoices')
+      .createSignedUrl(filePath, 60 * 60); // 1-hour URL generated at click time
+    if (error || !data) {
+      toast({ title: 'Error', description: 'No se pudo abrir la factura.', variant: 'destructive' });
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
+  };
+
   const pendingOrders = invoiceOrders?.filter(o => {
     const inv = getInvoiceForOrder(o.id);
     return o.fiscal_document_url && (!inv || inv.status === 'pending');
@@ -992,11 +1003,8 @@ const ManejoFacturacion = () => {
         .upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: signedUrlData, error: signedError } = await supabase.storage
-        .from('invoices')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
-      if (signedError) throw signedError;
-      const fileUrl = signedUrlData.signedUrl;
+      // Store file path only — generate fresh signed URL at view time, not a stored expiring URL
+      const fileUrl = filePath;
 
       const existingInvoice = getInvoiceForOrder(uploadingOrderId);
       if (existingInvoice) {
@@ -1153,7 +1161,7 @@ const ManejoFacturacion = () => {
                   </Button>
                 )}
                 {isIssued && inv?.pdf_url && (
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => window.open(inv.pdf_url!, '_blank')}>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => handleViewInvoice(inv.pdf_url!)}>
                     <FileText size={14} className="mr-1" /> Factura
                   </Button>
                 )}
@@ -1222,7 +1230,7 @@ const ManejoFacturacion = () => {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       {isIssued && inv?.pdf_url && (
-                        <Button size="sm" variant="outline" onClick={() => window.open(inv.pdf_url!, '_blank')}>
+                        <Button size="sm" variant="outline" onClick={() => handleViewInvoice(inv.pdf_url!)}>
                           <FileText size={14} className="mr-1" /> Ver Factura
                         </Button>
                       )}

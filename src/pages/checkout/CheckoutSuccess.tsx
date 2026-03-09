@@ -9,13 +9,18 @@ import { useCart } from '@/contexts/CartContext';
 
 const CheckoutSuccess = () => {
   const [searchParams] = useSearchParams();
+  // Handle both ?order= (SPEI/human-readable order number) and ?order_id= (MercadoPago UUID)
+  const orderNumber = searchParams.get('order');
   const orderId = searchParams.get('order_id');
+  const displayOrder = orderNumber || orderId;
   const { clearCart } = useCart();
 
   useEffect(() => {
-    // Clear cart on successful payment
-    clearCart();
-  }, [clearCart]);
+    // Only clear cart when we have a valid order confirmation, not on direct navigation
+    if (displayOrder) {
+      clearCart();
+    }
+  }, [displayOrder, clearCart]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,9 +49,13 @@ const CheckoutSuccess = () => {
               <Package size={24} />
               <span className="font-semibold">Pedido confirmado</span>
             </div>
-            {orderId && (
+            {displayOrder && (
               <p className="text-sm text-muted-foreground">
-                ID de pedido: <span className="font-mono">{orderId.slice(0, 8)}...</span>
+                {orderNumber ? (
+                  <>No. de pedido: <span className="font-mono font-semibold">{orderNumber}</span></>
+                ) : (
+                  <>ID de pedido: <span className="font-mono">{orderId!.slice(0, 8)}...</span></>
+                )}
               </p>
             )}
           </div>

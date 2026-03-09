@@ -121,13 +121,15 @@ const AdminResumen = () => {
     },
   });
 
-  // Fetch all orders for chart
+  // Fetch orders for chart — scoped to selected date range to avoid fetching all-time data
   const { data: allOrders } = useQuery({
-    queryKey: ['admin-all-orders-chart'],
+    queryKey: ['admin-all-orders-chart', dateRange],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
         .select('created_at, total, status')
+        .gte('created_at', dateRange.start)
+        .lte('created_at', dateRange.end + 'T23:59:59')
         .order('created_at', { ascending: true });
       
       if (error) throw error;
@@ -559,7 +561,7 @@ const AdminResumen = () => {
                 <span className="text-sm font-medium">Facturas pendientes</span>
               </div>
               <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-500">
-                {orders?.filter(o => o.requires_invoice && o.status !== 'cancelled').length || 0}
+                {orders?.filter(o => o.requires_invoice && ['paid', 'processing', 'shipped'].includes(o.status)).length || 0}
               </span>
             </Link>
             <Link to="/admin/pedidos" className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors group">
