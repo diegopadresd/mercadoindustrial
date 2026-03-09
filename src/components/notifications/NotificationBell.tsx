@@ -67,6 +67,11 @@ export const NotificationBell = () => {
     if (!notification.is_read) {
       await markAsRead.mutateAsync(notification.id);
     }
+    // Navigate to action URL if present
+    if (notification.action_url) {
+      setIsOpen(false);
+      navigate(notification.action_url);
+    }
   };
 
   const handleMarkAllAsRead = async () => {

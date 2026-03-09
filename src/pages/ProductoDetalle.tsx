@@ -232,7 +232,8 @@ const ProductoDetalle = () => {
         .select('*')
         .eq('product_id', id!)
         .eq('is_public', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20);
       if (error) throw error;
       return data;
     },
