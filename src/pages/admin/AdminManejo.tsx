@@ -992,11 +992,8 @@ const ManejoFacturacion = () => {
         .upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: signedUrlData, error: signedError } = await supabase.storage
-        .from('invoices')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
-      if (signedError) throw signedError;
-      const fileUrl = signedUrlData.signedUrl;
+      // Store file path only — generate fresh signed URL at view time, not a stored expiring URL
+      const fileUrl = filePath;
 
       const existingInvoice = getInvoiceForOrder(uploadingOrderId);
       if (existingInvoice) {
