@@ -957,9 +957,8 @@ const AdminUsuarios = () => {
                   <div className="border rounded-lg p-4 bg-muted/30">
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        // Generate signed URL and open in new tab
-                        const url = getIneUrl(selectedApplication.ine_url);
+                      onClick={async () => {
+                        const url = await getIneUrl(selectedApplication.ine_url);
                         if (url) window.open(url, '_blank');
                       }}
                     >
