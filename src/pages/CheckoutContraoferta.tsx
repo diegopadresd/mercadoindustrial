@@ -466,9 +466,14 @@ const CheckoutContraoferta = () => {
                 ) : (
                   <Button
                     onClick={handleConfirmSPEI}
-                    className="w-full py-6 text-lg"
+                    disabled={isProcessing || !speiReference.trim()}
+                    className="w-full py-6 text-lg btn-gold"
                   >
-                    <CheckCircle2 className="mr-2" size={20} />
+                    {isProcessing ? (
+                      <Loader2 className="animate-spin mr-2" size={20} />
+                    ) : (
+                      <CheckCircle2 className="mr-2" size={20} />
+                    )}
                     Ya realicé la transferencia
                   </Button>
                 )}
