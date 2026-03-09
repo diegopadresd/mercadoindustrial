@@ -125,6 +125,11 @@ const PublicarProducto = () => {
     const files = e.target.files;
     if (!files || !user?.id) return;
 
+    if (images.length >= 10) {
+      toast({ title: 'Límite de imágenes', description: 'Solo puedes subir hasta 10 imágenes por producto', variant: 'destructive' });
+      return;
+    }
+
     for (const file of Array.from(files)) {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${uuidv4()}.${fileExt}`;
