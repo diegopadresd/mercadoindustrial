@@ -223,7 +223,12 @@ const CheckoutCotizacion = () => {
     try {
       await supabase
         .from('orders')
-        .update({ status: 'processing' })
+        .update({
+          status: 'processing',
+          notes: speiReference.trim()
+            ? `Referencia SPEI: ${speiReference.trim()}`
+            : order.notes || undefined,
+        })
         .eq('id', order.id);
 
       toast.success('¡Gracias! Procesaremos tu pedido al confirmar la transferencia.');
