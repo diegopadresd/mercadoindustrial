@@ -164,10 +164,12 @@ serve(async (req) => {
 
     console.log('Base payload:', JSON.stringify(basePayload));
     
-    // Fetch quotes from multiple carriers in parallel
+    // Fetch quotes from multiple carriers in parallel with per-request 8s timeout
     const quotePromises = carriers.map(async (carrier) => {
       const payload = { ...basePayload, shipment: { ...basePayload.shipment, carrier } };
-      console.log(`Fetching quote for carrier: ${carrier}`);
+      
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
       
       try {
         const response = await fetch(`${ENVIA_API_URL}/ship/rate/`, {
@@ -178,10 +180,12 @@ serve(async (req) => {
             'Accept': 'application/json',
           },
           body: JSON.stringify(payload),
+          signal: controller.signal,
         });
+        clearTimeout(timeout);
         
         const text = await response.text();
-        console.log(`Response for ${carrier}: status=${response.status}, body=${text.substring(0, 500)}`);
+        console.log(`Response for ${carrier}: status=${response.status}, body=${text.substring(0, 200)}`);
         
         if (!response.ok) {
           return { carrier, error: true, status: response.status };
@@ -190,7 +194,12 @@ serve(async (req) => {
         const data = JSON.parse(text);
         return { carrier, error: false, data };
       } catch (err) {
-        console.error(`Error fetching ${carrier}:`, err);
+        clearTimeout(timeout);
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.warn(`Carrier ${carrier} timed out after 8s`);
+        } else {
+          console.error(`Error fetching ${carrier}:`, err);
+        }
         return { carrier, error: true, message: String(err) };
       }
     });
