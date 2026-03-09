@@ -59,24 +59,12 @@ async function fetchClients(page: number, search: string) {
 }
 
 async function fetchNewClientsCount() {
-  const session = await supabase.auth.getSession();
-  const token = session.data.session?.access_token || '';
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-  const resp = await fetch(
-    import.meta.env.VITE_SUPABASE_URL +
-      '/rest/v1/clients?select=id&created_at=gte.' + encodeURIComponent(thirtyDaysAgo),
-    {
-      headers: {
-        'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        'Authorization': 'Bearer ' + token,
-        'Prefer': 'count=exact',
-        'Range': '0-0',
-      },
-    }
-  );
-  const range = resp.headers.get('content-range') || '0-0/0';
-  return parseInt(range.split('/')[1] || '0');
+  const { count } = await supabase
+    .from('clients')
+    .select('id', { count: 'exact', head: true })
+    .gte('created_at', thirtyDaysAgo);
+  return count || 0;
 }
 
 function mapClient(c: any) {
