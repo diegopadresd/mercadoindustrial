@@ -87,21 +87,24 @@ const AdminExtraccionIA = () => {
   const loadDiagnostics = async () => {
     setLoadingDiag(true);
     try {
-      const { count: totalCount } = await supabase
-        .from('products')
-        .select('id', { count: 'exact', head: true });
-
       const fields = Object.keys(FIELD_LABELS);
+
+      // Run all queries in parallel (total + per-field) instead of sequentially
+      const [totalResult, ...fieldResults] = await Promise.all([
+        supabase.from('products').select('id', { count: 'exact', head: true }),
+        ...fields.map(field =>
+          supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .not(field, 'is', null)
+        ),
+      ]);
+
+      const totalCount = totalResult.count || 0;
       const results: Record<string, { filled: number; total: number }> = {};
-
-      for (const field of fields) {
-        const { count } = await supabase
-          .from('products')
-          .select('id', { count: 'exact', head: true })
-          .not(field, 'is', null);
-
-        results[field] = { filled: count || 0, total: totalCount || 0 };
-      }
+      fields.forEach((field, i) => {
+        results[field] = { filled: fieldResults[i].count || 0, total: totalCount };
+      });
 
       setFieldStats(results);
     } catch (e) {

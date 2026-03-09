@@ -140,6 +140,16 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email, contraseña y nombre son requeridos");
     }
 
+    // Validate email format to prevent malformed accounts
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error("El formato del correo electrónico es inválido");
+    }
+
+    // Basic password complexity: minimum 8 characters
+    if (password.length < 8) {
+      throw new Error("La contraseña debe tener al menos 8 caracteres");
+    }
+
     // Create admin client
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: {

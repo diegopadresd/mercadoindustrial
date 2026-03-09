@@ -47,15 +47,17 @@ Deno.serve(async (req) => {
     if (!authHeader) throw new Error('No authorization header');
     
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !user) throw new Error('Invalid token');
+    // Use getClaims for local JWT verification (avoids extra network round-trip per batch)
+    const { data: claimsData, error: claimsError } = await supabaseAdmin.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) throw new Error('Invalid token');
+    const userId = claimsData.claims.sub;
 
     const { data: adminRole } = await supabaseAdmin
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('role', 'admin')
-      .single();
+      .maybeSingle();
 
     if (!adminRole) throw new Error('Unauthorized: Admin access required');
 

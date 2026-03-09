@@ -894,7 +894,7 @@ const AdminInventario = () => {
                     ) : (
                       <div 
                         className="min-h-[100px] max-h-[200px] overflow-auto rounded-md border border-input bg-background px-3 py-2 text-sm prose prose-sm max-w-none [&_h6]:font-bold [&_h6]:mt-3 [&_h6]:mb-1 [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-0.5 [&_p]:mb-1"
-                        dangerouslySetInnerHTML={{ __html: formData.description || '<span class="text-muted-foreground">Sin descripción</span>' }}
+                        dangerouslySetInnerHTML={{ __html: (formData.description || '<span class="text-muted-foreground">Sin descripción</span>').replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '') }}
                       />
                     )}
                   </div>
@@ -1297,7 +1297,7 @@ const AdminInventario = () => {
                           Borrador
                         </Badge>
                       )}
-                      {(product as any).approval_status === 'pending_approval' && (
+                      {(['pending', 'pending_approval'].includes((product as any).approval_status)) && (
                         <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-500/10">
                           <Clock size={12} className="mr-1" />
                           Pendiente

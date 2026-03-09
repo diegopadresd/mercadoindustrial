@@ -37,52 +37,34 @@ const PAGE_SIZE = 50;
 
 async function fetchClients(page: number, search: string) {
   const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
-  const session = await supabase.auth.getSession();
-  const token = session.data.session?.access_token || '';
-  
-  let url = import.meta.env.VITE_SUPABASE_URL +
-    '/rest/v1/clients?select=*&order=created_at.desc&offset=' + from + '&limit=' + PAGE_SIZE;
+  let query = supabase
+    .from('clients')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to);
 
   if (search) {
-    const encoded = encodeURIComponent(search);
-    url += '&or=(first_name.ilike.*' + encoded + '*,last_name.ilike.*' + encoded + '*,email.ilike.*' + encoded + '*,company.ilike.*' + encoded + '*)';
+    // Use SDK .or() to avoid manual URL string injection with special characters
+    query = query.or(
+      `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,company.ilike.%${search}%`
+    );
   }
 
-  const resp = await fetch(url, {
-    headers: {
-      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-      'Authorization': 'Bearer ' + token,
-      'Prefer': 'count=exact',
-    },
-  });
+  const { data, error, count } = await query;
+  if (error) throw error;
 
-  const data = await resp.json();
-  const range = resp.headers.get('content-range') || '0-0/0';
-  const totalCount = parseInt(range.split('/')[1] || '0');
-
-  return { data: data || [], totalCount };
+  return { data: data || [], totalCount: count || 0 };
 }
 
 async function fetchNewClientsCount() {
-  const session = await supabase.auth.getSession();
-  const token = session.data.session?.access_token || '';
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-  const resp = await fetch(
-    import.meta.env.VITE_SUPABASE_URL +
-      '/rest/v1/clients?select=id&created_at=gte.' + encodeURIComponent(thirtyDaysAgo),
-    {
-      headers: {
-        'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        'Authorization': 'Bearer ' + token,
-        'Prefer': 'count=exact',
-        'Range': '0-0',
-      },
-    }
-  );
-  const range = resp.headers.get('content-range') || '0-0/0';
-  return parseInt(range.split('/')[1] || '0');
+  const { count } = await supabase
+    .from('clients')
+    .select('id', { count: 'exact', head: true })
+    .gte('created_at', thirtyDaysAgo);
+  return count || 0;
 }
 
 function mapClient(c: any) {
@@ -218,6 +200,7 @@ const AdminClientes = () => {
   const createMutation = useMutation({
     mutationFn: async (client: any) => {
       const { error } = await supabase.from('clients').insert({
+        // Use a large unique ID above the imported range (1-25000); ideally DB should have a sequence default
         id: Date.now(),
         first_name: client.first_name || null,
         last_name: client.last_name || null,

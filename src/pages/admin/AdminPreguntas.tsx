@@ -54,7 +54,8 @@ const AdminPreguntas = () => {
             images
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (search) {
         query = query.or(`question.ilike.%${search}%,customer_name.ilike.%${search}%`);
