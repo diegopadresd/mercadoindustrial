@@ -104,12 +104,13 @@ const FeaturedProductsTab = () => {
   });
 
   const reorderMutation = useMutation({
-    mutationFn: async ({ id, newOrder }: { id: string; newOrder: number }) => {
-      const { error } = await supabase
-        .from('featured_products')
-        .update({ display_order: newOrder })
-        .eq('id', id);
-      if (error) throw error;
+    mutationFn: async ({ swaps }: { swaps: Array<{ id: string; newOrder: number }> }) => {
+      // Update both rows in parallel to avoid position corruption if one fails
+      await Promise.all(
+        swaps.map(({ id, newOrder }) =>
+          supabase.from('featured_products').update({ display_order: newOrder }).eq('id', id)
+        )
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-featured-products'] });
@@ -160,15 +161,23 @@ const FeaturedProductsTab = () => {
   const handleMoveUp = (product: FeaturedProduct, index: number) => {
     if (index === 0) return;
     const prev = products[index - 1];
-    reorderMutation.mutate({ id: product.id, newOrder: prev.display_order ?? index - 1 });
-    reorderMutation.mutate({ id: prev.id, newOrder: product.display_order ?? index });
+    reorderMutation.mutate({
+      swaps: [
+        { id: product.id, newOrder: prev.display_order ?? index - 1 },
+        { id: prev.id, newOrder: product.display_order ?? index },
+      ],
+    });
   };
 
   const handleMoveDown = (product: FeaturedProduct, index: number) => {
     if (index === products.length - 1) return;
     const next = products[index + 1];
-    reorderMutation.mutate({ id: product.id, newOrder: next.display_order ?? index + 1 });
-    reorderMutation.mutate({ id: next.id, newOrder: product.display_order ?? index });
+    reorderMutation.mutate({
+      swaps: [
+        { id: product.id, newOrder: next.display_order ?? index + 1 },
+        { id: next.id, newOrder: product.display_order ?? index },
+      ],
+    });
   };
 
   return (

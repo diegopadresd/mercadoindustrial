@@ -38,6 +38,8 @@ const AdminNotificationsBell = () => {
       if (error) throw error;
       return data || [];
     },
+    refetchInterval: 60 * 1000,
+    staleTime: 30 * 1000,
   });
 
   // Fetch recent pending offers
@@ -53,6 +55,8 @@ const AdminNotificationsBell = () => {
       if (error) throw error;
       return data || [];
     },
+    refetchInterval: 60 * 1000,
+    staleTime: 30 * 1000,
   });
 
   // Fetch recent open support tickets
@@ -68,6 +72,8 @@ const AdminNotificationsBell = () => {
       if (error) throw error;
       return data || [];
     },
+    refetchInterval: 60 * 1000,
+    staleTime: 30 * 1000,
   });
 
   const formatTimeAgo = (dateStr: string) => {
