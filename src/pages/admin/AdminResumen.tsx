@@ -121,13 +121,15 @@ const AdminResumen = () => {
     },
   });
 
-  // Fetch all orders for chart
+  // Fetch orders for chart — scoped to selected date range to avoid fetching all-time data
   const { data: allOrders } = useQuery({
-    queryKey: ['admin-all-orders-chart'],
+    queryKey: ['admin-all-orders-chart', dateRange],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
         .select('created_at, total, status')
+        .gte('created_at', dateRange.start)
+        .lte('created_at', dateRange.end + 'T23:59:59')
         .order('created_at', { ascending: true });
       
       if (error) throw error;
