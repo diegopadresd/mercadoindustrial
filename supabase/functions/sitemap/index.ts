@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
         .from("products")
         .select("id, title, slug, updated_at")
         .eq("is_active", true)
+        .eq("approval_status", "approved")
         .order("created_at", { ascending: false })
         .range(from, from + PAGE_SIZE - 1);
 

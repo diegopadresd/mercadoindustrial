@@ -217,9 +217,13 @@ const PublicarProducto = () => {
       };
 
       if (editProductId) {
+        const updateData = publish
+          ? { ...productData, approval_status: 'pending' }
+          : productData;
+
         const { error } = await supabase
           .from('products')
-          .update(productData)
+          .update(updateData)
           .eq('id', editProductId)
           .eq('seller_id', user.id);
 

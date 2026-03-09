@@ -60,7 +60,8 @@ serve(async (req) => {
     console.error("Error fetching exchange rate:", error);
     
     // Return fallback rate if API fails
-    const fallbackRate = 17.5;
+    // Updated March 2026 — review periodically if Frankfurter stays down
+    const fallbackRate = 19.5;
     return new Response(
       JSON.stringify({ 
         rate: fallbackRate, 

@@ -85,6 +85,9 @@ const ActivarVendedor = () => {
 
   const handleSubmit = async () => {
     if (!user?.id) return;
+
+    // Guard: never let an approved user re-submit and overwrite their approved status
+    if (existingApplication?.status === 'approved') return;
     
     if (!validateForm()) return;
     
@@ -103,11 +106,7 @@ const ActivarVendedor = () => {
 
         if (uploadError) throw uploadError;
         
-        const { data: urlData } = supabase.storage
-          .from('seller-documents')
-          .getPublicUrl(filePath);
-        
-        ineUrl = filePath; // Store path, not public URL since bucket is private
+        ineUrl = filePath; // Store path (bucket is private — no public URL)
       }
 
       // Create seller application
