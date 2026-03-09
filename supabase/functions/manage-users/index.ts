@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       .select('role')
       .eq('user_id', requestingUser.id)
       .eq('role', 'admin')
-      .single()
+      .maybeSingle()
 
     if (!adminRole) {
       throw new Error('Unauthorized: Admin access required')
@@ -59,6 +59,16 @@ Deno.serve(async (req) => {
 
         if (!email || !password || !full_name || !role) {
           throw new Error('Missing required fields: email, password, full_name, role')
+        }
+
+        // Validate email format
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          throw new Error('Email inválido')
+        }
+
+        // Validate password minimum length
+        if (password.length < 8) {
+          throw new Error('La contraseña debe tener mínimo 8 caracteres')
         }
 
         // Create user in auth

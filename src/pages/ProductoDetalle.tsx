@@ -62,6 +62,14 @@ import { SellerReviews } from '@/components/product/SellerReviews';
 import { AuctionSection } from '@/components/product/AuctionSection';
 import { MakeOfferModal } from '@/components/product/MakeOfferModal';
 
+// Sanitize HTML to prevent XSS — strip script tags and on* event attributes
+const sanitizeHtml = (html: string): string => {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
+    .replace(/javascript\s*:/gi, '');
+};
+
 // Expandable description component
 const ExpandableDescription = ({ description }: { description: string }) => {
   const [expanded, setExpanded] = useState(false);
@@ -81,7 +89,7 @@ const ExpandableDescription = ({ description }: { description: string }) => {
           {description.includes('<') ? (
             <div
               className="prose prose-sm max-w-none text-muted-foreground [&_h6]:text-foreground [&_h6]:font-bold [&_h6]:mt-4 [&_h6]:mb-2 [&_strong]:text-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_li]:text-muted-foreground [&_p]:mb-2"
-              dangerouslySetInnerHTML={{ __html: description }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(description) }}
             />
           ) : (
             <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
