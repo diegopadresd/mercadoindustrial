@@ -1230,7 +1230,7 @@ const ManejoFacturacion = () => {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       {isIssued && inv?.pdf_url && (
-                        <Button size="sm" variant="outline" onClick={() => window.open(inv.pdf_url!, '_blank')}>
+                        <Button size="sm" variant="outline" onClick={() => handleViewInvoice(inv.pdf_url!)}>
                           <FileText size={14} className="mr-1" /> Ver Factura
                         </Button>
                       )}
