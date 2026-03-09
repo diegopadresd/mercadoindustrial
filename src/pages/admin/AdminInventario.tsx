@@ -1297,7 +1297,7 @@ const AdminInventario = () => {
                           Borrador
                         </Badge>
                       )}
-                      {(product as any).approval_status === 'pending_approval' && (
+                      {(['pending', 'pending_approval'].includes((product as any).approval_status)) && (
                         <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-500/10">
                           <Clock size={12} className="mr-1" />
                           Pendiente
