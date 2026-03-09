@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -30,6 +31,7 @@ const CheckoutContraoferta = () => {
   const [showPaymentStep, setShowPaymentStep] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
+  const [speiReference, setSpeiReference] = useState('');
 
   const { data: offer, isLoading: offerLoading } = useQuery({
     queryKey: ['counter-offer', offerId],
@@ -182,9 +184,17 @@ const CheckoutContraoferta = () => {
   const handleConfirmSPEI = async () => {
     if (!createdOrder) return;
     try {
+      const baseNotes = isCounterOffer
+        ? `Contraoferta aceptada - Oferta original: $${offer?.offer_price}`
+        : `Oferta aceptada: $${offer?.offer_price}`;
       await supabase
         .from('orders')
-        .update({ status: 'processing' })
+        .update({
+          status: 'processing',
+          notes: speiReference.trim()
+            ? `${baseNotes} | Referencia SPEI: ${speiReference.trim()}`
+            : baseNotes,
+        })
         .eq('id', createdOrder.id);
       // Mark offer as paid now that SPEI transfer was declared
       await supabase
@@ -421,6 +431,21 @@ const CheckoutContraoferta = () => {
                     <p className="text-xs text-muted-foreground mt-4">
                       Tu pedido será procesado una vez confirmada la transferencia (24-48 hrs hábiles)
                     </p>
+                    <div className="space-y-2 mt-2">
+                      <Label htmlFor="spei-reference" className="text-sm font-medium">
+                        Número de referencia de tu transferencia *
+                      </Label>
+                      <Input
+                        id="spei-reference"
+                        placeholder="Ej: 123456789012"
+                        value={speiReference}
+                        onChange={(e) => setSpeiReference(e.target.value)}
+                        className="font-mono"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Ingresa el folio o referencia de tu transferencia SPEI para confirmar tu pedido.
+                      </p>
+                    </div>
                   </div>
                 )}
 
@@ -441,9 +466,14 @@ const CheckoutContraoferta = () => {
                 ) : (
                   <Button
                     onClick={handleConfirmSPEI}
-                    className="w-full py-6 text-lg"
+                    disabled={isProcessing || !speiReference.trim()}
+                    className="w-full py-6 text-lg btn-gold"
                   >
-                    <CheckCircle2 className="mr-2" size={20} />
+                    {isProcessing ? (
+                      <Loader2 className="animate-spin mr-2" size={20} />
+                    ) : (
+                      <CheckCircle2 className="mr-2" size={20} />
+                    )}
                     Ya realicé la transferencia
                   </Button>
                 )}
