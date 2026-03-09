@@ -30,6 +30,7 @@ const getNotificationIcon = (type: string) => {
 
 export const NotificationBell = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const { data: notifications, refetch: refetchNotifications } = useNotifications(user?.id);
   const { data: unreadCount, refetch: refetchCount } = useUnreadNotificationsCount(user?.id);
