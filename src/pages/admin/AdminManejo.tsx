@@ -374,7 +374,7 @@ const ManejoAprobaciones = () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .in('approval_status', ['pending_approval', 'rejected'])
+        .in('approval_status', ['pending', 'pending_approval', 'rejected'])
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return data;
