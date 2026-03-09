@@ -104,12 +104,13 @@ const FeaturedProductsTab = () => {
   });
 
   const reorderMutation = useMutation({
-    mutationFn: async ({ id, newOrder }: { id: string; newOrder: number }) => {
-      const { error } = await supabase
-        .from('featured_products')
-        .update({ display_order: newOrder })
-        .eq('id', id);
-      if (error) throw error;
+    mutationFn: async ({ swaps }: { swaps: Array<{ id: string; newOrder: number }> }) => {
+      // Update both rows in parallel to avoid position corruption if one fails
+      await Promise.all(
+        swaps.map(({ id, newOrder }) =>
+          supabase.from('featured_products').update({ display_order: newOrder }).eq('id', id)
+        )
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-featured-products'] });

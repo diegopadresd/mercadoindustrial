@@ -135,7 +135,7 @@ const AdminDashboard = () => {
     if (item.adminOnly && !isAdmin) return false;
     if (item.vendedorOficialOnly && !isVendedorOficial) return false;
     
-    // Manejo role: only show Panel de Manejo
+    // Manejo role: only show manejoAccess items
     if (isManejo && !isAdmin) {
       return item.manejoAccess === true;
     }
@@ -144,11 +144,21 @@ const AdminDashboard = () => {
     if (isOperador && !isAdmin) {
       return item.operadorAccess === true;
     }
+
+    // VendedorOficial: only items with vendedorOficialAccess or vendedorOficialOnly
+    if (isVendedorOficial && !item.vendedorOficialAccess && !item.vendedorOficialOnly) return false;
+
+    // Plain vendedor: only show Inventario, Pedidos, Ofertas — never manejoAccess-only items
+    if (isVendedor && !isAdmin && !isVendedorOficial) {
+      if (item.manejoAccess && !item.vendedorOficialAccess && !item.operadorAccess) return false;
+      if (item.staffOnly) return false;
+      const vendedorPaths = ['/admin/inventario', '/admin/pedidos', '/admin/ofertas'];
+      return vendedorPaths.includes(item.path);
+    }
     
     if (item.staffOnly && !isStaff && !isVendedorOficial) {
       if (!item.vendedorOficialAccess || !isVendedorOficial) return false;
     }
-    if (isVendedorOficial && !item.vendedorOficialAccess && !item.vendedorOficialOnly) return false;
     return true;
   });
 

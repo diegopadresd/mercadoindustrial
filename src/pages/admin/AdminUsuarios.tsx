@@ -516,10 +516,16 @@ const AdminUsuarios = () => {
     return <Badge variant="outline" className="border-green-600 text-green-600">Activo</Badge>;
   };
 
-  const getIneUrl = (inePath: string | null) => {
+  const getIneUrl = async (inePath: string | null): Promise<string | null> => {
     if (!inePath) return null;
-    const { data } = supabase.storage.from('seller-documents').getPublicUrl(inePath);
-    return data?.publicUrl;
+    const { data, error } = await supabase.storage
+      .from('seller-documents')
+      .createSignedUrl(inePath, 300); // 5-minute signed URL
+    if (error) {
+      console.error('Error generating signed URL for INE:', error);
+      return null;
+    }
+    return data?.signedUrl ?? null;
   };
 
   if (roleLoading) {

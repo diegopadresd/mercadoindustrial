@@ -145,7 +145,10 @@ serve(async (req) => {
     const { items, shippingInfo, total }: CheckoutRequest = body;
 
     // Create order first
-    const orderNumber = `MI-${Date.now()}`;
+    const now = new Date();
+    const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const seqPart = now.getTime().toString().slice(-4).padStart(4, '0');
+    const orderNumber = `MI-${datePart}-${seqPart}`;
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
