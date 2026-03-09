@@ -183,9 +183,17 @@ const CheckoutContraoferta = () => {
   const handleConfirmSPEI = async () => {
     if (!createdOrder) return;
     try {
+      const baseNotes = isCounterOffer
+        ? `Contraoferta aceptada - Oferta original: $${offer?.offer_price}`
+        : `Oferta aceptada: $${offer?.offer_price}`;
       await supabase
         .from('orders')
-        .update({ status: 'processing' })
+        .update({
+          status: 'processing',
+          notes: speiReference.trim()
+            ? `${baseNotes} | Referencia SPEI: ${speiReference.trim()}`
+            : baseNotes,
+        })
         .eq('id', createdOrder.id);
       // Mark offer as paid now that SPEI transfer was declared
       await supabase
