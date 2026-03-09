@@ -212,6 +212,7 @@ const AdminClientes = () => {
   const createMutation = useMutation({
     mutationFn: async (client: any) => {
       const { error } = await supabase.from('clients').insert({
+        // Use a large unique ID above the imported range (1-25000); ideally DB should have a sequence default
         id: Date.now(),
         first_name: client.first_name || null,
         last_name: client.last_name || null,

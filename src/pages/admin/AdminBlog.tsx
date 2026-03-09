@@ -96,7 +96,8 @@ const AdminBlog = () => {
     }
     setSaving(true);
     try {
-      const slug = slugify(form.title);
+      // Preserve existing slug on edit to avoid breaking SEO/links; only generate for new posts
+      const slug = editingPost ? editingPost.slug : slugify(form.title);
       const payload = {
         slug,
         title: form.title,
