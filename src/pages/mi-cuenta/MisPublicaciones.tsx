@@ -231,7 +231,13 @@ const MisPublicaciones = () => {
                       ) : (
                         <DropdownMenuItem 
                           onClick={() => {
-                            if (canPublish(product)) {
+                            if ((product as any).approval_status === 'rejected' || (product as any).approval_status === 'pending') {
+                              toast({ 
+                                title: 'Aprobación requerida', 
+                                description: 'Este producto está pendiente de revisión por el administrador.',
+                                variant: 'destructive'
+                              });
+                            } else if (canPublish(product)) {
                               toggleActiveMutation.mutate({ productId: product.id, isActive: true });
                             } else {
                               toast({ 
