@@ -29,7 +29,7 @@ const WelcomeAnnouncementOverlay = () => {
           .from('site_settings')
           .select('value')
           .eq('key', 'welcome_announcement')
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching announcement:', error);

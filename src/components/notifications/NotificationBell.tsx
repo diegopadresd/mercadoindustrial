@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Bell, Check, CheckCheck, X, CreditCard, FileText, Package, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ const getNotificationIcon = (type: string) => {
 
 export const NotificationBell = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const { data: notifications, refetch: refetchNotifications } = useNotifications(user?.id);
   const { data: unreadCount, refetch: refetchCount } = useUnreadNotificationsCount(user?.id);
@@ -65,6 +66,11 @@ export const NotificationBell = () => {
   const handleMarkAsRead = async (notification: Notification) => {
     if (!notification.is_read) {
       await markAsRead.mutateAsync(notification.id);
+    }
+    // Navigate to action URL if present
+    if (notification.action_url) {
+      setIsOpen(false);
+      navigate(notification.action_url);
     }
   };
 
