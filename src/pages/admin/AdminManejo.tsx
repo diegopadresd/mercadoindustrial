@@ -1161,7 +1161,7 @@ const ManejoFacturacion = () => {
                   </Button>
                 )}
                 {isIssued && inv?.pdf_url && (
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => window.open(inv.pdf_url!, '_blank')}>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => handleViewInvoice(inv.pdf_url!)}>
                     <FileText size={14} className="mr-1" /> Factura
                   </Button>
                 )}
