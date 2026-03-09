@@ -29,7 +29,7 @@ const Subastas = () => {
       if (statusFilter === 'active') {
         query = query.eq('auction_status', 'active');
       } else if (statusFilter === 'scheduled') {
-        query = query.eq('auction_status', 'inactive');
+        query = query.eq('auction_status', 'scheduled');
       } else if (statusFilter === 'ended') {
         query = query.in('auction_status', ['ended_valid', 'ended_invalid', 'sold']);
       }

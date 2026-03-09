@@ -17,9 +17,9 @@ async function verifyMercadoPagoSignature(req: Request, rawBody: string): Promis
 
   const WEBHOOK_SECRET = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET');
   if (!WEBHOOK_SECRET) {
-    // If no secret configured, fall back to allowing (backwards compat)
-    console.warn('MERCADOPAGO_WEBHOOK_SECRET not set — skipping signature validation');
-    return true;
+    // Secret not configured — reject all requests for security
+    console.error('MERCADOPAGO_WEBHOOK_SECRET not set — rejecting webhook for security. Configure this secret in Lovable Cloud settings.');
+    return false;
   }
 
   // MercadoPago signature format: ts=<timestamp>,v1=<hash>

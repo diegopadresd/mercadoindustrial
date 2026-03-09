@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export type Offer = Tables<'offers'>;
 
-export const useOffers = (options?: { userId?: string; status?: string }) => {
+export const useOffers = (options?: { userId?: string; status?: string; limit?: number }) => {
   return useQuery({
     queryKey: ['offers', options],
     queryFn: async () => {
@@ -20,6 +20,10 @@ export const useOffers = (options?: { userId?: string; status?: string }) => {
       }
 
       query = query.order('created_at', { ascending: false });
+
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
