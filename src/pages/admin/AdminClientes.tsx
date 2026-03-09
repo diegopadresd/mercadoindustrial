@@ -37,31 +37,25 @@ const PAGE_SIZE = 50;
 
 async function fetchClients(page: number, search: string) {
   const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
-  const session = await supabase.auth.getSession();
-  const token = session.data.session?.access_token || '';
-  
-  let url = import.meta.env.VITE_SUPABASE_URL +
-    '/rest/v1/clients?select=*&order=created_at.desc&offset=' + from + '&limit=' + PAGE_SIZE;
+  let query = supabase
+    .from('clients')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to);
 
   if (search) {
-    const encoded = encodeURIComponent(search);
-    url += '&or=(first_name.ilike.*' + encoded + '*,last_name.ilike.*' + encoded + '*,email.ilike.*' + encoded + '*,company.ilike.*' + encoded + '*)';
+    // Use SDK .or() to avoid manual URL string injection with special characters
+    query = query.or(
+      `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,company.ilike.%${search}%`
+    );
   }
 
-  const resp = await fetch(url, {
-    headers: {
-      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-      'Authorization': 'Bearer ' + token,
-      'Prefer': 'count=exact',
-    },
-  });
+  const { data, error, count } = await query;
+  if (error) throw error;
 
-  const data = await resp.json();
-  const range = resp.headers.get('content-range') || '0-0/0';
-  const totalCount = parseInt(range.split('/')[1] || '0');
-
-  return { data: data || [], totalCount };
+  return { data: data || [], totalCount: count || 0 };
 }
 
 async function fetchNewClientsCount() {
