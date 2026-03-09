@@ -103,6 +103,7 @@ async function getProductMeta(
     .select("id, title, brand, sku, price, description, images, is_new, contact_for_quote")
     .eq("id", productId)
     .eq("is_active", true)
+    .eq("approval_status", "approved")
     .single();
 
   if (error || !data) return null;

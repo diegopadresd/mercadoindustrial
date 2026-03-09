@@ -125,6 +125,11 @@ const PublicarProducto = () => {
     const files = e.target.files;
     if (!files || !user?.id) return;
 
+    if (images.length >= 10) {
+      toast({ title: 'Límite de imágenes', description: 'Solo puedes subir hasta 10 imágenes por producto', variant: 'destructive' });
+      return;
+    }
+
     for (const file of Array.from(files)) {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${uuidv4()}.${fileExt}`;
@@ -212,9 +217,13 @@ const PublicarProducto = () => {
       };
 
       if (editProductId) {
+        const updateData = publish
+          ? { ...productData, approval_status: 'pending' }
+          : productData;
+
         const { error } = await supabase
           .from('products')
-          .update(productData)
+          .update(updateData)
           .eq('id', editProductId)
           .eq('seller_id', user.id);
 

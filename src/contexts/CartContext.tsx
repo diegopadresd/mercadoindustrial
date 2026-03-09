@@ -42,15 +42,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const { toast } = useToast();
 
-  // Listen for auth changes
+  // Listen for auth changes — set authInitialized only after getSession resolves
+  // so loadCart never fires with a stale null userId (prevents AbortError race condition)
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id ?? null);
+      setAuthInitialized(true);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUserId(session?.user?.id ?? null);
     });
 
@@ -113,9 +116,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [userId]);
 
+  // Only load cart after auth state is known to avoid the double-fire AbortError
   useEffect(() => {
-    loadCart();
-  }, [loadCart]);
+    if (authInitialized) {
+      loadCart();
+    }
+  }, [loadCart, authInitialized]);
 
   const addToCart = async (product: Omit<CartItem, 'id' | 'quantity'>, quantity = 1) => {
     try {
