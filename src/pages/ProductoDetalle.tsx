@@ -598,9 +598,11 @@ const ProductoDetalle = () => {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {productData.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="px-3 py-1">
-                      {tag}
-                    </Badge>
+                    <Link key={tag} to={`/etiqueta/${slugify(tag)}`}>
+                      <Badge variant="secondary" className="px-3 py-1 cursor-pointer hover:bg-secondary/80 transition-colors">
+                        {tag}
+                      </Badge>
+                    </Link>
                   ))}
                 </div>
               </div>
