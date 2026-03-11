@@ -101,8 +101,8 @@ const FilterSidebar = ({
   selectedLocations,
   toggleFilter,
 }: FilterSidebarProps) => {
-  const [brandSearch, setBrandSearch] = React.useState('');
-  const [categorySearch, setCategorySearch] = React.useState('');
+  const [brandSearch, setBrandSearch] = useState('');
+  const [categorySearch, setCategorySearch] = useState('');
 
   const filteredBrands = brands.filter(b => b.toLowerCase().includes(brandSearch.toLowerCase()));
   const filteredCategories = allCategories.filter(c => c.toLowerCase().includes(categorySearch.toLowerCase()));
