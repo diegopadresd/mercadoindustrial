@@ -736,9 +736,11 @@ const ProductoDetalle = () => {
               
               <div className="flex flex-wrap gap-2 mb-6">
                 {productData.categories.map((cat) => (
-                  <Badge key={cat} className="bg-primary/10 text-primary hover:bg-primary/20">
-                    {cat}
-                  </Badge>
+                  <Link key={cat} to={`/etiqueta/${slugify(cat)}`}>
+                    <Badge className="bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer">
+                      {cat}
+                    </Badge>
+                  </Link>
                 ))}
               </div>
             </div>
