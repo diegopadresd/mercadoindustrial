@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { slugify } from '@/lib/slugify';
 import { useParams, Link, Navigate, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
