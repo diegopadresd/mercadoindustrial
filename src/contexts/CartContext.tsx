@@ -12,6 +12,7 @@ export interface CartItem {
   image: string;
   quantity: number;
   slug?: string | null;
+  stock?: number;
 }
 
 interface CartContextType {
@@ -46,7 +47,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   // Listen for auth changes — set authInitialized only after getSession resolves
-  // so loadCart never fires with a stale null userId (prevents AbortError race condition)
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id ?? null);
@@ -79,7 +79,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             brand,
             price,
             images,
-            slug
+            slug,
+            stock
           )
         `);
 
@@ -106,6 +107,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         image: item.products?.images?.[0] || '',
         quantity: item.quantity,
         slug: item.products?.slug || null,
+        stock: item.products?.stock ?? 1,
       }));
 
       setItems(cartItems);
@@ -116,7 +118,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [userId]);
 
-  // Only load cart after auth state is known to avoid the double-fire AbortError
+  // Only load cart after auth state is known
   useEffect(() => {
     if (authInitialized) {
       loadCart();
@@ -174,13 +176,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await query;
       if (error) throw error;
 
-      await loadCart();
+      // Optimistic remove
+      setItems(prev => prev.filter(i => i.productId !== productId));
       toast({
         title: "Producto eliminado",
         description: "El producto se eliminó del carrito",
       });
     } catch (error) {
       console.error('Error removing from cart:', error);
+      await loadCart(); // Rollback on error
       toast({
         title: "Error",
         description: "No se pudo eliminar el producto",
@@ -195,6 +199,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    // Optimistic update — no visual flash
+    setItems(prev => prev.map(i => i.productId === productId ? { ...i, quantity } : i));
+
     try {
       const sessionId = getSessionId();
       
@@ -208,10 +215,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const { error } = await query;
       if (error) throw error;
-
-      await loadCart();
+      // No loadCart() — optimistic update is sufficient
     } catch (error) {
       console.error('Error updating quantity:', error);
+      await loadCart(); // Rollback
       toast({
         title: "Error",
         description: "No se pudo actualizar la cantidad",

@@ -130,7 +130,7 @@ const Carrito = () => {
                       <span>{item.brand}</span>
                     </div>
                     <div className="flex items-center justify-between flex-wrap gap-4">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleQuantityChange(item.productId, -1, item.quantity)}
                           className="w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
@@ -142,10 +142,15 @@ const Carrito = () => {
                         </span>
                         <button
                           onClick={() => handleQuantityChange(item.productId, 1, item.quantity)}
-                          className="w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
+                          disabled={item.stock !== undefined && item.quantity >= item.stock}
+                          className="w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={item.stock !== undefined && item.quantity >= item.stock ? `Stock máximo: ${item.stock}` : undefined}
                         >
                           <Plus size={16} />
                         </button>
+                        {item.stock !== undefined && item.quantity >= item.stock && (
+                          <span className="text-xs text-destructive font-medium">Máx</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-4">
                         {item.price ? (

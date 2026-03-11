@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -100,7 +100,14 @@ const FilterSidebar = ({
   selectedBrands,
   selectedLocations,
   toggleFilter,
-}: FilterSidebarProps) => (
+}: FilterSidebarProps) => {
+  const [brandSearch, setBrandSearch] = useState('');
+  const [categorySearch, setCategorySearch] = useState('');
+
+  const filteredBrands = brands.filter(b => b.toLowerCase().includes(brandSearch.toLowerCase()));
+  const filteredCategories = allCategories.filter(c => c.toLowerCase().includes(categorySearch.toLowerCase()));
+
+  return (
   <div className="space-y-6">
     <div className="flex items-center justify-between">
       <h3 className="font-display font-bold text-lg">Filtros</h3>
@@ -145,8 +152,16 @@ const FilterSidebar = ({
           <span className="font-semibold">Categoría</span>
         </AccordionTrigger>
         <AccordionContent className="pb-4">
+          <div className="mb-2">
+            <Input
+              placeholder="Buscar categoría..."
+              value={categorySearch}
+              onChange={e => setCategorySearch(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
           <div className="space-y-3 max-h-48 overflow-y-auto">
-            {allCategories.map((category) => (
+            {filteredCategories.map((category) => (
               <div key={category} className="flex items-center space-x-2">
                 <Checkbox 
                   id={`category-${category}`} 
@@ -158,6 +173,9 @@ const FilterSidebar = ({
                 </Label>
               </div>
             ))}
+            {filteredCategories.length === 0 && (
+              <p className="text-xs text-muted-foreground py-2">Sin resultados</p>
+            )}
           </div>
         </AccordionContent>
       </AccordionItem>
@@ -167,8 +185,16 @@ const FilterSidebar = ({
           <span className="font-semibold">Marca</span>
         </AccordionTrigger>
         <AccordionContent className="pb-4">
+          <div className="mb-2">
+            <Input
+              placeholder="Buscar marca..."
+              value={brandSearch}
+              onChange={e => setBrandSearch(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
           <div className="space-y-3 max-h-48 overflow-y-auto">
-            {brands.map((brand) => (
+            {filteredBrands.map((brand) => (
               <div key={brand} className="flex items-center space-x-2">
                 <Checkbox 
                   id={`brand-${brand}`} 
@@ -180,6 +206,9 @@ const FilterSidebar = ({
                 </Label>
               </div>
             ))}
+            {filteredBrands.length === 0 && (
+              <p className="text-xs text-muted-foreground py-2">Sin resultados</p>
+            )}
           </div>
         </AccordionContent>
       </AccordionItem>
@@ -207,7 +236,8 @@ const FilterSidebar = ({
       </AccordionItem>
     </Accordion>
   </div>
-);
+  );
+};
 
 const Catalogo = () => {
   const [searchParams, setSearchParams] = useSearchParams();
