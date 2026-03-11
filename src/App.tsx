@@ -109,6 +109,9 @@ const App = () => (
                 <Route path="/terminos" element={<Terminos />} />
                 <Route path="/contacto" element={<Contacto />} />
                 <Route path="/soporte" element={<Soporte />} />
+                {/* Brand & Tag listing pages */}
+                <Route path="/marca/:slug" element={<MarcaDetalle />} />
+                <Route path="/etiqueta/:slug" element={<EtiquetaDetalle />} />
                 {/* Admin Panel */}
                 <Route path="/admin/*" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
