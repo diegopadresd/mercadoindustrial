@@ -50,6 +50,8 @@ import MisOfertas from "./pages/mi-cuenta/MisOfertas";
 import Chats from "./pages/mi-cuenta/Chats";
 import ActivarVendedor from "./pages/mi-cuenta/ActivarVendedor";
 import PublicarProducto from "./pages/mi-cuenta/PublicarProducto";
+import MarcaDetalle from "./pages/MarcaDetalle";
+import EtiquetaDetalle from "./pages/EtiquetaDetalle";
 
 const queryClient = new QueryClient();
 

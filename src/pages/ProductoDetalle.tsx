@@ -457,7 +457,7 @@ const ProductoDetalle = () => {
           Regresar al catálogo
         </Link>
 
-        <div className="grid lg:grid-cols-2 gap-12">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12">
           {/* Image Gallery */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
