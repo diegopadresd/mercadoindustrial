@@ -93,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, profileData: Partial<Profile>) => {
+  const signUp = async (email: string, password: string, profileData: Partial<Profile> & { _fiscalDocumentBase64?: string; _fiscalDocumentMime?: string; _fiscalDocumentExt?: string }) => {
     try {
       // Use custom edge function for signup with Resend emails
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-signup`, {
@@ -112,7 +112,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           shippingState: profileData.shipping_state,
           shippingPostalCode: profileData.shipping_postal_code,
           rfc: profileData.rfc,
-          fiscalDocumentUrl: profileData.fiscal_document_url,
+          fiscalDocumentBase64: profileData._fiscalDocumentBase64,
+          fiscalDocumentMime: profileData._fiscalDocumentMime,
+          fiscalDocumentExt: profileData._fiscalDocumentExt,
           redirectUrl: window.location.origin,
         }),
       });
