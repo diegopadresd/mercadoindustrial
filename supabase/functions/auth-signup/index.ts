@@ -21,7 +21,9 @@ interface SignupRequest {
   shippingState?: string;
   shippingPostalCode?: string;
   rfc?: string;
-  fiscalDocumentUrl?: string;
+  fiscalDocumentBase64?: string;
+  fiscalDocumentMime?: string;
+  fiscalDocumentExt?: string;
   redirectUrl: string;
 }
 
