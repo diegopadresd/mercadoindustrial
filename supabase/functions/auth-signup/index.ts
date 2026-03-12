@@ -134,7 +134,9 @@ const handler = async (req: Request): Promise<Response> => {
       shippingState,
       shippingPostalCode,
       rfc,
-      fiscalDocumentUrl,
+      fiscalDocumentBase64,
+      fiscalDocumentMime,
+      fiscalDocumentExt,
       redirectUrl,
     }: SignupRequest = await req.json();
 
