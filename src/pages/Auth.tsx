@@ -112,28 +112,19 @@ const Auth = () => {
       return;
     }
 
-    let fiscalDocumentUrl: string | undefined;
+    // Encode fiscal document as base64 to send to edge function (upload happens server-side after user creation)
+    let fiscalDocumentBase64: string | undefined;
+    let fiscalDocumentMime: string | undefined;
+    let fiscalDocumentExt: string | undefined;
 
-    // Upload fiscal document if provided
     if (fiscalDocument) {
-      const fileExt = fiscalDocument.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('fiscal-documents')
-        .upload(fileName, fiscalDocument);
-
-      if (uploadError) {
-        toast({
-          title: 'Error',
-          description: 'No se pudo subir la constancia fiscal',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      fiscalDocumentUrl = uploadData.path;
+      fiscalDocumentMime = fiscalDocument.type;
+      fiscalDocumentExt = fiscalDocument.name.split('.').pop();
+      const arrayBuffer = await fiscalDocument.arrayBuffer();
+      const uint8 = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+      fiscalDocumentBase64 = btoa(binary);
     }
 
     const { error } = await signUp(registerData.email, registerData.password, {
@@ -144,7 +135,10 @@ const Auth = () => {
       shipping_state: registerData.shippingState,
       shipping_postal_code: registerData.shippingPostalCode,
       rfc: registerData.rfc,
-      fiscal_document_url: fiscalDocumentUrl,
+      // @ts-ignore — extra fields passed through to edge function
+      _fiscalDocumentBase64: fiscalDocumentBase64,
+      _fiscalDocumentMime: fiscalDocumentMime,
+      _fiscalDocumentExt: fiscalDocumentExt,
     });
 
     if (error) {
