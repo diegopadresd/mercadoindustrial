@@ -182,6 +182,29 @@ const handler = async (req: Request): Promise<Response> => {
 
     const userId = userData.user.id;
 
+    // Upload fiscal document if provided (server-side, using service role to bypass RLS)
+    let fiscalDocumentPath: string | undefined;
+    if (fiscalDocumentBase64 && fiscalDocumentExt) {
+      try {
+        const binaryStr = atob(fiscalDocumentBase64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+          .from('fiscal-documents')
+          .upload(`${userId}/fiscal.${fiscalDocumentExt}`, bytes, {
+            contentType: fiscalDocumentMime || 'application/octet-stream',
+            upsert: true,
+          });
+        if (uploadError) {
+          console.error('Error uploading fiscal document:', uploadError);
+        } else {
+          fiscalDocumentPath = uploadData.path;
+        }
+      } catch (uploadErr) {
+        console.error('Error processing fiscal document:', uploadErr);
+      }
+    }
+
     // Create profile
     const { error: profileError } = await supabaseAdmin.from("profiles").insert({
       user_id: userId,
@@ -194,7 +217,7 @@ const handler = async (req: Request): Promise<Response> => {
       shipping_postal_code: shippingPostalCode,
       shipping_country: "México",
       rfc,
-      fiscal_document_url: fiscalDocumentUrl,
+      fiscal_document_url: fiscalDocumentPath,
     });
 
     if (profileError) {
