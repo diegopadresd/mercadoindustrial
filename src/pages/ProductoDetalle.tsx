@@ -458,11 +458,12 @@ const ProductoDetalle = () => {
           Regresar al catálogo
         </Link>
 
-        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 min-w-0 overflow-hidden">
           {/* Image Gallery */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
+            className="min-w-0 overflow-hidden"
           >
             {/* Main Image */}
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-muted mb-4 cursor-zoom-in" onClick={() => setZoomOpen(true)}>
@@ -555,12 +556,12 @@ const ProductoDetalle = () => {
             </AnimatePresence>
 
             {/* Thumbnails */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 w-full max-w-full">
               {productData.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentImageIndex(index)}
-                  className={`shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                  className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-colors ${
                     index === currentImageIndex ? 'border-primary' : 'border-transparent hover:border-muted-foreground/50'
                   }`}
                 >
@@ -729,7 +730,7 @@ const ProductoDetalle = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-8"
+            className="space-y-8 min-w-0"
           >
             {/* Title */}
             <div>
@@ -739,7 +740,7 @@ const ProductoDetalle = () => {
               
               <div className="flex flex-wrap gap-2 mb-6">
                 {productData.categories.map((cat) => (
-                  <Link key={cat} to={`/etiqueta/${slugify(cat)}`}>
+                  <Link key={cat} to={`/catalogo-mi?categoria=${encodeURIComponent(cat)}`}>
                     <Badge className="bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer">
                       {cat}
                     </Badge>
