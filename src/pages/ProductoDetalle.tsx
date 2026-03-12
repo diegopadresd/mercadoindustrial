@@ -458,11 +458,12 @@ const ProductoDetalle = () => {
           Regresar al catálogo
         </Link>
 
-        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 min-w-0 overflow-hidden">
           {/* Image Gallery */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
+            className="min-w-0 overflow-hidden"
           >
             {/* Main Image */}
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-muted mb-4 cursor-zoom-in" onClick={() => setZoomOpen(true)}>
