@@ -739,7 +739,7 @@ const ProductoDetalle = () => {
               
               <div className="flex flex-wrap gap-2 mb-6">
                 {productData.categories.map((cat) => (
-                  <Link key={cat} to={`/etiqueta/${slugify(cat)}`}>
+                  <Link key={cat} to={`/catalogo-mi?categoria=${encodeURIComponent(cat)}`}>
                     <Badge className="bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer">
                       {cat}
                     </Badge>
