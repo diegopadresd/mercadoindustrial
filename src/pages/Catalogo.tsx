@@ -27,22 +27,56 @@ import { useCatalogProducts } from '@/hooks/useCatalogProducts';
 
 // Mapeo de slugs URL a nombres de categorías
 const categorySlugMap: Record<string, string> = {
+  // Maquinaria
   'maquinaria-pesada': 'Maquinaria pesada',
   'quebradores': 'Quebradores Trituradores',
+  'quebradores-trituradores': 'Quebradores Trituradores',
+  'bulldozer': 'Bulldozer',
+  'excavadoras': 'Excavadoras',
+  'gruas': 'Grúas',
+  'montacargas': 'Montacargas',
+  'plataforma-telescopica': 'Plataforma Telescópica',
+  'plataformas-telescopicas': 'Plataforma Telescópica',
+  'compactador': 'Compactador',
+  'compactadores': 'Compactador',
+  'tractores': 'Tractores',
+  'retroexcavadoras': 'Retroexcavadoras',
+  // Equipos eléctricos
   'motores-electricos': 'Motores eléctricos',
+  'equipos-electricos': 'Equipos eléctricos',
+  'transformadores': 'Transformadores',
+  'generadores': 'Generadores',
+  'tableros-electricos': 'Tableros eléctricos',
+  'variadores-de-frecuencia': 'Variadores de frecuencia',
+  'variadores': 'Variadores de frecuencia',
+  // Procesamiento / minería
   'cribas': 'Cribas',
+  'bandas-transportadoras': 'Bandas transportadoras',
+  'filtros-prensas': 'Filtros prensas',
+  'filtros': 'Filtros prensas',
+  // Fluidos
   'compresores': 'Compresores',
   'tanques': 'Tanques',
-  'bandas-transportadoras': 'Bandas transportadoras',
   'valvulas': 'Válvulas',
-  'refacciones': 'Refacciones',
-  'bulldozer': 'Bulldozer',
+  'bombas': 'Bombas',
+  'bombas-industriales': 'Bombas',
+  'hidroneumaticos': 'Hidroneumáticos',
+  // Almacenamiento
   'racks': 'Racks de carga pesada',
-  'filtros-prensas': 'Filtros prensas',
-  'equipos-nuevos': 'Equipos Nuevos',
-  'plataforma-telescopica': 'Plataforma Telescópica',
-  'compactador': 'Compactador',
+  'racks-de-carga-pesada': 'Racks de carga pesada',
+  // Vehículos
   'vehiculos': 'Vehículos',
+  'vehiculos-industriales': 'Vehículos',
+  // Refacciones & otros
+  'refacciones': 'Refacciones',
+  'refacciones-y-partes': 'Refacciones',
+  'equipos-nuevos': 'Equipos Nuevos',
+  'equipos-usados': 'Equipos usados',
+  'herramientas': 'Herramientas',
+  'soldadura': 'Soldadura',
+  'corte': 'Corte',
+  'robotica': 'Robótica',
+  'automatizacion': 'Automatización',
 };
 
 const sectors = ['Industrial', 'Minería', 'Construcción', 'Alimenticio', 'Eléctrico', 'Agroindustria'];

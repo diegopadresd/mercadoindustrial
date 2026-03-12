@@ -556,12 +556,12 @@ const ProductoDetalle = () => {
             </AnimatePresence>
 
             {/* Thumbnails */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 w-full max-w-full">
               {productData.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentImageIndex(index)}
-                  className={`shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                  className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-colors ${
                     index === currentImageIndex ? 'border-primary' : 'border-transparent hover:border-muted-foreground/50'
                   }`}
                 >
