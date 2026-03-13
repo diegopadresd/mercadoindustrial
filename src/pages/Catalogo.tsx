@@ -444,9 +444,12 @@ const Catalogo = () => {
   const hasActiveFilters = selectedSectors.length > 0 || selectedCategories.length > 0 || 
                            selectedBrands.length > 0 || selectedLocations.length > 0 || searchQuery !== '';
 
+  // For the active filter chips: exclude the slug-injected filter (it's shown as breadcrumb, not a removable chip)
+  const urlOnlySectors = searchParams.getAll('sector');
+  const urlOnlyCategories = searchParams.getAll('categoria');
   const allActiveFilters = [
-    ...selectedSectors.map(v => ({ key: 'sector', value: v })),
-    ...selectedCategories.map(v => ({ key: 'categoria', value: v })),
+    ...urlOnlySectors.map(v => ({ key: 'sector', value: v })),
+    ...urlOnlyCategories.map(v => ({ key: 'categoria', value: v })),
     ...selectedBrands.map(v => ({ key: 'marca', value: v })),
     ...selectedLocations.map(v => ({ key: 'sucursal', value: v })),
   ];
