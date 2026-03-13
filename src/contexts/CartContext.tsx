@@ -44,6 +44,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const pendingAdds = useRef(new Set<string>());
   const { toast } = useToast();
 
   // Listen for auth changes — set authInitialized only after getSession resolves
