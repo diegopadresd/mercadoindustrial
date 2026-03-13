@@ -463,9 +463,18 @@ const Catalogo = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="section-title text-4xl mb-2">Catálogo</h1>
+          {slugFilter && (
+            <nav className="text-sm text-muted-foreground mb-3 flex items-center gap-1">
+              <Link to="/catalogo-mi" className="hover:text-primary transition-colors">Catálogo</Link>
+              <span>/</span>
+              <span className="text-foreground font-medium">{pageTitle}</span>
+            </nav>
+          )}
+          <h1 className="section-title text-4xl mb-2">{pageTitle}</h1>
           <p className="text-muted-foreground">
-            Explora más de 12,000 productos disponibles
+            {slugFilter
+              ? `Explora nuestra selección de ${pageTitle.toLowerCase()}`
+              : 'Explora más de 12,000 productos disponibles'}
           </p>
           
           {/* Search Bar */}
