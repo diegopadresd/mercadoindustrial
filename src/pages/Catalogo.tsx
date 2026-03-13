@@ -284,18 +284,50 @@ const FilterSidebar = ({
   );
 };
 
+// Resolve a path slug to { type: 'sector'|'categoria', canonical, displayName }
+const resolveSlug = (slug: string): { type: 'sector' | 'categoria'; canonical: string; displayName: string } | null => {
+  if (!slug) return null;
+  // Check sector map first
+  if (sectorSlugMap[slug]) {
+    const canonical = sectorSlugMap[slug];
+    return { type: 'sector', canonical, displayName: canonical };
+  }
+  // Check category map
+  if (categorySlugMap[slug]) {
+    const canonical = categorySlugMap[slug];
+    return { type: 'categoria', canonical, displayName: canonical };
+  }
+  return null;
+};
+
 const Catalogo = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { slug } = useParams<{ slug?: string }>();
+
+  // Resolve path slug → filter info
+  const slugFilter = slug ? resolveSlug(slug) : null;
 
   // Read all state from URL
   const currentPage = Number(searchParams.get('page')) || 1;
   const searchQuery = searchParams.get('q') || '';
   const sortBy = searchParams.get('sort') || 'recientes';
-  const selectedSectors = searchParams.getAll('sector');
-  const selectedCategories = searchParams.getAll('categoria');
+
+  // Merge URL query params + path slug filter
+  const urlSectors = searchParams.getAll('sector');
+  const urlCategories = searchParams.getAll('categoria');
+  const selectedSectors = slugFilter?.type === 'sector'
+    ? [...new Set([slugFilter.canonical, ...urlSectors])]
+    : urlSectors;
+  const selectedCategories = slugFilter?.type === 'categoria'
+    ? [...new Set([slugFilter.canonical, ...urlCategories])]
+    : urlCategories;
+
   const selectedBrands = searchParams.getAll('marca');
   const selectedLocations = searchParams.getAll('sucursal');
   const mobileFiltersOpen = searchParams.get('filtros') === '1';
+
+  // Page title: use slug display name or generic
+  const pageTitle = slugFilter ? slugFilter.displayName : 'Catálogo';
 
   // Debounced search is handled via URL param change
   // We update the URL's 'q' only after a debounce
