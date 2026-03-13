@@ -71,6 +71,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/catalogo-mi" element={<Catalogo />} />
+                <Route path="/catalogo-mi/:slug" element={<Catalogo />} />
                 <Route path="/catalogo" element={<Navigate to="/catalogo-mi" replace />} />
                 <Route path="/venta-externa" element={<VentaExterna />} />
                 <Route path="/productos/:id" element={<ProductoDetalle />} />

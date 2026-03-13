@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -77,6 +77,17 @@ const categorySlugMap: Record<string, string> = {
   'corte': 'Corte',
   'robotica': 'Robótica',
   'automatizacion': 'Automatización',
+  // Agroindustria / rural
+  'agricola': 'Agrícola',
+  'ganadero': 'Ganadero',
+  'pesquero': 'Pesquero',
+  'agroindustria': 'Agroindustria',
+  // Extra production slugs
+  'mineria': 'Minería',
+  'construccion': 'Construcción',
+  'industrial': 'Industrial',
+  'alimenticio': 'Alimenticio',
+  'electrico': 'Eléctrico',
 };
 
 const sectors = ['Industrial', 'Minería', 'Construcción', 'Alimenticio', 'Eléctrico', 'Agroindustria'];
@@ -273,18 +284,50 @@ const FilterSidebar = ({
   );
 };
 
+// Resolve a path slug to { type: 'sector'|'categoria', canonical, displayName }
+const resolveSlug = (slug: string): { type: 'sector' | 'categoria'; canonical: string; displayName: string } | null => {
+  if (!slug) return null;
+  // Check sector map first
+  if (sectorSlugMap[slug]) {
+    const canonical = sectorSlugMap[slug];
+    return { type: 'sector', canonical, displayName: canonical };
+  }
+  // Check category map
+  if (categorySlugMap[slug]) {
+    const canonical = categorySlugMap[slug];
+    return { type: 'categoria', canonical, displayName: canonical };
+  }
+  return null;
+};
+
 const Catalogo = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { slug } = useParams<{ slug?: string }>();
+
+  // Resolve path slug → filter info
+  const slugFilter = slug ? resolveSlug(slug) : null;
 
   // Read all state from URL
   const currentPage = Number(searchParams.get('page')) || 1;
   const searchQuery = searchParams.get('q') || '';
   const sortBy = searchParams.get('sort') || 'recientes';
-  const selectedSectors = searchParams.getAll('sector');
-  const selectedCategories = searchParams.getAll('categoria');
+
+  // Merge URL query params + path slug filter
+  const urlSectors = searchParams.getAll('sector');
+  const urlCategories = searchParams.getAll('categoria');
+  const selectedSectors = slugFilter?.type === 'sector'
+    ? [...new Set([slugFilter.canonical, ...urlSectors])]
+    : urlSectors;
+  const selectedCategories = slugFilter?.type === 'categoria'
+    ? [...new Set([slugFilter.canonical, ...urlCategories])]
+    : urlCategories;
+
   const selectedBrands = searchParams.getAll('marca');
   const selectedLocations = searchParams.getAll('sucursal');
   const mobileFiltersOpen = searchParams.get('filtros') === '1';
+
+  // Page title: use slug display name or generic
+  const pageTitle = slugFilter ? slugFilter.displayName : 'Catálogo';
 
   // Debounced search is handled via URL param change
   // We update the URL's 'q' only after a debounce
@@ -401,9 +444,12 @@ const Catalogo = () => {
   const hasActiveFilters = selectedSectors.length > 0 || selectedCategories.length > 0 || 
                            selectedBrands.length > 0 || selectedLocations.length > 0 || searchQuery !== '';
 
+  // For the active filter chips: exclude the slug-injected filter (it's shown as breadcrumb, not a removable chip)
+  const urlOnlySectors = searchParams.getAll('sector');
+  const urlOnlyCategories = searchParams.getAll('categoria');
   const allActiveFilters = [
-    ...selectedSectors.map(v => ({ key: 'sector', value: v })),
-    ...selectedCategories.map(v => ({ key: 'categoria', value: v })),
+    ...urlOnlySectors.map(v => ({ key: 'sector', value: v })),
+    ...urlOnlyCategories.map(v => ({ key: 'categoria', value: v })),
     ...selectedBrands.map(v => ({ key: 'marca', value: v })),
     ...selectedLocations.map(v => ({ key: 'sucursal', value: v })),
   ];
@@ -420,9 +466,18 @@ const Catalogo = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="section-title text-4xl mb-2">Catálogo</h1>
+          {slugFilter && (
+            <nav className="text-sm text-muted-foreground mb-3 flex items-center gap-1">
+              <Link to="/catalogo-mi" className="hover:text-primary transition-colors">Catálogo</Link>
+              <span>/</span>
+              <span className="text-foreground font-medium">{pageTitle}</span>
+            </nav>
+          )}
+          <h1 className="section-title text-4xl mb-2">{pageTitle}</h1>
           <p className="text-muted-foreground">
-            Explora más de 12,000 productos disponibles
+            {slugFilter
+              ? `Explora nuestra selección de ${pageTitle.toLowerCase()}`
+              : 'Explora más de 12,000 productos disponibles'}
           </p>
           
           {/* Search Bar */}
