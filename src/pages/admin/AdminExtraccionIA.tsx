@@ -24,6 +24,7 @@ import {
 interface ExtractionResult {
   id: string;
   title: string;
+  slug?: string | null;
   status: 'updated' | 'no_changes' | 'error';
   extracted?: Record<string, any>;
   current?: Record<string, any>;
