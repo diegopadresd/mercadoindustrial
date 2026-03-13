@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -44,6 +44,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const pendingAdds = useRef(new Set<string>());
   const { toast } = useToast();
 
   // Listen for auth changes — set authInitialized only after getSession resolves
@@ -126,27 +127,52 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [loadCart, authInitialized]);
 
   const addToCart = async (product: Omit<CartItem, 'id' | 'quantity'>, quantity = 1) => {
+    // Guard: if this product is already being added, increment optimistically and return
+    if (pendingAdds.current.has(product.productId)) {
+      setItems(prev => prev.map(i =>
+        i.productId === product.productId ? { ...i, quantity: i.quantity + quantity } : i
+      ));
+      return;
+    }
+
+    pendingAdds.current.add(product.productId);
     try {
       const sessionId = getSessionId();
-      
-      // Check if item already exists
+
+      // Check if item already exists (using functional updater to avoid stale read)
       const existingItem = items.find(item => item.productId === product.productId);
-      
+
       if (existingItem) {
         await updateQuantity(product.productId, existingItem.quantity + quantity);
         return;
       }
 
-      const { error } = await supabase.from('cart_items').insert({
+      // Optimistic add — immediately visible, no wait for DB round-trip
+      const tempItem: CartItem = {
+        id: 'temp_' + product.productId,
+        ...product,
+        quantity,
+      };
+      setItems(prev => [...prev, tempItem]);
+
+      const { data, error } = await supabase.from('cart_items').insert({
         product_id: product.productId,
         quantity,
         user_id: userId || null,
         session_id: userId ? null : sessionId,
-      });
+      }).select('id').single();
 
-      if (error) throw error;
+      if (error) {
+        // Rollback optimistic update
+        setItems(prev => prev.filter(i => i.id !== tempItem.id));
+        throw error;
+      }
 
-      await loadCart();
+      // Patch temp id with real DB id
+      setItems(prev => prev.map(i =>
+        i.id === tempItem.id ? { ...i, id: data.id } : i
+      ));
+
       toast({
         title: "Producto agregado",
         description: `${product.title} se agregó al carrito`,
@@ -158,6 +184,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "No se pudo agregar el producto al carrito",
         variant: "destructive",
       });
+    } finally {
+      pendingAdds.current.delete(product.productId);
     }
   };
 
