@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { generateProductUrl } from '@/lib/slugify';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -123,9 +124,9 @@ const SubastasYOfertas = () => {
                             </div>
                           )}
                           <Button asChild size="sm" className="w-full">
-                            <Link to={`/productos/${product.id}`}>
-                              Ver subasta
-                            </Link>
+                             <Link to={generateProductUrl(product.slug || product.title, product.id, !!product.slug)}>
+                               Ver subasta
+                             </Link>
                           </Button>
                         </CardContent>
                       </Card>

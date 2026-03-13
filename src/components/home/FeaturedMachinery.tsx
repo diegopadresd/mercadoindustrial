@@ -144,9 +144,9 @@ export const FeaturedMachinery = () => {
                         {/* CTA - Always at bottom */}
                         <div className="mt-auto">
                           <Button asChild className="w-full bg-primary text-secondary hover:bg-primary/90">
-                            <Link to={generateProductUrl(product.title, product.id)}>
-                              {language === 'es' ? 'Ver Detalles' : 'View Details'}
-                            </Link>
+                            <Link to={generateProductUrl(product.slug || product.title, product.id, !!product.slug)}>
+                               {language === 'es' ? 'Ver Detalles' : 'View Details'}
+                             </Link>
                           </Button>
                         </div>
                       </div>

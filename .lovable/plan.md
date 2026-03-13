@@ -1,51 +1,18 @@
 
-## Problem: Product links don't always use the stored DB slug
+## Root Cause
 
-The user wants every product link across the site to use the `slug` field already stored in the database (the canonical URL from mercadoindustrial.com.mx). Currently there are **4 places** that fall back to slugifying the title instead of using the stored slug, plus **2 places** that use just the bare ID (`/productos/${id}` with no slug at all).
+All products have `allow_offers = false` in the database. The offer button is correctly guarded by `(productData as any).allow_offers` — but since **no product has `allow_offers = true`**, the button never appears.
 
-### Files with broken/missing slug usage
+This is a **data issue**, not a code bug. The `allow_offers` column exists and the code is correct, but it was never enabled for any product.
 
-**1. `src/components/home/FeaturedMachinery.tsx` — line 147**
-```tsx
-// WRONG: always slugifies title, never checks product.slug
-<Link to={generateProductUrl(product.title, product.id)}>
-// FIX:
-<Link to={generateProductUrl(product.slug || product.title, product.id, !!product.slug)}>
-```
+## Fix Options
 
-**2. `src/pages/SubastasYOfertas.tsx` — line 126**
-```tsx
-// WRONG: bare ID only, no slug
-<Link to={`/productos/${product.id}`}>
-// FIX: use generateProductUrl with slug
-<Link to={generateProductUrl(product.slug || product.title, product.id, !!product.slug)}>
-```
+Two ways to solve this:
 
-**3. `src/pages/admin/AdminExtraccionIA.tsx` — line 583**
-```tsx
-// WRONG: bare ID only, no slug (admin preview link)
-<a href={`/productos/${previewResult.id}`}>
-// FIX: use generateProductUrl (can import slugify or just build inline)
-<a href={generateProductUrl(previewResult.slug || previewResult.title, previewResult.id, !!previewResult.slug)}>
-```
+**Option A — Enable `allow_offers` via the Admin panel** (ideal for production): The admin sets `allow_offers = true` per product in AdminInventario. But if that UI doesn't exist yet, the user can't do this easily.
 
-**4. `src/lib/slugify.ts` — `generateProductUrl` function**
-The function itself already supports both paths correctly — the issue is call sites not passing `slug` and `useAsSlug = true`.
+**Option B — Add a toggle in the admin product editor** so admins can enable/disable offers per product. This is the cleanest long-term solution.
 
-### Files already correct (no changes needed)
-- `ProductCard.tsx` ✅ — checks `slug` prop, passes `useAsSlug = true`
-- `OfertasEnviadas.tsx` ✅ — checks `offer.product?.slug`
-- `OfertasRecibidas.tsx` ✅ — checks `offer.product?.slug`
-- `Carrito.tsx` ✅ — checks `item.slug`
-- `ProductoDetalle.tsx` ✅ — checks `dbSlug`
-- `ProductsSection.tsx` ✅ — checks `product.slug`
-- `sitemap/index.ts` ✅ — uses `product.slug || slugify(product.title)`
+**Option C — Temporarily enable offers on all products** via a DB migration (quickest test, not recommended for production).
 
-### Changes needed
-
-**3 files:**
-1. `src/components/home/FeaturedMachinery.tsx` — pass `product.slug` to `generateProductUrl`
-2. `src/pages/SubastasYOfertas.tsx` — import `generateProductUrl`, replace bare ID link
-3. `src/pages/admin/AdminExtraccionIA.tsx` — import `generateProductUrl`, replace bare ID link
-
-No DB or migration changes needed — slugs are already in the DB.
+Looking at the current admin panel to check if the toggle already exists:
