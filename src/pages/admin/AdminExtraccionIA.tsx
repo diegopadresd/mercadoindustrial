@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { generateProductUrl } from '@/lib/slugify';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
