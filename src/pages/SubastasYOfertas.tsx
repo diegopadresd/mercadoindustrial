@@ -124,9 +124,9 @@ const SubastasYOfertas = () => {
                             </div>
                           )}
                           <Button asChild size="sm" className="w-full">
-                            <Link to={`/productos/${product.id}`}>
-                              Ver subasta
-                            </Link>
+                             <Link to={generateProductUrl(product.slug || product.title, product.id, !!product.slug)}>
+                               Ver subasta
+                             </Link>
                           </Button>
                         </CardContent>
                       </Card>

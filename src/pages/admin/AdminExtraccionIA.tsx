@@ -581,7 +581,7 @@ const AdminExtraccionIA = () => {
                   {/* Link to real product page */}
                   <div className="text-center">
                     <Button variant="outline" size="sm" asChild>
-                      <a href={`/productos/${previewResult.id}`} target="_blank" rel="noopener noreferrer" className="gap-2">
+                      <a href={generateProductUrl(previewResult.slug || previewResult.title, previewResult.id, !!previewResult.slug)} target="_blank" rel="noopener noreferrer" className="gap-2">
                         <ArrowRight className="h-3.5 w-3.5" />
                         Ver página real del producto
                       </a>
