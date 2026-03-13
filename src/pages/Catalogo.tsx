@@ -77,6 +77,17 @@ const categorySlugMap: Record<string, string> = {
   'corte': 'Corte',
   'robotica': 'Robótica',
   'automatizacion': 'Automatización',
+  // Agroindustria / rural
+  'agricola': 'Agrícola',
+  'ganadero': 'Ganadero',
+  'pesquero': 'Pesquero',
+  'agroindustria': 'Agroindustria',
+  // Extra production slugs
+  'mineria': 'Minería',
+  'construccion': 'Construcción',
+  'industrial': 'Industrial',
+  'alimenticio': 'Alimenticio',
+  'electrico': 'Eléctrico',
 };
 
 const sectors = ['Industrial', 'Minería', 'Construcción', 'Alimenticio', 'Eléctrico', 'Agroindustria'];
