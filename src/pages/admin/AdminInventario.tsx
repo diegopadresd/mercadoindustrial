@@ -1421,6 +1421,7 @@ const AdminInventario = () => {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Pagination */}
