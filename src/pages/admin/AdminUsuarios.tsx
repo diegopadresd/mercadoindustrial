@@ -635,7 +635,7 @@ const AdminUsuarios = () => {
                         <TableCell>
                           {getStatusBadge(userData.status)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           {new Date(userData.created_at).toLocaleDateString('es-MX')}
                         </TableCell>
                         <TableCell className="text-right">
