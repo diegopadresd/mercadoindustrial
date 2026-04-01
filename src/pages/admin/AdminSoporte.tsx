@@ -284,7 +284,7 @@ const AdminSoporte = () => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <p className="max-w-[200px] truncate">{ticket.subject}</p>
                   </TableCell>
                   <TableCell>
