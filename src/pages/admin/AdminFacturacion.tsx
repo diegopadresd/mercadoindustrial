@@ -484,10 +484,10 @@ const AdminFacturacion = () => {
                   <TableHead>No. Factura</TableHead>
                   <TableHead>Pedido</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>RFC</TableHead>
+                  <TableHead className="hidden md:table-cell">RFC</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead>Emitida</TableHead>
+                  <TableHead className="hidden md:table-cell">Emitida</TableHead>
                   <TableHead className="text-right">Archivos</TableHead>
                 </TableRow>
               </TableHeader>
