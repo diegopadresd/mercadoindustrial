@@ -419,7 +419,7 @@ const AdminFacturacion = () => {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Calendar size={12} />
                           <span>{new Date(order.created_at).toLocaleDateString('es-MX')}</span>
