@@ -1,92 +1,117 @@
 
 
-## Mobile Optimization Audit — Admin Panels
+## Round 12 Bug Hunt — Complete Findings
 
-After reading all admin pages, here are the specific mobile issues found and the fixes needed:
-
----
-
-### Issue 1: AdminInventario — Table has no `overflow-x-auto` wrapper
-The products table (7 columns: Producto, SKU, Marca, Precio, Stock, Estado, Acciones) renders inside a card with `overflow-hidden` but **no `overflow-x-auto`**. On mobile, columns get crushed or clip. Also, the filter row uses 3 inline `<select>` elements that don't wrap well.
-
-**Fix:** Wrap the `<Table>` in a `<div className="overflow-x-auto">`. Hide SKU and Marca columns on small screens (`hidden sm:table-cell`). Make filter selects stack on mobile.
+### Files Reviewed
+- `Perfil.tsx`, `Recientes.tsx`, `VentaExterna.tsx`, `Contacto.tsx`, `MarcaDetalle.tsx`, `EtiquetaDetalle.tsx`, `Header.tsx`, `Footer.tsx`, `Marcas.tsx`, `Soporte.tsx`, `Blog.tsx`, `BlogDetalle.tsx`, `MiCuenta.tsx`, `Chats.tsx`, `useProducts.ts`, `useCatalogProducts.ts`
 
 ---
 
-### Issue 2: AdminUsuarios — Table has no `overflow-x-auto`, 5 columns all visible
-The users table shows Usuario, Rol, Estado, Fecha de Registro, Acciones — all visible at every breakpoint. The container has `overflow-hidden` but no horizontal scroll.
+### Bug 1 (HIGH): `Footer.tsx` — Sector links point to old `/catalogo?sector=` instead of `/catalogo-mi/`
 
-**Fix:** Add `overflow-x-auto` wrapper. Hide "Fecha de Registro" column on small screens (`hidden md:table-cell`).
+Lines 30-36: The footer sector links use the old `href: '/catalogo?sector=industrial'` pattern. The `/catalogo` route redirects to `/catalogo-mi` but strips the query param. These links should use the new path-based slugs like `/catalogo-mi/industrial`.
 
----
-
-### Issue 3: AdminUsuarios — Seller applications cards have side-by-side layout that breaks on mobile
-Line 739-762: The card header has a `flex items-start justify-between` with the vendor name on the left and a "Revisar Solicitud" button on the right. On narrow screens the button overflows.
-
-**Fix:** Stack the card header vertically on mobile (`flex-col sm:flex-row`), make the button full-width on mobile.
+**Fix:** Update the `sectors` array hrefs to `/catalogo-mi/industrial`, `/catalogo-mi/mineria`, etc.
 
 ---
 
-### Issue 4: AdminFacturacion — Table has 8 columns, only first table has `overflow-x-auto`
-The pending invoices table wraps in `overflow-x-auto`, but the processed invoices table (in the same page, lines ~470+) may not. Also, 8 columns is too many for mobile even with scroll — hide less important ones.
+### Bug 2 (MEDIUM): `Footer.tsx` — Quick links point to `/catalogo` instead of `/catalogo-mi`
 
-**Fix:** Hide "RFC", "Fecha", and "Constancia Fiscal" columns on mobile (`hidden md:table-cell`).
+Lines 43-44: Both the Spanish and English `quickLinks` arrays have `href: '/catalogo'`. This triggers the redirect (losing any intent) when it should link directly to `/catalogo-mi`.
 
----
-
-### Issue 5: AdminResumen — Date range inputs overflow on mobile
-Lines 367-384: The date range filter has two `w-36` inputs in a row that can overflow on very narrow screens.
-
-**Fix:** Change the container to `flex flex-wrap` and inputs to `w-full sm:w-36`.
+**Fix:** Change `href: '/catalogo'` to `href: '/catalogo-mi'` in both language arrays.
 
 ---
 
-### Issue 6: AdminResumen — Title text too large on mobile
-Line 351: `text-3xl` with no responsive step-down.
+### Bug 3 (MEDIUM): `Marcas.tsx` — Brand links use query params instead of `/marca/:slug`
 
-**Fix:** Change to `text-2xl md:text-3xl`.
+Line 131: `to={`/catalogo-mi?marca=${encodeURIComponent(brand.name)}`}`. The app now has a dedicated `/marca/:slug` route that provides a branded page with proper H1 and SEO. The current link bypasses it.
 
----
-
-### Issue 7: AdminVendedores — Quick stats row overflows on mobile
-Lines 264-282: The vendor card shows 4 stats + chevron in a horizontal row. On mobile this overflows.
-
-**Fix:** Make the stats row `flex flex-wrap` or `grid grid-cols-2 sm:flex`.
+**Fix:** Import `slugify` and change to `` to={`/marca/${slugify(brand.name)}`} ``.
 
 ---
 
-### Issue 8: AdminManejo — Sub-tables lack `overflow-x-auto`
-The ManejoOrders, ManejoInventario, ManejoAprobaciones, ManejoLeads, and ManejoFacturacion sub-components each render `<Table>` elements. Some lack `overflow-x-auto` wrappers.
+### Bug 4 (MEDIUM): `Perfil.tsx` — Dead checkout link `/checkout/oferta/:id`
 
-**Fix:** Audit each sub-table and add `overflow-x-auto` where missing.
+Line 436: `<Link to={`/checkout/oferta/${offer.id}`}>`. No such route exists in `App.tsx` — the actual route is `/checkout/contraoferta/:offerId`.
 
----
-
-### Issue 9: AdminSoporte / AdminPreguntas — Verify table wrappers
-These pages likely have tables too. Need to verify they have `overflow-x-auto`.
+**Fix:** Change to `/checkout/contraoferta/${offer.id}`.
 
 ---
 
-### Issue 10: AdminBlog — Form dialog may overflow on mobile
-The blog create/edit dialog with multiple fields could overflow vertically.
+### Bug 5 (MEDIUM): `Chats.tsx` — N+1 query problem fetches profile + last message + unread count per conversation
 
-**Fix:** Ensure `max-h-[85vh] overflow-y-auto` on DialogContent.
+Lines 79-114: For each conversation, 3 separate queries run sequentially inside `Promise.all`. With 20 conversations = 60 queries. This causes significant latency.
+
+**Fix:** Use a single batch approach — fetch all profiles and last messages in bulk, or at minimum use `Promise.all` at the outer level (it already does, so this is a performance note, not a crash bug). Lower priority.
 
 ---
 
-## Summary of files to change
+### Bug 6 (LOW): `Recientes.tsx` — Missing `slug` prop on ProductCard
+
+Line 112-128: `ProductCard` is rendered without a `slug` prop, so all product links from this page will generate slugs from the title instead of using the canonical DB slug.
+
+**Fix:** Add `slug={product.slug}` to the ProductCard. Also need to ensure `useProducts` selects the `slug` column (currently it does `select('*')` so it's included, but the Product type doesn't expose it).
+
+---
+
+### Bug 7 (LOW): `VentaExterna.tsx` — Missing `slug` prop on ProductCard
+
+Line 400-417: Same issue as Bug 6 — the `slug` prop is not passed. External products may also have slugs.
+
+**Fix:** Add `slug={(product as any).slug}` to the ProductCard.
+
+---
+
+### Bug 8 (LOW): `Contacto.tsx` — Form pre-fills from profile on mount only, not on profile load
+
+Lines 67-74: `formData` is initialized with `profile?.full_name || ''` etc. But `profile` is likely `null` on mount (async auth), so the fields stay empty even after profile loads. The `useEffect` that could fix this doesn't exist here (unlike in `Perfil.tsx` which has one).
+
+**Fix:** Add a `useEffect` that updates formData when `profile` changes, similar to Perfil.tsx.
+
+---
+
+### Bug 9 (LOW): `MiCuenta.tsx` — `<Outlet />` renders but no nested routes are defined
+
+Line 89: When `location.pathname !== '/mi-cuenta'`, the component renders `<Outlet />`. But in `App.tsx`, the mi-cuenta routes are defined as **sibling** routes, not nested. So `<Outlet />` renders nothing. This code path is actually never triggered because all sub-routes render their own full page component. Dead code, no user impact.
+
+**Status:** No fix needed — just dead code.
+
+---
+
+### Bug 10 (LOW): `useCatalogProducts.ts` — `description` in search but not in select columns
+
+Line 40: The search filter includes `description.ilike.%${search}%`, but line 24 `CATALOG_COLUMNS` does not include `description`. Supabase will error when searching by a column not in the select.
+
+**Fix:** Add `description` to `CATALOG_COLUMNS`, or remove `description` from the `.or()` search filter.
+
+---
+
+## Summary
 
 ```
-src/pages/admin/AdminInventario.tsx   → overflow-x-auto on table, hide columns on mobile, stack filters
-src/pages/admin/AdminUsuarios.tsx     → overflow-x-auto on table, hide date column, fix application card layout
-src/pages/admin/AdminFacturacion.tsx  → hide columns on mobile
-src/pages/admin/AdminResumen.tsx      → responsive date inputs, responsive title
-src/pages/admin/AdminVendedores.tsx   → wrap stats row for mobile
-src/pages/admin/AdminManejo.tsx       → overflow-x-auto on all sub-tables
-src/pages/admin/AdminPreguntas.tsx    → verify overflow-x-auto (read first)
-src/pages/admin/AdminSoporte.tsx      → verify overflow-x-auto (read first)
-src/pages/admin/AdminBlog.tsx         → verify dialog scroll
+Priority  File                              Bug
+HIGH      src/components/layout/Footer.tsx   → #1: sector links use old /catalogo?sector= path
+MEDIUM    src/components/layout/Footer.tsx   → #2: quick links use /catalogo instead of /catalogo-mi
+MEDIUM    src/pages/Marcas.tsx               → #3: brand links use query params instead of /marca/:slug
+MEDIUM    src/pages/Perfil.tsx               → #4: dead /checkout/oferta/ link (should be /checkout/contraoferta/)
+MEDIUM    src/pages/mi-cuenta/Chats.tsx      → #5: N+1 query (perf, not crash)
+LOW       src/pages/Recientes.tsx            → #6: missing slug prop on ProductCard
+LOW       src/pages/VentaExterna.tsx         → #7: missing slug prop on ProductCard
+LOW       src/pages/Contacto.tsx             → #8: profile pre-fill doesn't update after async load
+LOW       src/hooks/useCatalogProducts.ts    → #10: search includes description but select doesn't
 ```
 
-Each fix is CSS-only (adding responsive classes, `hidden sm:table-cell`, `overflow-x-auto`, `flex-wrap`). No logic changes needed.
+### Files to change
+```
+src/components/layout/Footer.tsx    → Fix #1 + #2
+src/pages/Marcas.tsx                → Fix #3
+src/pages/Perfil.tsx                → Fix #4
+src/pages/Recientes.tsx             → Fix #6
+src/pages/VentaExterna.tsx          → Fix #7
+src/pages/Contacto.tsx              → Fix #8
+src/hooks/useCatalogProducts.ts     → Fix #10
+```
+
+Bug #5 (Chats N+1) is a performance optimization that can be deferred.
 
