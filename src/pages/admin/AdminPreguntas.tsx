@@ -197,7 +197,7 @@ const AdminPreguntas = () => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex items-center gap-2">
                       <User size={14} className="text-muted-foreground" />
                       <div>
