@@ -713,6 +713,7 @@ const AdminUsuarios = () => {
                 </TableBody>
               </Table>
             )}
+            </div>
           </div>
         </TabsContent>
 
