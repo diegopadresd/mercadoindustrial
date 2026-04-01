@@ -602,7 +602,7 @@ const AdminUsuarios = () => {
                     <TableHead>Usuario</TableHead>
                     <TableHead>Rol</TableHead>
                     <TableHead>Estado</TableHead>
-                    <TableHead>Fecha de Registro</TableHead>
+                    <TableHead className="hidden md:table-cell">Fecha de Registro</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
