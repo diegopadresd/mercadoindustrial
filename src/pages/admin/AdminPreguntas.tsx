@@ -155,6 +155,7 @@ const AdminPreguntas = () => {
 
       {/* Questions Table */}
       <div className="bg-card rounded-2xl shadow-card overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
