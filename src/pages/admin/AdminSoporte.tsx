@@ -245,10 +245,10 @@ const AdminSoporte = () => {
             <TableRow>
               <TableHead>Ticket</TableHead>
               <TableHead>Contacto</TableHead>
-              <TableHead>Asunto</TableHead>
+              <TableHead className="hidden md:table-cell">Asunto</TableHead>
               <TableHead>Prioridad</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead>Fecha</TableHead>
+              <TableHead className="hidden lg:table-cell">Fecha</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
