@@ -1226,8 +1226,8 @@ const AdminInventario = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Producto</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Marca</TableHead>
+              <TableHead className="hidden sm:table-cell">SKU</TableHead>
+              <TableHead className="hidden sm:table-cell">Marca</TableHead>
               <TableHead>Precio</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Estado</TableHead>
