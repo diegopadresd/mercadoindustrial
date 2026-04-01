@@ -160,10 +160,10 @@ const AdminPreguntas = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Producto</TableHead>
-              <TableHead>Cliente</TableHead>
+              <TableHead className="hidden md:table-cell">Cliente</TableHead>
               <TableHead>Pregunta</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead>Fecha</TableHead>
+              <TableHead className="hidden md:table-cell">Fecha</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
