@@ -590,6 +590,7 @@ const AdminUsuarios = () => {
 
           {/* Users Table */}
           <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+            <div className="overflow-x-auto">
             {usersLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -601,7 +602,7 @@ const AdminUsuarios = () => {
                     <TableHead>Usuario</TableHead>
                     <TableHead>Rol</TableHead>
                     <TableHead>Estado</TableHead>
-                    <TableHead>Fecha de Registro</TableHead>
+                    <TableHead className="hidden md:table-cell">Fecha de Registro</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -634,7 +635,7 @@ const AdminUsuarios = () => {
                         <TableCell>
                           {getStatusBadge(userData.status)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           {new Date(userData.created_at).toLocaleDateString('es-MX')}
                         </TableCell>
                         <TableCell className="text-right">
@@ -712,6 +713,7 @@ const AdminUsuarios = () => {
                 </TableBody>
               </Table>
             )}
+            </div>
           </div>
         </TabsContent>
 
@@ -736,22 +738,23 @@ const AdminUsuarios = () => {
               {pendingApplications?.map((application) => (
                 <Card key={application.id} className="border-yellow-500/50 bg-yellow-500/5">
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center shrink-0">
                           <Clock size={24} className="text-yellow-600" />
                         </div>
-                        <div>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            {application.full_name}
-                            <Badge variant="outline" className="border-yellow-500 text-yellow-600 text-xs">
-                              Vendedor - Aprobación Requerida
+                        <div className="min-w-0">
+                          <CardTitle className="text-lg flex flex-wrap items-center gap-2">
+                            <span className="truncate">{application.full_name}</span>
+                            <Badge variant="outline" className="border-yellow-500 text-yellow-600 text-xs shrink-0">
+                              Aprobación Requerida
                             </Badge>
                           </CardTitle>
-                          <CardDescription>{application.user_email}</CardDescription>
+                          <CardDescription className="truncate">{application.user_email}</CardDescription>
                         </div>
                       </div>
                       <Button 
+                        className="w-full sm:w-auto shrink-0"
                         onClick={() => {
                           setSelectedApplication(application);
                           setShowApplicationDialog(true);

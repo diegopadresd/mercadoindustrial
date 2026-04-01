@@ -155,14 +155,15 @@ const AdminPreguntas = () => {
 
       {/* Questions Table */}
       <div className="bg-card rounded-2xl shadow-card overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Producto</TableHead>
-              <TableHead>Cliente</TableHead>
+              <TableHead className="hidden md:table-cell">Cliente</TableHead>
               <TableHead>Pregunta</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead>Fecha</TableHead>
+              <TableHead className="hidden md:table-cell">Fecha</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -196,7 +197,7 @@ const AdminPreguntas = () => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex items-center gap-2">
                       <User size={14} className="text-muted-foreground" />
                       <div>
@@ -221,7 +222,7 @@ const AdminPreguntas = () => {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Calendar size={14} />
                       <span>{new Date(question.created_at).toLocaleDateString('es-MX')}</span>
@@ -255,6 +256,7 @@ const AdminPreguntas = () => {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Answer Dialog */}

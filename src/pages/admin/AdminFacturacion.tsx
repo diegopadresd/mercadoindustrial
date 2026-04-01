@@ -344,11 +344,11 @@ const AdminFacturacion = () => {
               <TableRow>
                 <TableHead>Pedido</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead>RFC</TableHead>
+                <TableHead className="hidden md:table-cell">RFC</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead>Constancia Fiscal</TableHead>
+                <TableHead className="hidden lg:table-cell">Constancia Fiscal</TableHead>
                 <TableHead>Estado Factura</TableHead>
-                <TableHead>Fecha</TableHead>
+                <TableHead className="hidden md:table-cell">Fecha</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -382,7 +382,7 @@ const AdminFacturacion = () => {
                           <p className="text-xs text-muted-foreground">{order.customer_email}</p>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <span className="font-mono text-sm">{order.rfc || '-'}</span>
                       </TableCell>
                       <TableCell>
@@ -390,7 +390,7 @@ const AdminFacturacion = () => {
                           ${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {order.fiscal_document_url ? (
                           <Button 
                             variant="ghost" 
@@ -419,7 +419,7 @@ const AdminFacturacion = () => {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Calendar size={12} />
                           <span>{new Date(order.created_at).toLocaleDateString('es-MX')}</span>
@@ -484,10 +484,10 @@ const AdminFacturacion = () => {
                   <TableHead>No. Factura</TableHead>
                   <TableHead>Pedido</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>RFC</TableHead>
+                  <TableHead className="hidden md:table-cell">RFC</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead>Emitida</TableHead>
+                  <TableHead className="hidden md:table-cell">Emitida</TableHead>
                   <TableHead className="text-right">Archivos</TableHead>
                 </TableRow>
               </TableHeader>
@@ -508,7 +508,7 @@ const AdminFacturacion = () => {
                           <p className="text-xs text-muted-foreground">{orderData?.customer_email || ''}</p>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <span className="font-mono text-sm">{orderData?.rfc || '-'}</span>
                       </TableCell>
                       <TableCell>
@@ -519,7 +519,7 @@ const AdminFacturacion = () => {
                       <TableCell>
                         {getStatusBadge(inv.status)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Calendar size={12} />
                           <span>{inv.issued_at ? new Date(inv.issued_at).toLocaleDateString('es-MX') : '-'}</span>

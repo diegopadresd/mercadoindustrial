@@ -239,15 +239,16 @@ const AdminSoporte = () => {
 
       {/* Tickets Table */}
       <div className="bg-card rounded-2xl shadow-card overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Ticket</TableHead>
               <TableHead>Contacto</TableHead>
-              <TableHead>Asunto</TableHead>
+              <TableHead className="hidden md:table-cell">Asunto</TableHead>
               <TableHead>Prioridad</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead>Fecha</TableHead>
+              <TableHead className="hidden lg:table-cell">Fecha</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -283,7 +284,7 @@ const AdminSoporte = () => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <p className="max-w-[200px] truncate">{ticket.subject}</p>
                   </TableCell>
                   <TableCell>
@@ -326,7 +327,7 @@ const AdminSoporte = () => {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <div className="text-sm">
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Calendar size={14} />
@@ -349,6 +350,7 @@ const AdminSoporte = () => {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Ticket Detail Dialog */}

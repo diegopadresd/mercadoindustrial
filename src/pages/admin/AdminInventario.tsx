@@ -1221,12 +1221,13 @@ const AdminInventario = () => {
 
       {/* Products Table */}
       <div className="bg-card rounded-2xl shadow-card overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Producto</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Marca</TableHead>
+              <TableHead className="hidden sm:table-cell">SKU</TableHead>
+              <TableHead className="hidden sm:table-cell">Marca</TableHead>
               <TableHead>Precio</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Estado</TableHead>
@@ -1270,10 +1271,10 @@ const AdminInventario = () => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <span className="font-mono text-sm">{product.sku}</span>
                   </TableCell>
-                  <TableCell>{product.brand}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{product.brand}</TableCell>
                   <TableCell>
                     {product.price ? (
                       <span className="font-semibold">
@@ -1420,6 +1421,7 @@ const AdminInventario = () => {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Pagination */}
