@@ -27,12 +27,12 @@ const locations = [
 ];
 
 const sectors = [
-  { name: 'Industrial', href: '/catalogo?sector=industrial' },
-  { name: 'Minería', nameEn: 'Mining', href: '/catalogo?sector=mineria' },
-  { name: 'Construcción', nameEn: 'Construction', href: '/catalogo?sector=construccion' },
-  { name: 'Alimenticio', nameEn: 'Food Industry', href: '/catalogo?sector=alimenticio' },
-  { name: 'Eléctrico', nameEn: 'Electrical', href: '/catalogo?sector=electrico' },
-  { name: 'Agroindustria', nameEn: 'Agribusiness', href: '/catalogo?sector=agroindustria' },
+  { name: 'Industrial', href: '/catalogo-mi/industrial' },
+  { name: 'Minería', nameEn: 'Mining', href: '/catalogo-mi/mineria' },
+  { name: 'Construcción', nameEn: 'Construction', href: '/catalogo-mi/construccion' },
+  { name: 'Alimenticio', nameEn: 'Food Industry', href: '/catalogo-mi/alimenticio' },
+  { name: 'Eléctrico', nameEn: 'Electrical', href: '/catalogo-mi/electrico' },
+  { name: 'Agroindustria', nameEn: 'Agribusiness', href: '/catalogo-mi/agroindustria' },
 ];
 
 export const Footer = forwardRef<HTMLElement>((_, ref) => {
