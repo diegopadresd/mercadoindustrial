@@ -327,7 +327,7 @@ const AdminSoporte = () => {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <div className="text-sm">
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Calendar size={14} />
