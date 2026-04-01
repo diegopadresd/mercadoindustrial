@@ -414,6 +414,7 @@ const VentaExterna = () => {
                       auctionEnd={(product as any).auction_end}
                       contactForQuote={(product as any).contact_for_quote || false}
                       isExternal={true}
+                      slug={(product as any).slug}
                     />
                   ))}
                 </div>

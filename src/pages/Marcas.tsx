@@ -129,7 +129,7 @@ const Marcas = () => {
                   transition={{ delay: Math.min(index * 0.02, 0.5) }}
                 >
                   <Link
-                    to={`/catalogo-mi?marca=${encodeURIComponent(brand.name)}`}
+                    to={`/marca/${slugify(brand.name)}`}
                     className="group block bg-card rounded-2xl p-6 shadow-card hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/30"
                   >
                     <div className="aspect-[3/2] flex items-center justify-center mb-4 bg-gradient-to-br from-muted/50 to-muted rounded-xl p-6">

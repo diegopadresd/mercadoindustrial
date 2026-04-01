@@ -125,6 +125,7 @@ const Recientes = () => {
                   auctionMinPrice={product.auction_min_price}
                   auctionEnd={product.auction_end}
                   contactForQuote={product.contact_for_quote || false}
+                  slug={(product as any).slug}
                 />
               ))}
             </div>

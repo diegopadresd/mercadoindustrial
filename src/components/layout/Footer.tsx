@@ -47,7 +47,7 @@ export const Footer = forwardRef<HTMLElement>((_, ref) => {
     { name: 'Vende con Nosotros', href: '/como-vender' },
   ] : [
     { name: 'Home', href: '/' },
-    { name: 'Catalog', href: '/catalogo' },
+    { name: 'Catalog', href: '/catalogo-mi' },
     { name: 'Brands', href: '/marcas' },
     { name: 'Blog', href: '/blog' },
     { name: 'About Us', href: '/nosotros' },
