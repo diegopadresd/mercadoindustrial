@@ -390,7 +390,7 @@ const AdminFacturacion = () => {
                           ${Number(order.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {order.fiscal_document_url ? (
                           <Button 
                             variant="ghost" 
