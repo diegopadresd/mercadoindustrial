@@ -519,7 +519,7 @@ const AdminFacturacion = () => {
                       <TableCell>
                         {getStatusBadge(inv.status)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Calendar size={12} />
                           <span>{inv.issued_at ? new Date(inv.issued_at).toLocaleDateString('es-MX') : '-'}</span>

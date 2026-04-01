@@ -256,6 +256,7 @@ const AdminPreguntas = () => {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Answer Dialog */}

@@ -366,19 +366,19 @@ const AdminResumen = () => {
         {/* Date Range Filter */}
         <div className="flex flex-wrap items-center gap-3 bg-card p-3 rounded-xl border border-border/50">
           <Calendar size={18} className="text-muted-foreground" />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Input
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              className="w-36 h-9"
+              className="w-full sm:w-36 h-9"
             />
-            <span className="text-muted-foreground">a</span>
+            <span className="text-muted-foreground hidden sm:inline">a</span>
             <Input
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-              className="w-36 h-9"
+              className="w-full sm:w-36 h-9"
             />
           </div>
         </div>

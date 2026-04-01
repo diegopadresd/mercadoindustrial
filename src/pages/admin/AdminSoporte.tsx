@@ -350,6 +350,7 @@ const AdminSoporte = () => {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Ticket Detail Dialog */}

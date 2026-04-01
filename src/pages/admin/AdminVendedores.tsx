@@ -261,7 +261,7 @@ const AdminVendedores = () => {
                   </div>
 
                   {/* Quick stats */}
-                  <div className="flex items-center gap-6 text-sm">
+                  <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-6 text-sm">
                     <div className="text-center">
                       <p className="font-bold text-lg">{vendor.leads.total}</p>
                       <p className="text-xs text-muted-foreground">Leads</p>

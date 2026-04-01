@@ -1271,10 +1271,10 @@ const AdminInventario = () => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <span className="font-mono text-sm">{product.sku}</span>
                   </TableCell>
-                  <TableCell>{product.brand}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{product.brand}</TableCell>
                   <TableCell>
                     {product.price ? (
                       <span className="font-semibold">
