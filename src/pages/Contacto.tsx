@@ -74,6 +74,18 @@ const Contacto = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Sync form with profile when it loads asynchronously
+  useEffect(() => {
+    if (profile) {
+      setFormData(prev => ({
+        ...prev,
+        name: prev.name || profile.full_name || '',
+        email: prev.email || profile.email || '',
+        phone: prev.phone || profile.phone || '',
+      }));
+    }
+  }, [profile]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
