@@ -382,7 +382,7 @@ const AdminFacturacion = () => {
                           <p className="text-xs text-muted-foreground">{order.customer_email}</p>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <span className="font-mono text-sm">{order.rfc || '-'}</span>
                       </TableCell>
                       <TableCell>
