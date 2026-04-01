@@ -344,7 +344,7 @@ const AdminFacturacion = () => {
               <TableRow>
                 <TableHead>Pedido</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead>RFC</TableHead>
+                <TableHead className="hidden md:table-cell">RFC</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Constancia Fiscal</TableHead>
                 <TableHead>Estado Factura</TableHead>
