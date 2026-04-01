@@ -590,6 +590,7 @@ const AdminUsuarios = () => {
 
           {/* Users Table */}
           <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+            <div className="overflow-x-auto">
             {usersLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
