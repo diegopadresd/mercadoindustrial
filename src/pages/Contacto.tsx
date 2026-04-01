@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -73,6 +73,18 @@ const Contacto = () => {
     message: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Sync form with profile when it loads asynchronously
+  useEffect(() => {
+    if (profile) {
+      setFormData(prev => ({
+        ...prev,
+        name: prev.name || profile.full_name || '',
+        email: prev.email || profile.email || '',
+        phone: prev.phone || profile.phone || '',
+      }));
+    }
+  }, [profile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;

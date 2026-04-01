@@ -21,7 +21,7 @@ interface CatalogResult {
   count: number;
 }
 
-const CATALOG_COLUMNS = 'id,title,sku,brand,price,original_price,images,location,categories,is_new,is_featured,is_auction,auction_min_price,auction_end,contact_for_quote,created_at,updated_at,seller_id,is_active,slug' as const;
+const CATALOG_COLUMNS = 'id,title,sku,brand,price,original_price,images,location,categories,is_new,is_featured,is_auction,auction_min_price,auction_end,contact_for_quote,created_at,updated_at,seller_id,is_active,slug,description' as const;
 
 function buildCatalogQuery(options: CatalogOptions) {
   const { page, perPage, search, categories, brands, locations, sortBy, officialOnly } = options;

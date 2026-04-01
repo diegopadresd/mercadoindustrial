@@ -433,7 +433,7 @@ const Perfil = () => {
                             {offer.status === 'accepted' && offer.admin_notes && (
                               <div className="mt-3 p-3 bg-green-500/10 rounded-lg">
                                 <p className="text-sm text-green-600">{offer.admin_notes}</p>
-                                <Link to={`/checkout/oferta/${offer.id}`}>
+                                <Link to={`/checkout/contraoferta/${offer.id}`}>
                                   <Button size="sm" className="mt-2 bg-green-500 hover:bg-green-600">
                                     Proceder al checkout <ChevronRight size={16} />
                                   </Button>
