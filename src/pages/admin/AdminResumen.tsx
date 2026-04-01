@@ -348,7 +348,7 @@ const AdminResumen = () => {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-3xl font-display font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               {isVendedor && !isStaff ? 'Mi Panel' : 'Panel de Control'}
             </h1>
             <Badge variant="outline" className="text-xs">
