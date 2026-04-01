@@ -40,7 +40,7 @@ export const Footer = forwardRef<HTMLElement>((_, ref) => {
 
   const quickLinks = language === 'es' ? [
     { name: 'Inicio', href: '/' },
-    { name: 'Catálogo', href: '/catalogo' },
+    { name: 'Catálogo', href: '/catalogo-mi' },
     { name: 'Marcas', href: '/marcas' },
     { name: 'Blog', href: '/blog' },
     { name: 'Quiénes Somos', href: '/nosotros' },
