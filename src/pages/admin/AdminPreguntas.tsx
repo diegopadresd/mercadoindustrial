@@ -222,7 +222,7 @@ const AdminPreguntas = () => {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Calendar size={14} />
                       <span>{new Date(question.created_at).toLocaleDateString('es-MX')}</span>
