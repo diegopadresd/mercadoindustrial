@@ -59,6 +59,7 @@ export const ProductCard = ({
 }: ProductCardProps) => {
   const { addToCart, items } = useCart();
   const { formatPrice, t, language } = useLocale();
+  const { toggleCompare, isComparing, isFull } = useCompare();
   const navigate = useNavigate();
   const [cotizarOpen, setCotizarOpen] = useState(false);
 
