@@ -62,6 +62,8 @@ import { SellerProfileCard } from '@/components/product/SellerProfileCard';
 import { SellerReviews } from '@/components/product/SellerReviews';
 import { AuctionSection } from '@/components/product/AuctionSection';
 import { MakeOfferModal } from '@/components/product/MakeOfferModal';
+import { RecentlyViewed } from '@/components/product/RecentlyViewed';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 // Sanitize HTML to prevent XSS — strip script tags and on* event attributes
 const sanitizeHtml = (html: string): string => {
