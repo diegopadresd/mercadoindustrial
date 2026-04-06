@@ -475,7 +475,9 @@ const ProductoDetalle = () => {
                 <motion.img
                   key={currentImageIndex}
                   src={productData.images[currentImageIndex]}
-                  alt={productData.title}
+                  alt={`${productData.title} - ${productData.brand} | Mercado Industrial`}
+                  width={800}
+                  height={600}
                   className="w-full h-full object-cover"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
