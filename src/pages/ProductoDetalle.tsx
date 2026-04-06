@@ -62,6 +62,8 @@ import { SellerProfileCard } from '@/components/product/SellerProfileCard';
 import { SellerReviews } from '@/components/product/SellerReviews';
 import { AuctionSection } from '@/components/product/AuctionSection';
 import { MakeOfferModal } from '@/components/product/MakeOfferModal';
+import { RecentlyViewed } from '@/components/product/RecentlyViewed';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 // Sanitize HTML to prevent XSS — strip script tags and on* event attributes
 const sanitizeHtml = (html: string): string => {
@@ -200,6 +202,7 @@ const ProductoDetalle = () => {
   const { formatPrice } = useLocale();
   const createOffer = useCreateOffer();
   const queryClient = useQueryClient();
+  const { recentIds, addProduct } = useRecentlyViewed();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [newQuestion, setNewQuestion] = useState('');
@@ -218,11 +221,12 @@ const ProductoDetalle = () => {
   // Get product from static data as fallback
   const staticProduct = getProductById(id || '');
 
-  // Fire-and-forget view increment (works for all visitors, no auth required)
+  // Fire-and-forget view increment + track recently viewed
   useEffect(() => {
     if (!id) return;
     supabase.rpc('increment_product_view', { _product_id: id });
-  }, [id]);
+    addProduct(id);
+  }, [id, addProduct]);
 
   // Fetch product-specific questions from Supabase
   const { data: productQuestions = [] } = useQuery({
@@ -1015,6 +1019,8 @@ const ProductoDetalle = () => {
             />
           </div>
         </motion.section>
+        {/* Recently Viewed */}
+        <RecentlyViewed productIds={recentIds} currentProductId={id || ''} />
       </main>
       
       <Footer />

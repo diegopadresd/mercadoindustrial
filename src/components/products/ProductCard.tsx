@@ -11,7 +11,9 @@ import {
 } from '@/components/ui/dialog';
 import { useCart } from '@/contexts/CartContext';
 import { useLocale } from '@/contexts/LocaleContext';
+import { useCompare } from '@/contexts/CompareContext';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { generateProductUrl } from '@/lib/slugify';
 
 export interface ProductCardProps {
@@ -57,6 +59,7 @@ export const ProductCard = ({
 }: ProductCardProps) => {
   const { addToCart, items } = useCart();
   const { formatPrice, t, language } = useLocale();
+  const { toggleCompare, isComparing, isFull } = useCompare();
   const navigate = useNavigate();
   const [cotizarOpen, setCotizarOpen] = useState(false);
 
@@ -284,13 +287,27 @@ export const ProductCard = ({
             )}
           </div>
 
-          {/* Location */}
-          {location && (
-            <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground">
-              <MapPin size={12} />
-              <span>{location}</span>
-            </div>
-          )}
+          {/* Location + Compare */}
+          <div className="flex items-center justify-between mt-3">
+            {location && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin size={12} />
+                <span>{location}</span>
+              </div>
+            )}
+            <label
+              className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer ml-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <Checkbox
+                checked={isComparing(id)}
+                onCheckedChange={() => toggleCompare(id)}
+                disabled={!isComparing(id) && isFull}
+                className="h-3.5 w-3.5"
+              />
+              <span>Comparar</span>
+            </label>
+          </div>
         </div>
       </motion.div>
 

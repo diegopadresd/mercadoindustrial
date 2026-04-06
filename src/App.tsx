@@ -8,8 +8,12 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { LocaleProvider } from "@/contexts/LocaleContext";
+import { CompareProvider } from "@/contexts/CompareContext";
 import WelcomeAnnouncementOverlay from "./components/WelcomeAnnouncementOverlay";
 import { FloatingCart } from "./components/FloatingCart";
+import { CompareBar } from "./components/compare/CompareBar";
+import { BackToTop } from "./components/layout/BackToTop";
+import { ChatWidget } from "./components/layout/ChatWidget";
 
 import Index from "./pages/Index";
 import Catalogo from "./pages/Catalogo";
@@ -52,6 +56,7 @@ import ActivarVendedor from "./pages/mi-cuenta/ActivarVendedor";
 import PublicarProducto from "./pages/mi-cuenta/PublicarProducto";
 import MarcaDetalle from "./pages/MarcaDetalle";
 import EtiquetaDetalle from "./pages/EtiquetaDetalle";
+import Comparar from "./pages/Comparar";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +66,7 @@ const App = () => (
     <LocaleProvider>
       <AuthProvider>
         <CartProvider>
+          <CompareProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -68,6 +74,9 @@ const App = () => (
               <ScrollToTop />
               <WelcomeAnnouncementOverlay />
               <FloatingCart />
+              <CompareBar />
+              <BackToTop />
+              <ChatWidget />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/catalogo-mi" element={<Catalogo />} />
@@ -113,6 +122,7 @@ const App = () => (
                 {/* Brand & Tag listing pages */}
                 <Route path="/marca/:slug" element={<MarcaDetalle />} />
                 <Route path="/etiqueta/:slug" element={<EtiquetaDetalle />} />
+                <Route path="/comparar" element={<Comparar />} />
                 {/* Admin Panel */}
                 <Route path="/admin/*" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
@@ -120,6 +130,7 @@ const App = () => (
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
+          </CompareProvider>
         </CartProvider>
       </AuthProvider>
     </LocaleProvider>
