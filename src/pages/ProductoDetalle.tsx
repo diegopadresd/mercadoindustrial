@@ -1019,6 +1019,8 @@ const ProductoDetalle = () => {
             />
           </div>
         </motion.section>
+        {/* Recently Viewed */}
+        <RecentlyViewed productIds={recentIds} currentProductId={id || ''} />
       </main>
       
       <Footer />

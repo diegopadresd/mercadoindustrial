@@ -287,13 +287,27 @@ export const ProductCard = ({
             )}
           </div>
 
-          {/* Location */}
-          {location && (
-            <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground">
-              <MapPin size={12} />
-              <span>{location}</span>
-            </div>
-          )}
+          {/* Location + Compare */}
+          <div className="flex items-center justify-between mt-3">
+            {location && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin size={12} />
+                <span>{location}</span>
+              </div>
+            )}
+            <label
+              className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer ml-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <Checkbox
+                checked={isComparing(id)}
+                onCheckedChange={() => toggleCompare(id)}
+                disabled={!isComparing(id) && isFull}
+                className="h-3.5 w-3.5"
+              />
+              <span>Comparar</span>
+            </label>
+          </div>
         </div>
       </motion.div>
 
