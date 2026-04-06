@@ -8,8 +8,12 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { LocaleProvider } from "@/contexts/LocaleContext";
+import { CompareProvider } from "@/contexts/CompareContext";
 import WelcomeAnnouncementOverlay from "./components/WelcomeAnnouncementOverlay";
 import { FloatingCart } from "./components/FloatingCart";
+import { CompareBar } from "./components/compare/CompareBar";
+import { BackToTop } from "./components/layout/BackToTop";
+import { ChatWidget } from "./components/layout/ChatWidget";
 
 import Index from "./pages/Index";
 import Catalogo from "./pages/Catalogo";
