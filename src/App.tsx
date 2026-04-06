@@ -56,6 +56,7 @@ import ActivarVendedor from "./pages/mi-cuenta/ActivarVendedor";
 import PublicarProducto from "./pages/mi-cuenta/PublicarProducto";
 import MarcaDetalle from "./pages/MarcaDetalle";
 import EtiquetaDetalle from "./pages/EtiquetaDetalle";
+import Comparar from "./pages/Comparar";
 
 const queryClient = new QueryClient();
 
