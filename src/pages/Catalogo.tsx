@@ -24,6 +24,14 @@ import { Filter, X, RotateCcw, Loader2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useBrands, useCategories } from '@/hooks/useProducts';
 import { useCatalogProducts } from '@/hooks/useCatalogProducts';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 // Mapeo de slugs URL a nombres de categorías
 const categorySlugMap: Record<string, string> = {
@@ -156,17 +164,16 @@ const FilterSidebar = ({
   <div className="space-y-6">
     <div className="flex items-center justify-between">
       <h3 className="font-display font-bold text-lg">Filtros</h3>
-      {hasActiveFilters && (
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={clearFilters}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <RotateCcw size={14} className="mr-1" />
-          Limpiar
-        </Button>
-      )}
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={clearFilters}
+        disabled={!hasActiveFilters}
+        className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+      >
+        <RotateCcw size={14} className="mr-1" />
+        Limpiar filtros
+      </Button>
     </div>
 
     <Accordion type="multiple" defaultValue={['sector', 'categoria', 'marca', 'sucursal']} className="space-y-2">
@@ -466,13 +473,59 @@ const Catalogo = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          {slugFilter && (
-            <nav className="text-sm text-muted-foreground mb-3 flex items-center gap-1">
-              <Link to="/catalogo-mi" className="hover:text-primary transition-colors">Catálogo</Link>
-              <span>/</span>
-              <span className="text-foreground font-medium">{pageTitle}</span>
-            </nav>
-          )}
+          <nav className="text-sm text-muted-foreground mb-3">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to="/">Inicio</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                {slugFilter ? (
+                  <>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to="/catalogo-mi">Catálogo</Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </>
+                ) : selectedSectors.length > 0 || selectedCategories.length > 0 ? (
+                  <>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to="/catalogo-mi">Catálogo</Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    {selectedSectors.length > 0 && (
+                      <>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                          <BreadcrumbPage>{selectedSectors[0]}</BreadcrumbPage>
+                        </BreadcrumbItem>
+                      </>
+                    )}
+                    {selectedCategories.length > 0 && (
+                      <>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                          <BreadcrumbPage>{selectedCategories[0]}</BreadcrumbPage>
+                        </BreadcrumbItem>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Catálogo</BreadcrumbPage>
+                  </BreadcrumbItem>
+                )}
+              </BreadcrumbList>
+            </Breadcrumb>
+          </nav>
           <h1 className="section-title text-4xl mb-2">{pageTitle}</h1>
           <p className="text-muted-foreground">
             {slugFilter
@@ -590,12 +643,15 @@ const Catalogo = () => {
                     </button>
                   </span>
                 )}
-                <button 
+                <Button 
+                  variant="outline"
+                  size="sm"
                   onClick={clearFilters}
-                  className="text-sm text-muted-foreground hover:text-foreground underline"
+                  className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
                 >
+                  <RotateCcw size={14} className="mr-1" />
                   Limpiar todos
-                </button>
+                </Button>
               </div>
             )}
 
