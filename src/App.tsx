@@ -124,6 +124,7 @@ const App = () => (
                 <Route path="/marca/:slug" element={<MarcaDetalle />} />
                 <Route path="/etiqueta/:slug" element={<EtiquetaDetalle />} />
                 <Route path="/comparar" element={<Comparar />} />
+                <Route path="/favoritos" element={<Favoritos />} />
                 {/* Admin Panel */}
                 <Route path="/admin/*" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
