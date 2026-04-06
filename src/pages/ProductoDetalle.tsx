@@ -221,11 +221,12 @@ const ProductoDetalle = () => {
   // Get product from static data as fallback
   const staticProduct = getProductById(id || '');
 
-  // Fire-and-forget view increment (works for all visitors, no auth required)
+  // Fire-and-forget view increment + track recently viewed
   useEffect(() => {
     if (!id) return;
     supabase.rpc('increment_product_view', { _product_id: id });
-  }, [id]);
+    addProduct(id);
+  }, [id, addProduct]);
 
   // Fetch product-specific questions from Supabase
   const { data: productQuestions = [] } = useQuery({
