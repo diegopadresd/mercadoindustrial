@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut, Package, ShoppingBag, MessageSquare, Store, Globe, DollarSign } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut, Package, ShoppingBag, MessageSquare, Store, Globe, DollarSign, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
