@@ -393,10 +393,16 @@ const Auth = () => {
                           placeholder="tu@email.com"
                           value={registerData.email}
                           onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                          className="pl-10"
+                          onBlur={() => setEmailTouched(true)}
+                          className={`pl-10 ${emailError ? 'border-destructive' : ''}`}
                           required
                         />
                       </div>
+                      {emailError && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <X size={14} /> Ingresa un correo electrónico válido
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -413,6 +419,19 @@ const Auth = () => {
                           required
                         />
                       </div>
+                      {password.length > 0 && (
+                        <ul className="space-y-1 text-sm mt-1">
+                          <li className={`flex items-center gap-1 ${pwHasLength ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                            {pwHasLength ? <Check size={14} /> : <X size={14} />} Mínimo 8 caracteres
+                          </li>
+                          <li className={`flex items-center gap-1 ${pwHasUpper ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                            {pwHasUpper ? <Check size={14} /> : <X size={14} />} Al menos 1 letra mayúscula
+                          </li>
+                          <li className={`flex items-center gap-1 ${pwHasNumber ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                            {pwHasNumber ? <Check size={14} /> : <X size={14} />} Al menos 1 número
+                          </li>
+                        </ul>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -423,8 +442,19 @@ const Auth = () => {
                         placeholder="••••••••"
                         value={registerData.confirmPassword}
                         onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                        className={confirmError ? 'border-destructive' : ''}
                         required
                       />
+                      {confirmError && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <X size={14} /> Las contraseñas no coinciden
+                        </p>
+                      )}
+                      {confirmMatch && (
+                        <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <Check size={14} /> Las contraseñas coinciden
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
