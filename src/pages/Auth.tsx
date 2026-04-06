@@ -23,7 +23,9 @@ import {
   EyeOff,
   Loader2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Check,
+  X
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -56,6 +58,25 @@ const Auth = () => {
     rfc: '',
   });
   const [fiscalDocument, setFiscalDocument] = useState<File | null>(null);
+  const [emailTouched, setEmailTouched] = useState(false);
+
+  // Real-time password validation
+  const password = registerData.password;
+  const confirmPassword = registerData.confirmPassword;
+  const pwHasLength = password.length >= 8;
+  const pwHasUpper = /[A-Z]/.test(password);
+  const pwHasNumber = /[0-9]/.test(password);
+  const pwAllValid = pwHasLength && pwHasUpper && pwHasNumber;
+  const confirmMatch = confirmPassword.length > 0 && password === confirmPassword;
+  const confirmError = confirmPassword.length > 0 && password !== confirmPassword;
+
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailValid = emailRegex.test(registerData.email);
+  const emailError = emailTouched && registerData.email.length > 0 && !emailValid;
+
+  // Overall form validity for disabling submit
+  const registerFormValid = pwAllValid && confirmMatch && emailValid && registerData.fullName.trim().length > 0;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,10 +123,10 @@ const Auth = () => {
       return;
     }
 
-    if (registerData.password.length < 6) {
+    if (!pwAllValid) {
       toast({
         title: 'Error',
-        description: 'La contraseña debe tener al menos 6 caracteres',
+        description: 'La contraseña debe tener al menos 8 caracteres, 1 mayúscula y 1 número',
         variant: 'destructive',
       });
       setIsLoading(false);
@@ -372,10 +393,16 @@ const Auth = () => {
                           placeholder="tu@email.com"
                           value={registerData.email}
                           onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                          className="pl-10"
+                          onBlur={() => setEmailTouched(true)}
+                          className={`pl-10 ${emailError ? 'border-destructive' : ''}`}
                           required
                         />
                       </div>
+                      {emailError && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <X size={14} /> Ingresa un correo electrónico válido
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -392,6 +419,19 @@ const Auth = () => {
                           required
                         />
                       </div>
+                      {password.length > 0 && (
+                        <ul className="space-y-1 text-sm mt-1">
+                          <li className={`flex items-center gap-1 ${pwHasLength ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                            {pwHasLength ? <Check size={14} /> : <X size={14} />} Mínimo 8 caracteres
+                          </li>
+                          <li className={`flex items-center gap-1 ${pwHasUpper ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                            {pwHasUpper ? <Check size={14} /> : <X size={14} />} Al menos 1 letra mayúscula
+                          </li>
+                          <li className={`flex items-center gap-1 ${pwHasNumber ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                            {pwHasNumber ? <Check size={14} /> : <X size={14} />} Al menos 1 número
+                          </li>
+                        </ul>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -402,8 +442,19 @@ const Auth = () => {
                         placeholder="••••••••"
                         value={registerData.confirmPassword}
                         onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                        className={confirmError ? 'border-destructive' : ''}
                         required
                       />
+                      {confirmError && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <X size={14} /> Las contraseñas no coinciden
+                        </p>
+                      )}
+                      {confirmMatch && (
+                        <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <Check size={14} /> Las contraseñas coinciden
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
@@ -511,7 +562,7 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full btn-gold" disabled={isLoading}>
+                  <Button type="submit" className="w-full btn-gold" disabled={isLoading || !registerFormValid}>
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
