@@ -23,7 +23,9 @@ import {
   EyeOff,
   Loader2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Check,
+  X
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
