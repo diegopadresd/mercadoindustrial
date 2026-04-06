@@ -130,6 +130,7 @@ const App = () => (
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
+          </CompareProvider>
         </CartProvider>
       </AuthProvider>
     </LocaleProvider>
