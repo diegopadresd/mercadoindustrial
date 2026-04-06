@@ -75,7 +75,7 @@ serve(async (req) => {
       // Handle offer checkout (order already created)
       const { items, orderId, payer } = body;
       
-      const origin = req.headers.get('origin') || 'https://mercadoindustrial.lovable.app';
+      const origin = req.headers.get('origin') || 'https://mercado.alcance.co';
       
       const mpItems = items.map((item: any) => ({
         id: item.id,
