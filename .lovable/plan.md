@@ -1,24 +1,59 @@
 
 
-## Fix Homepage: Empty Products Section + Zero Count Badge
+## Audit of the 4 Requested Items
 
-### Problem 1: "Equipos disponibles" shows empty
-`ProductsSection.tsx` line 27: the "Destacados" tab filters `.eq('is_featured', true)` combined with `.is('seller_id', null)`. If zero MI-official products have `is_featured = true`, the query returns empty → "No hay productos disponibles."
+### 1. Homepage Search Bar — WORKS, but not "real-time"
+The Header search bar navigates to `/catalogo-mi?q={query}` on Enter press. The Catalogo page reads the `q` param and passes it to `useCatalogProducts`, which filters by `title.ilike`, `sku.ilike`, `brand.ilike`, `description.ilike`. This works correctly as a navigate-on-enter flow. It is **not** a real-time filter on the homepage itself (it redirects to the catalog). No code fix needed here — this is working as designed.
 
-**Fix:** Remove the `is_featured` filter for the "Destacados" tab. Instead, order by `is_featured DESC, created_at DESC` so featured products appear first but the grid is never empty. Also increase limit from 6 to 12.
+### 2. Product Detail Page — WORKS
+Route `/productos/:id` exists in App.tsx, loads `ProductoDetalle` which fetches from DB via `useProduct(id)`. It renders images (with carousel + zoom), description (expandable HTML), specifications, price, stock, "Cotizar" button, "Agregar al Carrito" button, questions section, seller profile card, and reviews. The page is fully built and functional. If the user sees it "not loading," it would be a data issue (product ID not found), not a code issue.
 
-### Problem 2: Hero badge shows "+0 productos disponibles"
-`HeroSection.tsx` line 66: the brands query `select('brand').eq('is_active', true)` hits the default 1000-row Supabase limit, returning only 1000 of 12,829 rows. This causes the unique brands count to be wrong. More critically, the product count query may be failing or returning null.
+### 3. Carousel Pagination (FeaturedMachinery) — WORKS
+Uses Embla Carousel with `loop: true`, `scrollPrev()`, and `scrollNext()` callbacks. The buttons are properly wired. No code fix needed.
 
-**Fix:** Replace both queries with efficient approaches:
-- Product count: use `select('id', { count: 'exact', head: true })` instead of `select('*', ...)`
-- Brands count: use the existing `get_brand_counts` RPC function (already in DB), then just count the returned rows
+### 4. Registration Validation — NEEDS IMPROVEMENT
+Current validation is minimal:
+- Password match check ✓ (but only on submit via toast, not real-time)
+- Min length: **6 chars** (should be 8)
+- No uppercase requirement
+- No number requirement
+- No real-time inline feedback (all errors shown as toasts after submit)
+- Email validated only by HTML `type="email"` — no custom regex
+
+**This is the only item that needs actual code changes.**
+
+---
+
+## Plan: Enhance Registration Validation
+
+Add real-time inline validation to the registration form in `Auth.tsx`:
+
+1. Add a `validationErrors` state object tracking per-field errors
+2. Add a `validate` helper that runs on every keystroke (`onChange`) for the password/confirm fields
+3. Password requirements: min 8 chars, at least 1 uppercase letter, at least 1 number
+4. Show a password strength indicator below the password field (colored bars + requirement checklist)
+5. Show inline error text (red) below confirm password when it doesn't match
+6. Email: add regex validation on blur showing inline error
+7. Block submit if any validation errors exist (disable button)
+
+### Technical details
+
+**Single file change:** `src/pages/Auth.tsx`
+
+- Add `passwordErrors` computed from `registerData.password`:
+  - `length`: `password.length >= 8`
+  - `uppercase`: `/[A-Z]/.test(password)`
+  - `number`: `/[0-9]/.test(password)`
+- Render a checklist below password input showing ✓/✗ for each requirement with green/red colors
+- Add `confirmError` shown when `confirmPassword` is non-empty and doesn't match
+- Add `emailError` shown on blur when email doesn't match a basic email regex
+- Change min password check from 6 to 8 in `handleRegister`
+- Disable submit button when requirements aren't met
+
+No database or migration changes needed.
 
 ### Files to change
 ```
-src/components/home/ProductsSection.tsx  → fix Destacados query, increase limit to 12
-src/components/home/HeroSection.tsx      → fix stats queries to use RPC + proper count
+src/pages/Auth.tsx  → add real-time validation UI + stricter password rules
 ```
-
-No DB changes needed.
 
