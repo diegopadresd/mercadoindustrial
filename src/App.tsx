@@ -74,6 +74,9 @@ const App = () => (
               <ScrollToTop />
               <WelcomeAnnouncementOverlay />
               <FloatingCart />
+              <CompareBar />
+              <BackToTop />
+              <ChatWidget />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/catalogo-mi" element={<Catalogo />} />
