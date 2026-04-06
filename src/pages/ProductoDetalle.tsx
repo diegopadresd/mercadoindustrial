@@ -571,7 +571,7 @@ const ProductoDetalle = () => {
                     index === currentImageIndex ? 'border-primary' : 'border-transparent hover:border-muted-foreground/50'
                   }`}
                 >
-                  <img src={image} alt="" className="w-full h-full object-cover" />
+                  <img src={image} alt={`${productData.title} - imagen ${index + 1}`} width={80} height={80} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

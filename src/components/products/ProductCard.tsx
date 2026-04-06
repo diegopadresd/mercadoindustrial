@@ -109,7 +109,9 @@ export const ProductCard = ({
         <Link to={productUrl} className="block relative aspect-[4/3] overflow-hidden">
           <img
             src={imgError ? '/placeholder.svg' : image}
-            alt={title}
+            alt={`${title} - ${brand} | Mercado Industrial`}
+            width={400}
+            height={300}
             loading="lazy"
             decoding="async"
             onError={() => setImgError(true)}
