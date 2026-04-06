@@ -19,16 +19,14 @@ export const ProductsSection = () => {
         .from('products')
         .select('id, title, sku, brand, images, location, is_featured, is_new, created_at, seller_id, slug')
         .eq('is_active', true)
-        .is('seller_id', null) // Only official Mercado Industrial products
-        .limit(6);
+        .is('seller_id', null)
+        .limit(12);
       
-      // Apply different ordering based on tab
       if (activeTab === 'Destacados') {
-        query = query.eq('is_featured', true).order('created_at', { ascending: false });
+        query = query.order('is_featured', { ascending: false }).order('created_at', { ascending: false });
       } else if (activeTab === 'Recientes') {
         query = query.order('created_at', { ascending: false });
       } else {
-      // "Más vistos" - order by real view_count
         query = query.order('view_count', { ascending: false });
       }
       
