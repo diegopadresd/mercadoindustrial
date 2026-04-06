@@ -57,6 +57,7 @@ import PublicarProducto from "./pages/mi-cuenta/PublicarProducto";
 import MarcaDetalle from "./pages/MarcaDetalle";
 import EtiquetaDetalle from "./pages/EtiquetaDetalle";
 import Comparar from "./pages/Comparar";
+import Favoritos from "./pages/Favoritos";
 
 const queryClient = new QueryClient();
 
