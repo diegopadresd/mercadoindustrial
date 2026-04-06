@@ -62,13 +62,12 @@ export const HeroSection = () => {
     queryKey: ['hero-stats'],
     queryFn: async () => {
       const [productsRes, brandsRes] = await Promise.all([
-        supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('products').select('brand').eq('is_active', true),
+        supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.rpc('get_brand_counts'),
       ]);
-      const uniqueBrands = new Set(brandsRes.data?.map(p => p.brand?.toUpperCase().trim()).filter(Boolean));
       return {
         products: productsRes.count || 0,
-        brands: uniqueBrands.size,
+        brands: brandsRes.data?.length || 0,
         locations: 5,
       };
     },
