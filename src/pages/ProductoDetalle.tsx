@@ -202,6 +202,7 @@ const ProductoDetalle = () => {
   const { formatPrice } = useLocale();
   const createOffer = useCreateOffer();
   const queryClient = useQueryClient();
+  const { recentIds, addProduct } = useRecentlyViewed();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [newQuestion, setNewQuestion] = useState('');
