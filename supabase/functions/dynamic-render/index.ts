@@ -12,7 +12,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  * Bots get the meta tags they need; human visitors are redirected to the SPA.
  */
 
-const SITE_URL = "https://mercadoindustrial.lovable.app";
+const SITE_URL = "https://mercado.alcance.co";
 const DEFAULT_IMAGE = "https://storage.googleapis.com/gpt-engineer-file-uploads/lbsCK7F3QIUlTDY2mHIEsgcYAFj1/social-images/social-1770061755213-image.webp";
 const SITE_NAME = "Mercado Industrial";
 

@@ -10,7 +10,7 @@ import { HowToBuySection } from '@/components/home/HowToBuySection';
 import { CTASection } from '@/components/home/CTASection';
 import { ContactSection } from '@/components/home/ContactSection';
 
-const SITE_URL = 'https://mercadoindustrial.com.mx';
+const SITE_URL = 'https://mercado.alcance.co';
 
 const organizationJsonLd = {
   '@context': 'https://schema.org',

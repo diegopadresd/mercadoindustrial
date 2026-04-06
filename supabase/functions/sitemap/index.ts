@@ -6,7 +6,7 @@ const corsHeaders = {
   "Content-Type": "application/xml; charset=utf-8",
 };
 
-const SITE_URL = "https://mercadoindustrial.lovable.app";
+const SITE_URL = "https://mercado.alcance.co";
 
 function slugify(text: string, maxLength = 80): string {
   return text
