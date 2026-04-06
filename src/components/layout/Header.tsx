@@ -312,6 +312,13 @@ export const Header = () => {
                           {t('account.chats')}
                         </Link>
                         <Link
+                          to="/favoritos"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
+                        >
+                          <Heart size={16} />
+                          Favoritos
+                        <Link
                           to={isVendedor ? "/mi-cuenta/publicar" : "/mi-cuenta/vender"}
                           onClick={() => setUserMenuOpen(false)}
                           className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors text-primary"
