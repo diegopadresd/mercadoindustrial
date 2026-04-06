@@ -1,57 +1,71 @@
 
 
-## Audit of 8 Requests
+## SEO Infrastructure Fix — Make the Site Visible to Google
 
-### 1. Mobile navigation menu — ALREADY WORKING
-The hamburger menu uses `Sheet` (right-side drawer) with all nav items, search, auth buttons, Marketplace/Subastas links, currency toggle, and seller/admin links. Fully functional.
+### Problem
+The site is invisible to search engines due to 4 infrastructure-level issues:
+1. **Sitemap URLs point to `mercadoindustrial.lovable.app`** instead of `mercado.alcance.co`
+2. **Canonical tags and OG URLs point to wrong domains** (`mercadoindustrial.lovable.app` or `mercadoindustrial.com.mx`)
+3. **robots.txt sitemap URL points to raw Supabase function** instead of `/sitemap.xml`
+4. **No `/sitemap.xml` path** — returns 404 on the live domain
 
-### 2. Add to Cart from product cards — ALREADY WORKING
-`ProductCard.tsx` already has `handleAddToCart` with a "Carrito" / "Agregar al carrito" button on every card. Stock validation included.
+### Solution: Single Source of Truth for Domain
 
-### 3. Comprar/Vender CTAs more visually distinct — NEEDS IMPROVEMENT
-The hero CTA buttons in `HeroSection.tsx` need to be reviewed for visual prominence. The nav bar already has bold gradient Marketplace/Subastas buttons, but the homepage hero CTAs should be the most clickable elements.
-
-### 4. Toast notifications — ALREADY WORKING
-The app uses both `sonner` and `useToast` throughout. Add to cart shows "Producto agregado", contact form shows success/error, auth shows validation toasts. Fully implemented.
-
-### 5. Sector dropdown functional — ALREADY WORKING
-Header lines 198-237: the "Todos los sectores" dropdown opens, lists all 6 sectors, and when a sector is selected + search submitted, it passes `?sector=` to the catalog page. Functional.
-
-### 6. Pagination controls — ALREADY WORKING
-`Catalogo.tsx` lines 703-747: shows numbered page buttons (up to 5 with smart windowing), "Anterior"/"Siguiente" buttons, current page highlighted with `btn-gold`. Fully implemented.
-
-### 7. Broken product images / placeholder — NEEDS IMPROVEMENT
-`ProductCard.tsx` line 107-113: the `<img>` has no `onError` fallback. If the image URL is broken, it shows a broken image icon. Should add an `onError` handler that swaps to a placeholder.
-
-### 8. Favorites / Wishlist — NEEDS NEW FEATURE
-No wishlist functionality exists. Requires a new DB table + context + heart icon on product cards.
+Define `SITE_URL = "https://mercado.alcance.co"` everywhere. Fix the sitemap path. All changes are string replacements — no logic changes.
 
 ---
 
-## Plan: 3 Items Need Changes
+### Fix 1: Sitemap edge function — wrong domain
+**File:** `supabase/functions/sitemap/index.ts`
+- Change `SITE_URL` from `"https://mercadoindustrial.lovable.app"` → `"https://mercado.alcance.co"`
 
-### Fix A: Hero CTAs more prominent
-Read `HeroSection.tsx` to identify current CTA styling and make "Comprar Maquinaria" and "Vender Maquinaria" buttons larger, with stronger contrast, animation, and shadow. Make them the most visually dominant interactive elements on the page.
+### Fix 2: Dynamic render edge function — wrong domain
+**File:** `supabase/functions/dynamic-render/index.ts`
+- Change `SITE_URL` from `"https://mercadoindustrial.lovable.app"` → `"https://mercado.alcance.co"`
 
-### Fix B: Product image fallback
-Add `onError` handler to `ProductCard.tsx` `<img>` that sets `src` to a placeholder. Also add the same to other places images render (FeaturedMachinery, etc.).
+### Fix 3: Product detail page — wrong domain for canonicals/OG
+**File:** `src/pages/ProductoDetalle.tsx`
+- Change `SITE_URL` from `"https://mercadoindustrial.lovable.app"` → `"https://mercado.alcance.co"`
 
-### Fix C: Favorites / Wishlist
-1. Create `favorites` DB table (`id`, `user_id`, `product_id`, `created_at`) with RLS policies
-2. Create `useFavorites` hook for CRUD + optimistic updates
-3. Add heart icon toggle to `ProductCard.tsx`
-4. Create a `/favoritos` page listing saved products
-5. Add route in `App.tsx` and link in user menu
+### Fix 4: Homepage JSON-LD — wrong domain
+**File:** `src/pages/Index.tsx`
+- Change `SITE_URL` from `"https://mercadoindustrial.com.mx"` → `"https://mercado.alcance.co"`
+
+### Fix 5: index.html — hardcoded OG/Twitter meta with no canonical
+**File:** `index.html`
+- Add `<link rel="canonical" href="https://mercado.alcance.co/" />`
+- Update `og:url` to `https://mercado.alcance.co/`
+
+### Fix 6: robots.txt — sitemap URL
+**File:** `public/robots.txt`
+- Change sitemap URL from raw Supabase function URL → `https://mercado.alcance.co/sitemap.xml`
+- Note: `/sitemap.xml` will need a redirect or proxy to the edge function. Since Lovable hosting doesn't support redirects, the sitemap edge function path can be kept but referenced via the domain. Alternative: keep pointing to the edge function but use the production domain proxy.
+
+Actually, since Lovable SPA hosting serves `index.html` for unknown paths (no server-side routing), `/sitemap.xml` will return the SPA HTML, not XML. The sitemap must remain hosted on the edge function. The robots.txt should point to the full edge function URL, but proxied through the domain if Cloudflare is in front.
+
+**Revised approach for robots.txt:** Point to `https://mercado.alcance.co/functions/v1/sitemap` — if Cloudflare proxies to the Supabase functions. Otherwise keep the direct Supabase URL but ensure it returns `mercado.alcance.co` URLs in the XML body.
+
+The critical fix is that the **sitemap XML content** uses the correct domain. The robots.txt sitemap URL can remain the Supabase function URL since Google just needs to fetch it — what matters is the URLs inside the XML.
+
+### Fix 7: MercadoPago function — wrong fallback domain
+**File:** `supabase/functions/mercadopago-create-preference/index.ts`
+- Change fallback origin from `mercadoindustrial.lovable.app` → `mercado.alcance.co` (2 occurrences)
+
+### Fix 8: Sharing utility — uses VITE_SUPABASE_URL
+**File:** `src/lib/sharing.ts`
+- This is fine as-is (uses edge function URL for social bot rendering). No change needed.
+
+---
 
 ### Files to change
 ```
-src/components/home/HeroSection.tsx       → Fix A: larger, bolder CTA buttons
-src/components/products/ProductCard.tsx   → Fix B: image onError fallback + Fix C: heart icon
-src/hooks/useFavorites.ts                 → Fix C: new hook
-src/pages/Favoritos.tsx                   → Fix C: new page
-src/App.tsx                               → Fix C: add /favoritos route
-src/components/layout/Header.tsx          → Fix C: add Favoritos to user menu (desktop + mobile)
+supabase/functions/sitemap/index.ts                    → SITE_URL → mercado.alcance.co
+supabase/functions/dynamic-render/index.ts             → SITE_URL → mercado.alcance.co
+src/pages/ProductoDetalle.tsx                          → SITE_URL → mercado.alcance.co
+src/pages/Index.tsx                                    → SITE_URL → mercado.alcance.co
+index.html                                             → add canonical, fix og:url
+supabase/functions/mercadopago-create-preference/index.ts → fallback origin
 ```
 
-DB migration needed: `favorites` table with RLS for authenticated users.
+No database or migration changes needed. Backend edge functions deploy automatically.
 
