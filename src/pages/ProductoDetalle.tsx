@@ -475,7 +475,9 @@ const ProductoDetalle = () => {
                 <motion.img
                   key={currentImageIndex}
                   src={productData.images[currentImageIndex]}
-                  alt={productData.title}
+                  alt={`${productData.title} - ${productData.brand} | Mercado Industrial`}
+                  width={800}
+                  height={600}
                   className="w-full h-full object-cover"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -539,7 +541,7 @@ const ProductoDetalle = () => {
                   <motion.img
                     key={currentImageIndex}
                     src={productData.images[currentImageIndex]}
-                    alt={productData.title}
+                    alt={`${productData.title} - ${productData.brand} | Mercado Industrial`}
                     className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -569,7 +571,7 @@ const ProductoDetalle = () => {
                     index === currentImageIndex ? 'border-primary' : 'border-transparent hover:border-muted-foreground/50'
                   }`}
                 >
-                  <img src={image} alt="" className="w-full h-full object-cover" />
+                  <img src={image} alt={`${productData.title} - imagen ${index + 1}`} width={80} height={80} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

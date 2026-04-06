@@ -102,7 +102,10 @@ export const FeaturedMachinery = () => {
                         {product.images?.[0] ? (
                           <img
                             src={product.images[0]}
-                            alt={product.title}
+                            alt={`${product.title} - ${product.brand}`}
+                            width={320}
+                            height={160}
+                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         ) : (
