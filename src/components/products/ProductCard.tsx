@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, MapPin, Gavel, Timer, Store, DollarSign, FileText, Truck, X } from 'lucide-react';
+import { ShoppingCart, MapPin, Gavel, Timer, Store, DollarSign, FileText, Truck, X, Heart } from 'lucide-react';
+import { useFavorites } from '@/hooks/useFavorites';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -60,8 +61,10 @@ export const ProductCard = ({
   const { addToCart, items } = useCart();
   const { formatPrice, t, language } = useLocale();
   const { toggleCompare, isComparing, isFull } = useCompare();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const [cotizarOpen, setCotizarOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const cartItem = items.find(item => item.productId === id);
   const currentQtyInCart = cartItem?.quantity ?? 0;
@@ -105,10 +108,11 @@ export const ProductCard = ({
         {/* Image Container */}
         <Link to={productUrl} className="block relative aspect-[4/3] overflow-hidden">
           <img
-            src={image}
+            src={imgError ? '/placeholder.svg' : image}
             alt={title}
             loading="lazy"
             decoding="async"
+            onError={() => setImgError(true)}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -156,6 +160,21 @@ export const ProductCard = ({
               MERCADO INDUSTRIAL
             </span>
           </div>
+
+          {/* Favorite Heart */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleFavorite(id);
+            }}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors z-10"
+          >
+            <Heart
+              size={16}
+              className={isFavorite(id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}
+            />
+          </button>
         </Link>
 
         {/* Content */}

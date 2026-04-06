@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut, Package, ShoppingBag, MessageSquare, Store, Globe, DollarSign } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, Phone, Mail, ChevronDown, User, LogOut, Package, ShoppingBag, MessageSquare, Store, Globe, DollarSign, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -310,6 +310,14 @@ export const Header = () => {
                         >
                           <MessageSquare size={16} />
                           {t('account.chats')}
+                        </Link>
+                        <Link
+                          to="/favoritos"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
+                        >
+                          <Heart size={16} />
+                          Favoritos
                         </Link>
                         <Link
                           to={isVendedor ? "/mi-cuenta/publicar" : "/mi-cuenta/vender"}

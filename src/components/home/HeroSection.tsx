@@ -211,17 +211,17 @@ export const HeroSection = () => {
               >
                 <Link 
                   to="/catalogo-mi"
-                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-secondary font-bold rounded-lg hover:bg-primary/90 transition-all duration-300 shadow-gold"
+                  className="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-primary text-secondary font-black text-lg rounded-xl hover:bg-primary/90 hover:scale-105 transition-all duration-300 shadow-[0_8px_30px_rgba(var(--primary-rgb,212,175,55),0.4)]"
                 >
                   {language === 'es' ? 'Comprar Maquinaria' : 'Buy Machinery'}
-                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={22} className="group-hover:translate-x-1.5 transition-transform" />
                 </Link>
                 <button 
                   onClick={() => setShowSellingScheme(true)}
-                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-transparent text-white font-bold rounded-lg border-2 border-white/30 hover:bg-white/10 transition-all duration-300"
+                  className="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-white/10 backdrop-blur-sm text-white font-black text-lg rounded-xl border-2 border-white/40 hover:bg-white/20 hover:border-white/60 hover:scale-105 transition-all duration-300 shadow-[0_8px_30px_rgba(255,255,255,0.1)]"
                 >
                   {language === 'es' ? 'Vender Maquinaria' : 'Sell Machinery'}
-                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={22} className="group-hover:translate-x-1.5 transition-transform" />
                 </button>
               </motion.div>
 
