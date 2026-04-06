@@ -198,7 +198,7 @@ serve(async (req) => {
     }
 
     // Get the base URL for redirects
-    const origin = req.headers.get('origin') || 'https://mercadoindustrial.lovable.app';
+    const origin = req.headers.get('origin') || 'https://mercado.alcance.co';
 
     // Create MercadoPago preference
     const mpItems = items.map(item => ({

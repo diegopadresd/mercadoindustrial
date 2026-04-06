@@ -190,7 +190,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { ProductJsonLd } from '@/components/seo/ProductJsonLd';
 import { getSocialShareUrl } from '@/lib/sharing';
 
-const SITE_URL = 'https://mercadoindustrial.lovable.app';
+const SITE_URL = 'https://mercado.alcance.co';
 
 const ProductoDetalle = () => {
   const { id: slugParam } = useParams();
