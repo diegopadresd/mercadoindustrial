@@ -160,6 +160,21 @@ export const ProductCard = ({
               MERCADO INDUSTRIAL
             </span>
           </div>
+
+          {/* Favorite Heart */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleFavorite(id);
+            }}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors z-10"
+          >
+            <Heart
+              size={16}
+              className={isFavorite(id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}
+            />
+          </button>
         </Link>
 
         {/* Content */}
