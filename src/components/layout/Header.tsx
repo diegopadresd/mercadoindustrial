@@ -318,6 +318,7 @@ export const Header = () => {
                         >
                           <Heart size={16} />
                           Favoritos
+                        </Link>
                         <Link
                           to={isVendedor ? "/mi-cuenta/publicar" : "/mi-cuenta/vender"}
                           onClick={() => setUserMenuOpen(false)}
