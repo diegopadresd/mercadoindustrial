@@ -635,12 +635,15 @@ const Catalogo = () => {
                     </button>
                   </span>
                 )}
-                <button 
+                <Button 
+                  variant="outline"
+                  size="sm"
                   onClick={clearFilters}
-                  className="text-sm text-muted-foreground hover:text-foreground underline"
+                  className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
                 >
+                  <RotateCcw size={14} className="mr-1" />
                   Limpiar todos
-                </button>
+                </Button>
               </div>
             )}
 
