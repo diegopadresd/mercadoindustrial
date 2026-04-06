@@ -156,17 +156,16 @@ const FilterSidebar = ({
   <div className="space-y-6">
     <div className="flex items-center justify-between">
       <h3 className="font-display font-bold text-lg">Filtros</h3>
-      {hasActiveFilters && (
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={clearFilters}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <RotateCcw size={14} className="mr-1" />
-          Limpiar
-        </Button>
-      )}
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={clearFilters}
+        disabled={!hasActiveFilters}
+        className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+      >
+        <RotateCcw size={14} className="mr-1" />
+        Limpiar filtros
+      </Button>
     </div>
 
     <Accordion type="multiple" defaultValue={['sector', 'categoria', 'marca', 'sucursal']} className="space-y-2">
