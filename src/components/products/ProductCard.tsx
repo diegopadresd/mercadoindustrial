@@ -11,7 +11,9 @@ import {
 } from '@/components/ui/dialog';
 import { useCart } from '@/contexts/CartContext';
 import { useLocale } from '@/contexts/LocaleContext';
+import { useCompare } from '@/contexts/CompareContext';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { generateProductUrl } from '@/lib/slugify';
 
 export interface ProductCardProps {
