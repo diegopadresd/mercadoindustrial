@@ -122,6 +122,7 @@ const App = () => (
                 {/* Brand & Tag listing pages */}
                 <Route path="/marca/:slug" element={<MarcaDetalle />} />
                 <Route path="/etiqueta/:slug" element={<EtiquetaDetalle />} />
+                <Route path="/comparar" element={<Comparar />} />
                 {/* Admin Panel */}
                 <Route path="/admin/*" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
