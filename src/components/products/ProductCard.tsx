@@ -61,8 +61,10 @@ export const ProductCard = ({
   const { addToCart, items } = useCart();
   const { formatPrice, t, language } = useLocale();
   const { toggleCompare, isComparing, isFull } = useCompare();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const [cotizarOpen, setCotizarOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const cartItem = items.find(item => item.productId === id);
   const currentQtyInCart = cartItem?.quantity ?? 0;
