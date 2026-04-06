@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, MapPin, Gavel, Timer, Store, DollarSign, FileText, Truck, X } from 'lucide-react';
+import { ShoppingCart, MapPin, Gavel, Timer, Store, DollarSign, FileText, Truck, X, Heart } from 'lucide-react';
+import { useFavorites } from '@/hooks/useFavorites';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
