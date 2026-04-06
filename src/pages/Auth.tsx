@@ -58,6 +58,25 @@ const Auth = () => {
     rfc: '',
   });
   const [fiscalDocument, setFiscalDocument] = useState<File | null>(null);
+  const [emailTouched, setEmailTouched] = useState(false);
+
+  // Real-time password validation
+  const password = registerData.password;
+  const confirmPassword = registerData.confirmPassword;
+  const pwHasLength = password.length >= 8;
+  const pwHasUpper = /[A-Z]/.test(password);
+  const pwHasNumber = /[0-9]/.test(password);
+  const pwAllValid = pwHasLength && pwHasUpper && pwHasNumber;
+  const confirmMatch = confirmPassword.length > 0 && password === confirmPassword;
+  const confirmError = confirmPassword.length > 0 && password !== confirmPassword;
+
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailValid = emailRegex.test(registerData.email);
+  const emailError = emailTouched && registerData.email.length > 0 && !emailValid;
+
+  // Overall form validity for disabling submit
+  const registerFormValid = pwAllValid && confirmMatch && emailValid && registerData.fullName.trim().length > 0;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
