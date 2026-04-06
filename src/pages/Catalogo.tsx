@@ -24,6 +24,14 @@ import { Filter, X, RotateCcw, Loader2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useBrands, useCategories } from '@/hooks/useProducts';
 import { useCatalogProducts } from '@/hooks/useCatalogProducts';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 // Mapeo de slugs URL a nombres de categorías
 const categorySlugMap: Record<string, string> = {
