@@ -123,10 +123,10 @@ const Auth = () => {
       return;
     }
 
-    if (registerData.password.length < 6) {
+    if (!pwAllValid) {
       toast({
         title: 'Error',
-        description: 'La contraseña debe tener al menos 6 caracteres',
+        description: 'La contraseña debe tener al menos 8 caracteres, 1 mayúscula y 1 número',
         variant: 'destructive',
       });
       setIsLoading(false);
