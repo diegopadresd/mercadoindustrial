@@ -1,37 +1,42 @@
 
 
-## Plan: 4 Lead & Offer Enhancements
+## Plan: 3 Changes — Vendedor Oficial Client Access, Admin Publish Toggle, Order Status Flow
 
-### 1. Auto-create client when a new lead is created
-When a lead is inserted (from the "Asignar Lead" dialog in AdminOfertas), also upsert a record into the `clients` table using the lead's `client_name`, `client_email`, `client_phone`, and `client_company`. This ensures every lead automatically becomes a client record.
+### 1. Vendedor Oficial gets access to Clientes
 
-**Files:** `src/pages/admin/AdminOfertas.tsx` — after the `leads.insert` call on line 581, add a `clients` upsert using email as the conflict key (since clients table uses numeric `id`, we'll do a select-then-insert pattern: check if email exists, if not insert).
+**Current:** The sidebar entry for Clientes has `adminOnly: true`. RLS already allows `vendedor_oficial` to SELECT from `clients`.
 
-### 2. Allow assigning a lead to multiple vendors (collaborators)
-Currently the "Asignar Lead" dialog assigns to exactly one vendor. Change this to allow selecting multiple vendors. Each selected vendor gets their own lead record for the same client/product.
+**Fix:** In `Dashboard.tsx`, change the Clientes sidebar entry from `adminOnly: true` to `adminOnly: false, vendedorOficialAccess: true`. That's it — the RLS policy already permits read access.
+
+### 2. Admin can activate/pause products from the edit form
+
+**Current:** The `is_active` toggle (line 992-998) only shows for `isStaff` (admin or operador). But `isAdmin` is a subset of `isStaff`, so admins already see it. The issue is the condition `isAdmin ? data.is_active : (!editingProduct ? false : data.is_active)` on line 257 — this means when an admin edits, `is_active` is respected. This should already work.
+
+**Fix:** Change the condition from `isStaff` to `isAdmin` explicitly, making it clearer. Also ensure the toggle is visible and prominent — move it above the form footer with a clear label like "Publicar en catálogo" / "Pausar publicación" with visual feedback (green/red).
+
+### 3. Order status flow: Interest → Pending → auto stock management
+
+**Current status options:** `pending`, `paid`, `processing`, `shipped`, `delivered`, `cancelled`.
+
+**New flow:**
+- Add two new statuses: `interest` (Interés / Por cotizar) and keep `pending` (Pendiente)
+- DB migration: Add `interest` to the `order_status` enum
+- When a product is added to cart or quoted → order starts as `interest` (not `pending`)
+- When status changes from `interest` → `pending`: decrease stock by 1. If stock reaches 0, auto-pause product (`is_active = false`)
+- When status changes from `pending` → `interest` or `pending` → `cancelled`: restore stock by 1. If product was paused due to zero stock, re-activate it (`is_active = true`)
+- This logic goes in the `updateStatusMutation` in `AdminPedidos.tsx`
 
 **Changes:**
-- `src/pages/admin/AdminOfertas.tsx` — Replace single `selectedVendorId` state with `selectedVendorIds: string[]`. Change the Select to a multi-select using checkboxes. On confirm, insert one lead per vendor. Also show all assigned vendors (not just the `assigned_vendor_id` on the offer).
-- DB: No schema change needed — each vendor gets their own lead row.
 
-### 3. Product search by SKU/category/name when assigning product to lead
-Currently the lead is auto-linked to the offer's `product_id`. Add an optional product search field in the "Asignar Lead" dialog so the admin can search products by SKU, name, or category and assign a specific product of interest.
+### Files
 
-**Changes:**
-- `src/pages/admin/AdminOfertas.tsx` — Add a product search input in the assign dialog. Use debounced search against `products` table filtering by `title`, `sku`, or `categories`. Show results in a dropdown. Pre-fill with the offer's product but allow changing it.
-
-### 4. Existing vs New client tag on offers
-When offers load, cross-check each `customer_name` / `customer_email` against the `clients` table. If a match is found, show a green "Existente" badge; if not, show a blue "NUEVO" badge next to the customer info.
-
-**Changes:**
-- `src/pages/admin/AdminOfertas.tsx` — Add a query that fetches all unique client emails from the `clients` table (or batch-check the emails in the current offers). For each offer, compare `customer_email` against the client list and render the appropriate badge.
-
-### Files Summary
-
-**Modified:**
 ```
-src/pages/admin/AdminOfertas.tsx  → All 4 features (auto-client, multi-vendor, product search, existing/new tag)
+src/pages/admin/Dashboard.tsx              → Clientes sidebar: add vendedorOficialAccess
+src/pages/admin/AdminInventario.tsx        → Make is_active toggle visible for admin with clear UI
+src/pages/admin/AdminPedidos.tsx           → Add 'interest' status, stock management on status transitions
+src/pages/Checkout.tsx                     → Set initial order status to 'interest' instead of 'pending'
+src/pages/CheckoutCotizacion.tsx           → Set initial order status to 'interest'
 ```
 
-No database migrations needed — all features use existing tables (`clients`, `leads`, `products`, `offers`).
+**DB migration:** `ALTER TYPE order_status ADD VALUE 'interest';`
 
