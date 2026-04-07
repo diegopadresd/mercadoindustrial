@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, MapPin, Tag, Loader2 } from 'lucide-react';
 import { generateProductUrl } from '@/lib/slugify';
