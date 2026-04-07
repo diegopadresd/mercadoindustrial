@@ -528,30 +528,18 @@ const AdminInventario = () => {
     setFormData(prev => ({ ...prev, images: prev.images.filter(img => img !== imageUrl) }));
   };
 
-  // Enhanced AI flow: name-first or image identification
+  // AI Identifier: always uses image, passes title as hint if available
   const handleAIIdentify = async () => {
-    // If title exists, skip image identification — go straight to price comparison
-    if (formData.title.trim()) {
-      const priceResult = await comparePrices(formData.title.trim(), formData.brand || undefined);
-      if (priceResult) {
-        setPriceComparison(priceResult);
-        setAIResult(null);
-        setShowAIConfirmDialog(true);
-      }
-      return;
-    }
-
-    // No title — need image
     if (formData.images.length === 0) {
       toast({
-        title: 'Sin imagen ni nombre',
-        description: 'Agrega una imagen o escribe el nombre del producto para identificarlo',
+        title: 'Sin imagen',
+        description: 'Agrega al menos una imagen para identificar el producto',
         variant: 'destructive',
       });
       return;
     }
 
-    const result = await identifyProduct(formData.images[0], products || []);
+    const result = await identifyProduct(formData.images[0], products || [], formData.title.trim() || undefined);
     if (result && result.identified) {
       setAIResult(result);
       setPriceComparison(null);
@@ -562,6 +550,25 @@ const AdminInventario = () => {
         description: result?.notes || 'No se pudo identificar el producto en la imagen',
         variant: 'destructive',
       });
+    }
+  };
+
+  // Price comparison: uses title/brand directly
+  const handleAIPriceCompare = async () => {
+    const name = formData.title.trim();
+    if (!name) {
+      toast({
+        title: 'Sin nombre',
+        description: 'Escribe el nombre del producto para comparar precios',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const priceResult = await comparePrices(name, formData.brand || undefined);
+    if (priceResult) {
+      setPriceComparison(priceResult);
+      setAIResult(null);
+      setShowAIConfirmDialog(true);
     }
   };
 
@@ -683,21 +690,30 @@ const AdminInventario = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Fotos del producto</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAIIdentify}
-                      disabled={identifying || comparingPrices}
-                      className="gap-2"
-                    >
-                      {identifying || comparingPrices ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Sparkles size={16} />
-                      )}
-                      {identifying ? 'Identificando...' : comparingPrices ? 'Comparando precios...' : (formData.title.trim() ? 'Comparar Precios AI' : 'Identificador AI')}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAIIdentify}
+                        disabled={identifying || comparingPrices || formData.images.length === 0}
+                        className="gap-2"
+                      >
+                        {identifying ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                        {identifying ? 'Identificando...' : 'Identificador AI'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAIPriceCompare}
+                        disabled={identifying || comparingPrices || !formData.title.trim()}
+                        className="gap-2"
+                      >
+                        {comparingPrices ? <Loader2 size={16} className="animate-spin" /> : <TrendingUp size={16} />}
+                        {comparingPrices ? 'Comparando...' : 'Comparar Precios'}
+                      </Button>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
