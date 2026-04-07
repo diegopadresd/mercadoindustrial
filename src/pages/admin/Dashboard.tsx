@@ -89,6 +89,8 @@ const allSidebarItems: SidebarItem[] = [
   { icon: Search, label: 'Extracción IA', path: '/admin/extraccion-ia', description: 'Extracción de datos con IA', adminOnly: true },
   { icon: Package, label: 'Migración', path: '/admin/migracion', description: 'Migración de datos', adminOnly: true },
   { icon: Truck, label: 'Cotizador', path: '/admin/cotizador', description: 'Cotiza envíos de flete', vendedorOficialAccess: true, operadorAccess: true, manejoAccess: true },
+  { icon: Users, label: 'Importar Clientes', path: '/admin/importar-clientes', description: 'Importar CSV de clientes', adminOnly: true },
+  { icon: LinkIcon, label: 'Importar Slugs', path: '/admin/importar-slugs', description: 'Importar slugs de productos', adminOnly: true },
 ];
 
 const AdminDashboard = () => {
@@ -242,7 +244,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Navigation */}
-          <nav className="p-4 space-y-2">
+          <nav className="p-4 space-y-2 pb-40">
             {processedSidebarItems.map((item) => {
               const isActive = location.pathname === item.path || 
                 (item.path !== '/admin' && location.pathname.startsWith(item.path));
@@ -376,7 +378,7 @@ const AdminDashboard = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                 <Input
-                  placeholder="Buscar en el panel..."
+                  placeholder="Buscar productos en inventario..."
                   className="pl-10 w-80 bg-muted/50 border-0 focus-visible:ring-1"
                   value={adminSearch}
                   onChange={(e) => setAdminSearch(e.target.value)}

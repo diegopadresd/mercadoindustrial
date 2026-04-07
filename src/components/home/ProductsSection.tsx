@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, MapPin, Tag, Loader2 } from 'lucide-react';
 import { generateProductUrl } from '@/lib/slugify';
@@ -90,7 +90,6 @@ export const ProductsSection = () => {
         {/* Products Grid */}
         {!isLoading && products.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            <AnimatePresence mode="wait">
               {products.map((product, index) => (
                 <motion.div
                   key={product.id}
@@ -172,7 +171,6 @@ export const ProductsSection = () => {
                   </Link>
                 </motion.div>
               ))}
-            </AnimatePresence>
           </div>
         )}
 

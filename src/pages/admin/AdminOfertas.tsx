@@ -79,7 +79,6 @@ const AdminOfertas = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [assignOfferId, setAssignOfferId] = useState<string | null>(null);
-  const [vendedoresOficiales, setVendedoresOficiales] = useState<any[]>([]);
   const [selectedVendorId, setSelectedVendorId] = useState<string>('');
 
   // Fetch vendedores oficiales for assignment
