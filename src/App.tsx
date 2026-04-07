@@ -88,10 +88,7 @@ const App = () => (
             <BrowserRouter>
               <ScrollToTop />
               <WelcomeAnnouncementOverlay />
-              <FloatingCart />
-              <CompareBar />
-              <BackToTop />
-              <ChatWidget />
+              <StorefrontWidgets />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/catalogo-mi" element={<Catalogo />} />
