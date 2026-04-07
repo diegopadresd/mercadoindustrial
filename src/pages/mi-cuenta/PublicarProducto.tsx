@@ -32,6 +32,9 @@ const PublicarProducto = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const editProductId = searchParams.get('edit');
+  const { data: existingCategories } = useCategories();
+  const [categoryInput, setCategoryInput] = useState('');
+  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
   
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
