@@ -119,6 +119,27 @@ const PublicarProducto = () => {
     }
   }, [editProductId, user?.id, navigate, toast]);
 
+  const filteredCategories = useMemo(() => {
+    if (!existingCategories || !categoryInput.trim()) return existingCategories || [];
+    return existingCategories.filter(c => 
+      c.toLowerCase().includes(categoryInput.toLowerCase()) &&
+      !formData.categories.includes(c)
+    );
+  }, [existingCategories, categoryInput, formData.categories]);
+
+  const addCategory = (cat: string) => {
+    const trimmed = cat.trim();
+    if (trimmed && !formData.categories.includes(trimmed)) {
+      setFormData(prev => ({ ...prev, categories: [...prev.categories, trimmed] }));
+    }
+    setCategoryInput('');
+    setShowCategorySuggestions(false);
+  };
+
+  const removeCategory = (cat: string) => {
+    setFormData(prev => ({ ...prev, categories: prev.categories.filter(c => c !== cat) }));
+  };
+
   const canPublish = () => {
     const hasShippingData = formData.peso_aprox_kg && formData.largo_aprox_cm && formData.ancho_aprox_cm && 
            formData.alto_aprox_cm && formData.cp_origen;
