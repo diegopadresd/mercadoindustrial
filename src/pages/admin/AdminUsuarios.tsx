@@ -452,10 +452,10 @@ const AdminUsuarios = () => {
       });
       return;
     }
-    if (createFormData.password.length < 6) {
+    if (createFormData.password.length < 8) {
       toast({
         title: 'Error',
-        description: 'La contraseña debe tener al menos 6 caracteres',
+        description: 'La contraseña debe tener al menos 8 caracteres',
         variant: 'destructive',
       });
       return;
@@ -842,9 +842,9 @@ const AdminUsuarios = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={createFormData.password}
                   onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   required
-                  minLength={6}
+                  minLength={8}
                 />
                 <Button
                   type="button"

@@ -1047,8 +1047,11 @@ const ManejoFacturacion = () => {
                     </table>
                   </div>
                   <div style="text-align: center; margin: 20px 0;">
-                    <a href="${fileUrl}" style="display: inline-block; background: #d69e2e; color: white; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: bold;">
-                      📄 Descargar Factura (${ext.toUpperCase()})
+                    <p style="color: #444; line-height: 1.6;">
+                      Tu factura (${ext.toUpperCase()}) está disponible para descargar desde la sección <strong>"Mis Compras"</strong> en tu cuenta de Mercado Industrial.
+                    </p>
+                    <a href="https://mercado.alcance.co/mi-cuenta/compras" style="display: inline-block; background: #d69e2e; color: white; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: bold; margin-top: 12px;">
+                      📄 Ir a Mis Compras
                     </a>
                   </div>
                 </div>
@@ -1320,7 +1323,7 @@ const ManejoDestacados = () => {
       <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 flex items-start gap-2">
         <Star size={16} className="text-primary mt-0.5 shrink-0" />
         <p className="text-sm text-muted-foreground">
-          Los productos marcados como <span className="font-semibold text-foreground">Destacados</span> aparecen en la sección "Destacados" de la página de inicio. Se muestran hasta 6 productos.
+          Los productos marcados como <span className="font-semibold text-foreground">Destacados</span> aparecen en la sección "Destacados" de la página de inicio. Se muestran hasta 12 productos. <span className="font-medium text-primary">Solo se muestran productos oficiales de Mercado Industrial (no productos de vendedores externos).</span>
         </p>
       </div>
 
