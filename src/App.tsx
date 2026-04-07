@@ -14,6 +14,20 @@ import { FloatingCart } from "./components/FloatingCart";
 import { CompareBar } from "./components/compare/CompareBar";
 import { BackToTop } from "./components/layout/BackToTop";
 import { ChatWidget } from "./components/layout/ChatWidget";
+import { useLocation } from "react-router-dom";
+
+const StorefrontWidgets = () => {
+  const { pathname } = useLocation();
+  if (pathname.startsWith('/admin')) return null;
+  return (
+    <>
+      <FloatingCart />
+      <CompareBar />
+      <BackToTop />
+      <ChatWidget />
+    </>
+  );
+};
 
 import Index from "./pages/Index";
 import Catalogo from "./pages/Catalogo";
@@ -74,10 +88,7 @@ const App = () => (
             <BrowserRouter>
               <ScrollToTop />
               <WelcomeAnnouncementOverlay />
-              <FloatingCart />
-              <CompareBar />
-              <BackToTop />
-              <ChatWidget />
+              <StorefrontWidgets />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/catalogo-mi" element={<Catalogo />} />
