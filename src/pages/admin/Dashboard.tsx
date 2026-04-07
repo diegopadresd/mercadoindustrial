@@ -25,6 +25,7 @@ import {
   Target,
   TrendingUp,
   Truck,
+  Wrench,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,9 +45,7 @@ import AdminPreguntas from './AdminPreguntas';
 import AdminOfertas from './AdminOfertas';
 import AdminUsuarios from './AdminUsuarios';
 import AdminAjustes from './AdminAjustes';
-import AdminAuditoriaEnlaces from './AdminAuditoriaEnlaces';
 import AdminSoporte from './AdminSoporte';
-import AdminImportClients from './AdminImportClients';
 import VendorLeads from './VendorLeads';
 import AdminVendedores from './AdminVendedores';
 import AdminManejo from './AdminManejo';
@@ -55,6 +54,7 @@ import AdminExtraccionIA from './AdminExtraccionIA';
 import AdminMigracion from './AdminMigracion';
 import AdminCotizador from './AdminCotizador';
 import AdminImportSlugs from './AdminImportSlugs';
+import AdminHerramientas from './AdminHerramientas';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -83,14 +83,12 @@ const allSidebarItems: SidebarItem[] = [
   { icon: MessageSquare, label: 'Preguntas', path: '/admin/preguntas', description: 'Soporte a clientes', staffOnly: true, vendedorOficialAccess: true, operadorAccess: false },
   { icon: Ticket, label: 'Soporte', path: '/admin/soporte', description: 'Tickets de contacto', staffOnly: true, vendedorOficialAccess: true, operadorAccess: false },
   { icon: Settings, label: 'Ajustes', path: '/admin/ajustes', description: 'Configuración del sitio', adminOnly: true },
-  { icon: LinkIcon, label: 'Auditoría Enlaces', path: '/admin/auditoria-enlaces', description: 'Verificación de rutas', adminOnly: true },
+  { icon: Wrench, label: 'Herramientas', path: '/admin/herramientas', description: 'Importación y auditoría', adminOnly: true },
   { icon: LayoutDashboard, label: 'Panel de Manejo', path: '/admin/manejo', description: 'Control administrativo', adminOnly: false, manejoAccess: true },
   { icon: FileText, label: 'Blog', path: '/admin/blog', description: 'Gestión de artículos', adminOnly: false, manejoAccess: true },
   { icon: Search, label: 'Extracción IA', path: '/admin/extraccion-ia', description: 'Extracción de datos con IA', adminOnly: true },
   { icon: Package, label: 'Migración', path: '/admin/migracion', description: 'Migración de datos', adminOnly: true },
   { icon: Truck, label: 'Cotizador', path: '/admin/cotizador', description: 'Cotiza envíos de flete', vendedorOficialAccess: true, operadorAccess: true, manejoAccess: true },
-  { icon: Users, label: 'Importar Clientes', path: '/admin/importar-clientes', description: 'Importar CSV de clientes', adminOnly: true },
-  { icon: LinkIcon, label: 'Importar Slugs', path: '/admin/importar-slugs', description: 'Importar slugs de productos', adminOnly: true },
 ];
 
 const AdminDashboard = () => {
@@ -449,9 +447,8 @@ const AdminDashboard = () => {
                 (isStaff || isVendedorOficial) ? <AdminSoporte /> : <AccessDenied message="Solo administradores y operadores pueden gestionar tickets de soporte." />
               } />
               <Route path="ajustes" element={<AdminAjustes />} />
-              <Route path="auditoria-enlaces" element={<AdminAuditoriaEnlaces />} />
-              <Route path="importar-clientes" element={
-                isAdmin ? <AdminImportClients /> : <AccessDenied message="Solo administradores pueden importar clientes." />
+              <Route path="herramientas" element={
+                isAdmin ? <AdminHerramientas /> : <AccessDenied message="Solo administradores pueden acceder a herramientas." />
               } />
               <Route path="manejo" element={
                 (isAdmin || isManejo) ? <AdminManejo /> : <AccessDenied message="Solo administradores y personal de manejo pueden acceder al panel de manejo." />
@@ -466,9 +463,6 @@ const AdminDashboard = () => {
                 isAdmin ? <AdminMigracion /> : <AccessDenied message="Solo administradores pueden acceder a la migración de datos." />
               } />
               <Route path="cotizador" element={<AdminCotizador />} />
-              <Route path="importar-slugs" element={
-                isAdmin ? <AdminImportSlugs /> : <AccessDenied message="Solo administradores pueden importar slugs." />
-              } />
             </Routes>
           </div>
         </main>
