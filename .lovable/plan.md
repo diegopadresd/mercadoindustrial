@@ -1,21 +1,28 @@
 
 
-## Fix: Golden Bleed in Admin Sidebar + Console Ref Warning
+## Consolidate 3 Admin Pages into a Single "Herramientas" Section
 
-### Problem 1: Golden background bleeding through sidebar footer
-The user section at the bottom of the sidebar (line 318-351) uses `bg-card/50 backdrop-blur-sm` — that's 50% transparent. The Quick Actions card above it (line 294) has `bg-gradient-to-br from-primary/10 via-primary/5` where `primary` is golden yellow. The golden gradient bleeds through the semi-transparent footer, creating the ugly golden wash visible in the screenshot.
+### Problem
+"Importar Slugs", "Importar Clientes", and "Auditoría de Enlaces" are 3 separate sidebar entries that clutter the admin navigation. They're all admin-only utility tools that are rarely used.
 
-**Fix:** Change `bg-card/50 backdrop-blur-sm` to `bg-card` (fully opaque) on the user footer section. No reason for it to be transparent.
+### Solution
+Create a single **"Herramientas"** (Tools) sidebar entry at `/admin/herramientas` that contains all 3 utilities as tabs within one page.
 
-### Problem 2: Console ref warning from nested Routes
-The `<Routes>` inside `AdminDashboard` passes refs to function components like `AdminImportSlugs`, `AdminResumen`, etc. React warns because function components can't receive refs. This is a React Router v6 behavior when using nested `<Routes>`.
+### Changes
 
-**Fix:** The admin page components rendered inside `<Route element={...}>` don't need `forwardRef`. The warning comes from React Router internally. Wrapping each route element in a `<div>` would suppress it but that's hacky. The cleaner fix: this is a known React Router v6 dev-mode warning that doesn't affect functionality. However, if we want zero warnings, we can wrap the `<Routes>` content area in a simple div container.
+**1. New file: `src/pages/admin/AdminHerramientas.tsx`**
+- A single page with 3 tabs using shadcn `Tabs` component:
+  - **Importar Clientes** — embeds existing `AdminImportClients` content
+  - **Importar Slugs** — embeds existing `AdminImportSlugs` content  
+  - **Auditoría de Enlaces** — embeds existing `AdminAuditoriaEnlaces` content
+- Each tab renders the existing component directly (no rewrite needed)
 
-### Files to change
-```
-src/pages/admin/Dashboard.tsx  → line 318: bg-card/50 → bg-card (fix golden bleed)
-```
+**2. Modify: `src/pages/admin/Dashboard.tsx`**
+- Remove the 3 individual sidebar entries (Importar Clientes, Importar Slugs, Auditoría Enlaces)
+- Add one entry: `{ icon: Wrench, label: 'Herramientas', path: '/admin/herramientas', description: 'Importación y auditoría', adminOnly: true }`
+- Remove the 3 individual `<Route>` entries
+- Add one route: `<Route path="herramientas" element={<AdminHerramientas />} />`
 
-One-line CSS change. No DB changes.
+### Result
+Sidebar goes from 3 entries → 1 entry. All functionality preserved, just grouped under tabs.
 
