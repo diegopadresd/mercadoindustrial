@@ -73,7 +73,7 @@ interface SidebarItem {
 const allSidebarItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: 'Panel de Control', path: '/admin', description: 'Vista general', vendedorOficialAccess: true, operadorAccess: false },
   { icon: UserCog, label: 'Usuarios', path: '/admin/usuarios', description: 'Gestión de usuarios', adminOnly: true },
-  { icon: Users, label: 'Clientes', path: '/admin/clientes', description: 'Gestión de clientes', adminOnly: true },
+  { icon: Users, label: 'Clientes', path: '/admin/clientes', description: 'Gestión de clientes', adminOnly: false, vendedorOficialAccess: true },
   { icon: TrendingUp, label: 'Vendedores', path: '/admin/vendedores', description: 'Rendimiento del equipo', adminOnly: true },
   { icon: Target, label: 'Mis Leads', path: '/admin/leads', description: 'Leads asignados', vendedorOficialOnly: true },
   { icon: ShoppingCart, label: 'Pedidos', path: '/admin/pedidos', description: 'Órdenes y cotizaciones', vendedorOficialAccess: true, operadorAccess: true },

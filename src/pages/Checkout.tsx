@@ -284,7 +284,7 @@ const Checkout = () => {
   };
 
   // ---- Shared order creation ----
-  const createOrder = async (notes: string, status: 'pending' | 'paid' = 'pending') => {
+  const createOrder = async (notes: string, status: 'interest' | 'pending' | 'paid' = 'interest') => {
     const shippingAddr = paymentMethod === 'terminal'
       ? `Recoger en sucursal: ${SUCURSALES.find(s => s.id === selectedSucursal)?.name}`
       : shippingInfo.address;
