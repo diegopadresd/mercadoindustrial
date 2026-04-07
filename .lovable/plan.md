@@ -1,20 +1,21 @@
 
 
-## Fix: Hide Storefront Widgets from Admin Panel
+## Fix: WelcomeAnnouncementOverlay Bleeding into Admin Panel
 
 ### Problem
-The FloatingCart, ChatWidget, CompareBar, and BackToTop components render globally on every route — including `/admin/*`. These are storefront elements that have no business in the admin panel.
+The `WelcomeAnnouncementOverlay` renders globally on ALL routes including `/admin/*`. The golden/yellow overlay is appearing behind the admin sidebar — same issue as the storefront widgets that were already fixed.
 
 ### Fix
-In `App.tsx`, wrap these 4 components in a route-aware wrapper that checks `location.pathname`. If the path starts with `/admin`, don't render them.
+Two changes:
 
-Create a small helper component (e.g. `StorefrontWidgets`) that uses `useLocation()` and returns `null` when on admin routes. This keeps App.tsx clean.
+1. **`WelcomeAnnouncementOverlay.tsx`** — Add route check at the top of the component. If `pathname.startsWith('/admin')`, return `null` immediately. This prevents the overlay from rendering, fetching announcement data, or blocking scroll on admin pages.
+
+2. **`App.tsx`** — Move `WelcomeAnnouncementOverlay` inside the `StorefrontWidgets` component so ALL storefront-only elements are managed in one place with the existing `/admin` guard.
 
 ### Files to change
 ```
-src/App.tsx → wrap FloatingCart, ChatWidget, CompareBar, BackToTop
-             in a conditional that hides them on /admin/* routes
+src/App.tsx → move WelcomeAnnouncementOverlay inside StorefrontWidgets
 ```
 
-No new files needed — just a small inline component inside App.tsx that checks the path.
+One-line change. No new files, no DB changes.
 
