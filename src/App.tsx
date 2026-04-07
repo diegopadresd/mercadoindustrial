@@ -21,6 +21,7 @@ const StorefrontWidgets = () => {
   if (pathname.startsWith('/admin')) return null;
   return (
     <>
+      <WelcomeAnnouncementOverlay />
       <FloatingCart />
       <CompareBar />
       <BackToTop />
@@ -87,7 +88,6 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <ScrollToTop />
-              <WelcomeAnnouncementOverlay />
               <StorefrontWidgets />
               <Routes>
                 <Route path="/" element={<Index />} />
