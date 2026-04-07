@@ -1248,6 +1248,7 @@ export type Database = {
         | "shipped"
         | "delivered"
         | "cancelled"
+        | "interest"
       order_type: "purchase" | "quote"
     }
     CompositeTypes: {
@@ -1399,6 +1400,7 @@ export const Constants = {
         "shipped",
         "delivered",
         "cancelled",
+        "interest",
       ],
       order_type: ["purchase", "quote"],
     },
