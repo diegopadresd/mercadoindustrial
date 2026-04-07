@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -79,7 +80,13 @@ const AdminOfertas = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [assignOfferId, setAssignOfferId] = useState<string | null>(null);
-  const [selectedVendorId, setSelectedVendorId] = useState<string>('');
+  // Multi-vendor selection
+  const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
+  // Product search for lead assignment
+  const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [productSearchResults, setProductSearchResults] = useState<any[]>([]);
+  const [isSearchingProducts, setIsSearchingProducts] = useState(false);
 
   // Fetch vendedores oficiales for assignment
   const { data: vendedores } = useQuery({
@@ -100,6 +107,51 @@ const AdminOfertas = () => {
     },
     enabled: isAdmin,
   });
+
+  // Fetch existing client emails for Existente/NUEVO tags
+  const { data: existingClientEmails } = useQuery({
+    queryKey: ['client-emails-set'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('email')
+        .not('email', 'is', null);
+      if (error) throw error;
+      return new Set((data || []).map((c: any) => c.email?.toLowerCase().trim()).filter(Boolean));
+    },
+    enabled: isAdmin,
+  });
+
+  // Debounced product search
+  useEffect(() => {
+    if (!productSearchTerm || productSearchTerm.length < 2) {
+      setProductSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearchingProducts(true);
+      try {
+        const term = productSearchTerm.trim();
+        const { data } = await supabase
+          .from('products')
+          .select('id, title, sku, brand, images, categories')
+          .eq('is_active', true)
+          .or(`title.ilike.%${term}%,sku.ilike.%${term}%,brand.ilike.%${term}%`)
+          .limit(10);
+        setProductSearchResults(data || []);
+      } catch {
+        setProductSearchResults([]);
+      } finally {
+        setIsSearchingProducts(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [productSearchTerm]);
+
+  const isClientExisting = (email: string) => {
+    if (!existingClientEmails) return null; // still loading
+    return existingClientEmails.has(email?.toLowerCase().trim());
+  };
 
   const filteredOffers = offers?.filter((offer) => {
     const matchesSearch =
@@ -134,7 +186,6 @@ const AdminOfertas = () => {
           return;
         }
 
-        // Update offer with counter offer price and status
         const { error } = await supabase
           .from('offers')
           .update({
@@ -148,7 +199,6 @@ const AdminOfertas = () => {
 
         if (error) throw error;
 
-        // Create notification for the customer with payment link
         await createNotification.mutateAsync({
           user_id: offer.user_id,
           title: '💰 ¡Nueva Contraoferta!',
@@ -168,7 +218,6 @@ const AdminOfertas = () => {
           respondedBy: user.id,
         });
 
-        // Create notification for the customer
         await createNotification.mutateAsync({
           user_id: offer.user_id,
           title: actionType === 'accept' ? '¡Oferta Aceptada!' : 'Oferta Rechazada',
@@ -205,6 +254,51 @@ const AdminOfertas = () => {
     return <Badge className={c.className}>{c.label}</Badge>;
   };
 
+  const toggleVendorSelection = (vendorId: string) => {
+    setSelectedVendorIds(prev =>
+      prev.includes(vendorId)
+        ? prev.filter(id => id !== vendorId)
+        : [...prev, vendorId]
+    );
+  };
+
+  const autoCreateClient = async (offer: { customer_name: string; customer_email: string; customer_phone?: string | null }) => {
+    try {
+      // Check if client with this email already exists
+      const { data: existing } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('email', offer.customer_email)
+        .limit(1);
+
+      if (!existing || existing.length === 0) {
+        // Get next available ID
+        const { data: maxRow } = await supabase
+          .from('clients')
+          .select('id')
+          .order('id', { ascending: false })
+          .limit(1);
+        const nextId = (maxRow?.[0]?.id || 0) + 1;
+
+        const nameParts = offer.customer_name.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        await supabase.from('clients').insert({
+          id: nextId,
+          first_name: firstName,
+          last_name: lastName,
+          email: offer.customer_email,
+          phone: offer.customer_phone || null,
+          source: 'oferta',
+          tags: ['lead'],
+        });
+      }
+    } catch (err) {
+      console.error('Error auto-creating client:', err);
+    }
+  };
+
   const stats = {
     total: offers?.length || 0,
     pending: offers?.filter((o) => o.status === 'pending').length || 0,
@@ -213,7 +307,6 @@ const AdminOfertas = () => {
     counter: offers?.filter((o) => o.status === 'counter_offer').length || 0,
   };
 
-  // Header label based on role
   const headerTitle = isVendedor && !isStaff ? 'Mis Ofertas' : 'Ofertas';
   const headerDescription = isVendedor && !isStaff 
     ? 'Ofertas recibidas en tus productos' 
@@ -326,137 +419,151 @@ const AdminOfertas = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredOffers?.map((offer, index) => (
-            <motion.div
-              key={offer.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="bg-card rounded-xl border border-border p-6"
-            >
-              <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-                {/* Product Info */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Package size={16} className="text-primary" />
-                    <span className="text-sm font-medium text-primary">Producto</span>
+          {filteredOffers?.map((offer, index) => {
+            const clientStatus = isClientExisting(offer.customer_email);
+            return (
+              <motion.div
+                key={offer.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-card rounded-xl border border-border p-6"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+                  {/* Product Info */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Package size={16} className="text-primary" />
+                      <span className="text-sm font-medium text-primary">Producto</span>
+                    </div>
+                    <OfferProductInfo productId={offer.product_id} />
                   </div>
-                  <OfferProductInfo productId={offer.product_id} />
-                </div>
 
-                {/* Customer Info */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-3">
-                    <User size={16} className="text-secondary" />
-                    <span className="text-sm font-medium text-secondary">Cliente</span>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="font-medium">{offer.customer_name}</p>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Mail size={12} />
-                      {offer.customer_email}
-                    </p>
-                    {offer.customer_phone && (
+                  {/* Customer Info */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <User size={16} className="text-secondary" />
+                      <span className="text-sm font-medium text-secondary">Cliente</span>
+                      {clientStatus !== null && (
+                        clientStatus ? (
+                          <Badge className="bg-green-500/20 text-green-700 text-[10px] px-1.5 py-0">Existente</Badge>
+                        ) : (
+                          <Badge className="bg-blue-500/20 text-blue-700 text-[10px] px-1.5 py-0 font-bold">NUEVO</Badge>
+                        )
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium">{offer.customer_name}</p>
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Phone size={12} />
-                        {offer.customer_phone}
+                        <Mail size={12} />
+                        {offer.customer_email}
                       </p>
-                    )}
+                      {offer.customer_phone && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Phone size={12} />
+                          {offer.customer_phone}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Offer Details */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-3">
-                    <DollarSign size={16} className="text-green-500" />
-                    <span className="text-sm font-medium text-green-500">Oferta</span>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold text-primary">
-                      ${offer.offer_price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                    </p>
-                    {(offer as any).counter_offer_price && (
-                      <p className="text-sm font-semibold text-blue-600">
-                        Contraoferta: ${(offer as any).counter_offer_price.toLocaleString('es-MX')}
+                  {/* Offer Details */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <DollarSign size={16} className="text-green-500" />
+                      <span className="text-sm font-medium text-green-500">Oferta</span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-2xl font-bold text-primary">
+                        ${offer.offer_price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                       </p>
-                    )}
-                    {offer.original_price && (
-                      <p className="text-sm text-muted-foreground">
-                        Precio original: ${offer.original_price.toLocaleString('es-MX')}
+                      {(offer as any).counter_offer_price && (
+                        <p className="text-sm font-semibold text-blue-600">
+                          Contraoferta: ${(offer as any).counter_offer_price.toLocaleString('es-MX')}
+                        </p>
+                      )}
+                      {offer.original_price && (
+                        <p className="text-sm text-muted-foreground">
+                          Precio original: ${offer.original_price.toLocaleString('es-MX')}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(offer.created_at).toLocaleDateString('es-MX', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(offer.created_at).toLocaleDateString('es-MX', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Status & Actions */}
-                <div className="flex flex-col items-end gap-3">
-                  {getStatusBadge(offer.status)}
-                  {(offer as any).assigned_vendor_id && vendedores && (
-                    <span className="text-xs text-muted-foreground">
-                      Asignado a: <strong>{vendedores.find((v: any) => v.user_id === (offer as any).assigned_vendor_id)?.full_name || 'Vendedor'}</strong>
-                    </span>
-                  )}
-                  {offer.status === 'pending' && (
-                    <div className="flex flex-wrap gap-2 justify-end">
-                      {isAdmin && (
+                  {/* Status & Actions */}
+                  <div className="flex flex-col items-end gap-3">
+                    {getStatusBadge(offer.status)}
+                    {(offer as any).assigned_vendor_id && vendedores && (
+                      <span className="text-xs text-muted-foreground">
+                        Asignado a: <strong>{vendedores.find((v: any) => v.user_id === (offer as any).assigned_vendor_id)?.full_name || 'Vendedor'}</strong>
+                      </span>
+                    )}
+                    {offer.status === 'pending' && (
+                      <div className="flex flex-wrap gap-2 justify-end">
+                        {isAdmin && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const offerData = offers?.find(o => o.id === offer.id);
+                              setAssignOfferId(offer.id);
+                              setSelectedVendorIds([]);
+                              setSelectedProductId(offerData?.product_id || null);
+                              setProductSearchTerm('');
+                              setProductSearchResults([]);
+                              setAssignDialogOpen(true);
+                            }}
+                          >
+                            <UserPlus size={16} className="mr-1" />
+                            Asignar Lead
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          onClick={() => handleAction(offer.id, 'accept')}
+                          className="bg-green-500 hover:bg-green-600"
+                        >
+                          <Check size={16} className="mr-1" />
+                          Aceptar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAction(offer.id, 'counter')}
+                          className="bg-blue-500 hover:bg-blue-600"
+                        >
+                          <ArrowLeftRight size={16} className="mr-1" />
+                          Contraoferta
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            setAssignOfferId(offer.id);
-                            setSelectedVendorId('');
-                            setAssignDialogOpen(true);
-                          }}
+                          onClick={() => handleAction(offer.id, 'reject')}
+                          className="border-red-500 text-red-500 hover:bg-red-500/10"
                         >
-                          <UserPlus size={16} className="mr-1" />
-                          Asignar Lead
+                          <X size={16} className="mr-1" />
+                          Rechazar
                         </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        onClick={() => handleAction(offer.id, 'accept')}
-                        className="bg-green-500 hover:bg-green-600"
-                      >
-                        <Check size={16} className="mr-1" />
-                        Aceptar
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleAction(offer.id, 'counter')}
-                        className="bg-blue-500 hover:bg-blue-600"
-                      >
-                        <ArrowLeftRight size={16} className="mr-1" />
-                        Contraoferta
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAction(offer.id, 'reject')}
-                        className="border-red-500 text-red-500 hover:bg-red-500/10"
-                      >
-                        <X size={16} className="mr-1" />
-                        Rechazar
-                      </Button>
-                    </div>
-                  )}
-                  {offer.admin_notes && (
-                    <p className="text-xs text-muted-foreground max-w-xs text-right">
-                      Nota: {offer.admin_notes}
-                    </p>
-                  )}
+                      </div>
+                    )}
+                    {offer.admin_notes && (
+                      <p className="text-xs text-muted-foreground max-w-xs text-right">
+                        Nota: {offer.admin_notes}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
@@ -503,7 +610,7 @@ const AdminOfertas = () => {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Notas {actionType === 'counter' ? '(opcional)' : '(opcional)'}</label>
+              <label className="text-sm font-medium">Notas (opcional)</label>
               <Textarea
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
@@ -541,65 +648,154 @@ const AdminOfertas = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Assign to Vendor Dialog */}
+      {/* Assign to Vendor(s) Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Asignar Lead a Vendedor Oficial</DialogTitle>
+            <DialogTitle>Asignar Lead a Vendedor(es)</DialogTitle>
             <DialogDescription>
-              Selecciona un vendedor oficial para asignar esta oferta como lead.
+              Selecciona uno o más vendedores para asignar esta oferta como lead. También puedes cambiar el producto de interés.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar vendedor..." />
-              </SelectTrigger>
-              <SelectContent>
+          <div className="space-y-5 py-4">
+            {/* Multi-vendor selection with checkboxes */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Vendedores *</label>
+              <div className="border border-border rounded-lg max-h-40 overflow-y-auto divide-y divide-border">
                 {vendedores?.map((v: any) => (
-                  <SelectItem key={v.user_id} value={v.user_id}>
-                    {v.full_name} ({v.email})
-                  </SelectItem>
+                  <label
+                    key={v.user_id}
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={selectedVendorIds.includes(v.user_id)}
+                      onCheckedChange={() => toggleVendorSelection(v.user_id)}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{v.full_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{v.email}</p>
+                    </div>
+                  </label>
                 ))}
-              </SelectContent>
-            </Select>
+                {(!vendedores || vendedores.length === 0) && (
+                  <p className="text-sm text-muted-foreground p-3">No hay vendedores oficiales registrados</p>
+                )}
+              </div>
+              {selectedVendorIds.length > 0 && (
+                <p className="text-xs text-muted-foreground">{selectedVendorIds.length} vendedor(es) seleccionado(s)</p>
+              )}
+            </div>
+
+            {/* Product search */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Producto de interés</label>
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={productSearchTerm}
+                  onChange={(e) => setProductSearchTerm(e.target.value)}
+                  placeholder="Buscar por SKU, nombre o categoría..."
+                  className="pl-9"
+                />
+              </div>
+              {isSearchingProducts && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 size={12} className="animate-spin" /> Buscando...
+                </div>
+              )}
+              {productSearchResults.length > 0 && (
+                <div className="border border-border rounded-lg max-h-40 overflow-y-auto divide-y divide-border">
+                  {productSearchResults.map((p: any) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-muted/50 ${
+                        selectedProductId === p.id ? 'bg-primary/10' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedProductId(p.id);
+                        setProductSearchTerm('');
+                        setProductSearchResults([]);
+                      }}
+                    >
+                      <img
+                        src={p.images?.[0] || '/placeholder.svg'}
+                        alt={p.title}
+                        className="w-8 h-8 rounded object-cover shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{p.title}</p>
+                        <p className="text-xs text-muted-foreground">SKU: {p.sku} · {p.brand}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedProductId && (
+                <div className="flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1.5">
+                  <Package size={12} />
+                  <span>Producto seleccionado: <strong>{selectedProductId}</strong></span>
+                  <button
+                    type="button"
+                    className="ml-auto text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      const offerData = offers?.find(o => o.id === assignOfferId);
+                      setSelectedProductId(offerData?.product_id || null);
+                    }}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setAssignDialogOpen(false)} className="flex-1">Cancelar</Button>
             <Button
               className="flex-1"
-              disabled={!selectedVendorId || isSubmitting}
+              disabled={selectedVendorIds.length === 0 || isSubmitting}
               onClick={async () => {
-                if (!assignOfferId || !selectedVendorId) return;
+                if (!assignOfferId || selectedVendorIds.length === 0) return;
                 setIsSubmitting(true);
                 try {
                   const offer = offers?.find(o => o.id === assignOfferId);
                   if (!offer) return;
-                  // Update offer with assigned vendor
-                  await supabase.from('offers').update({ assigned_vendor_id: selectedVendorId }).eq('id', assignOfferId);
-                  // Create lead for the vendor
-                  await supabase.from('leads').insert({
-                    vendor_id: selectedVendorId,
+
+                  const productId = selectedProductId || offer.product_id;
+
+                  // Update offer with first assigned vendor (primary)
+                  await supabase.from('offers').update({ assigned_vendor_id: selectedVendorIds[0] }).eq('id', assignOfferId);
+
+                  // Create one lead per vendor
+                  const leadInserts = selectedVendorIds.map(vendorId => ({
+                    vendor_id: vendorId,
                     client_name: offer.customer_name,
                     client_email: offer.customer_email,
                     client_phone: offer.customer_phone,
-                    product_id: offer.product_id,
+                    product_id: productId,
                     offer_id: offer.id,
-                    status: 'nuevo',
-                    notes: `Oferta de $${offer.offer_price.toLocaleString('es-MX')} en producto ${offer.product_id}`,
-                  });
-                  toast.success('Lead asignado correctamente');
+                    status: 'nuevo' as const,
+                    notes: `Oferta de $${offer.offer_price.toLocaleString('es-MX')} en producto ${productId}`,
+                  }));
+
+                  await supabase.from('leads').insert(leadInserts);
+
+                  // Auto-create client
+                  await autoCreateClient(offer);
+
+                  toast.success(`Lead asignado a ${selectedVendorIds.length} vendedor(es)`);
                   refetch();
                   setAssignDialogOpen(false);
                 } catch (err) {
                   toast.error('Error al asignar lead');
+                  console.error(err);
                 } finally {
                   setIsSubmitting(false);
                 }
               }}
             >
               {isSubmitting && <Loader2 size={16} className="mr-2 animate-spin" />}
-              Asignar
+              Asignar a {selectedVendorIds.length || ''} vendedor{selectedVendorIds.length !== 1 ? 'es' : ''}
             </Button>
           </div>
         </DialogContent>
