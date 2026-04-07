@@ -1,28 +1,26 @@
 
 
-## Add Cost/Expense Logging to Product History
+## Fix: Split into Two Separate Buttons — Identificador AI + Comparar Precios
 
-### What
-Add a "Registrar gasto" (Log expense) form in the ProductHistoryDialog so users can record costs associated with a product (tune-ups, repairs, shipping, parts, etc.). Each expense entry gets logged as a new event type (`expense`) in the existing `product_history` table with the amount in `new_value` and a description in `reason`.
+### Problem
+Currently there's a single button that dynamically changes its label between "Identificador AI" and "Comparar Precios AI" based on whether the title field has text. The user wants **both buttons visible at all times** so they can choose either action independently.
 
-### Changes
+### Fix
 
-**`src/components/admin/ProductHistoryDialog.tsx`**
-- Add two new event types to `eventLabels`: `expense` (Gasto) and `cost` (Costo) with a `Receipt`/`Banknote` icon in red/orange
-- Add a collapsible "Registrar gasto/costo" section below the note input with:
-  - A text input for the concept/description (e.g. "Tune up motor", "Flete")
-  - A number input for the amount (MXN)
-  - A select to choose between "Gasto" and "Costo"
-  - A submit button
-- On submit, call `addEntry` with `event_type: 'expense'` or `'cost'`, `new_value: "$5,000 MXN"`, `reason: "Tune up motor"`
-- In the timeline, format expense/cost entries to show the amount prominently with a currency style
+**`src/pages/admin/AdminInventario.tsx`**
 
-**No DB or hook changes needed** — the existing `product_history` table and `addEntry` mutation already support arbitrary `event_type`, `new_value`, and `reason` fields.
+1. **Replace the single button (lines 686-700) with two buttons side by side:**
+   - **"Identificador AI"** (Sparkles icon) — always available when there's at least one image. Runs `identifyProduct` on the first image regardless of whether title is filled. If title exists, passes it as a hint.
+   - **"Comparar Precios"** (TrendingUp icon) — enabled when title OR brand is filled. Runs `comparePrices` directly with the current title/brand.
+
+2. **Split `handleAIIdentify` into two functions:**
+   - `handleAIIdentify` — always does image identification (requires image, ignores title-only shortcut)
+   - `handleAIPriceCompare` — always does price comparison (requires title, goes straight to `comparePrices`)
 
 ### Files
 ```
-src/components/admin/ProductHistoryDialog.tsx  → add expense/cost form + event labels
+src/pages/admin/AdminInventario.tsx  → split button into two, split handler into two
 ```
 
-One file change. No migrations.
+One file, no migrations.
 
