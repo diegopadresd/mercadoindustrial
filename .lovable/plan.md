@@ -1,21 +1,21 @@
 
 
-## Fix: WelcomeAnnouncementOverlay Bleeding into Admin Panel
+## Fix: Golden Bleed in Admin Sidebar + Console Ref Warning
 
-### Problem
-The `WelcomeAnnouncementOverlay` renders globally on ALL routes including `/admin/*`. The golden/yellow overlay is appearing behind the admin sidebar — same issue as the storefront widgets that were already fixed.
+### Problem 1: Golden background bleeding through sidebar footer
+The user section at the bottom of the sidebar (line 318-351) uses `bg-card/50 backdrop-blur-sm` — that's 50% transparent. The Quick Actions card above it (line 294) has `bg-gradient-to-br from-primary/10 via-primary/5` where `primary` is golden yellow. The golden gradient bleeds through the semi-transparent footer, creating the ugly golden wash visible in the screenshot.
 
-### Fix
-Two changes:
+**Fix:** Change `bg-card/50 backdrop-blur-sm` to `bg-card` (fully opaque) on the user footer section. No reason for it to be transparent.
 
-1. **`WelcomeAnnouncementOverlay.tsx`** — Add route check at the top of the component. If `pathname.startsWith('/admin')`, return `null` immediately. This prevents the overlay from rendering, fetching announcement data, or blocking scroll on admin pages.
+### Problem 2: Console ref warning from nested Routes
+The `<Routes>` inside `AdminDashboard` passes refs to function components like `AdminImportSlugs`, `AdminResumen`, etc. React warns because function components can't receive refs. This is a React Router v6 behavior when using nested `<Routes>`.
 
-2. **`App.tsx`** — Move `WelcomeAnnouncementOverlay` inside the `StorefrontWidgets` component so ALL storefront-only elements are managed in one place with the existing `/admin` guard.
+**Fix:** The admin page components rendered inside `<Route element={...}>` don't need `forwardRef`. The warning comes from React Router internally. Wrapping each route element in a `<div>` would suppress it but that's hacky. The cleaner fix: this is a known React Router v6 dev-mode warning that doesn't affect functionality. However, if we want zero warnings, we can wrap the `<Routes>` content area in a simple div container.
 
 ### Files to change
 ```
-src/App.tsx → move WelcomeAnnouncementOverlay inside StorefrontWidgets
+src/pages/admin/Dashboard.tsx  → line 318: bg-card/50 → bg-card (fix golden bleed)
 ```
 
-One-line change. No new files, no DB changes.
+One-line CSS change. No DB changes.
 
