@@ -764,6 +764,39 @@ export type Database = {
         }
         Relationships: []
       }
+      product_history: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          new_value: string | null
+          previous_value: string | null
+          product_id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          new_value?: string | null
+          previous_value?: string | null
+          product_id: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          new_value?: string | null
+          previous_value?: string | null
+          product_id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_questions: {
         Row: {
           answer: string | null

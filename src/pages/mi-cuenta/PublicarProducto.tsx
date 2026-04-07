@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useCategories } from '@/hooks/useProducts';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -30,6 +32,9 @@ const PublicarProducto = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const editProductId = searchParams.get('edit');
+  const { data: existingCategories } = useCategories();
+  const [categoryInput, setCategoryInput] = useState('');
+  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
   
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
@@ -113,6 +118,27 @@ const PublicarProducto = () => {
         });
     }
   }, [editProductId, user?.id, navigate, toast]);
+
+  const filteredCategories = useMemo(() => {
+    if (!existingCategories || !categoryInput.trim()) return existingCategories || [];
+    return existingCategories.filter(c => 
+      c.toLowerCase().includes(categoryInput.toLowerCase()) &&
+      !formData.categories.includes(c)
+    );
+  }, [existingCategories, categoryInput, formData.categories]);
+
+  const addCategory = (cat: string) => {
+    const trimmed = cat.trim();
+    if (trimmed && !formData.categories.includes(trimmed)) {
+      setFormData(prev => ({ ...prev, categories: [...prev.categories, trimmed] }));
+    }
+    setCategoryInput('');
+    setShowCategorySuggestions(false);
+  };
+
+  const removeCategory = (cat: string) => {
+    setFormData(prev => ({ ...prev, categories: prev.categories.filter(c => c !== cat) }));
+  };
 
   const canPublish = () => {
     const hasShippingData = formData.peso_aprox_kg && formData.largo_aprox_cm && formData.ancho_aprox_cm && 

@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.import-slugs]
 verify_jwt = false
+
+[functions.compare-product-prices]
+verify_jwt = false
