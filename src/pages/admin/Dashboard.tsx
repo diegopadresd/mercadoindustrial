@@ -316,7 +316,7 @@ const AdminDashboard = () => {
 
           {/* User section */}
           <div className={cn(
-            "absolute bottom-0 left-0 right-0 p-4 border-t border-border/50 bg-card/50 backdrop-blur-sm",
+            "absolute bottom-0 left-0 right-0 p-4 border-t border-border/50 bg-card",
             sidebarCollapsed && "p-2"
           )}>
             {!sidebarCollapsed ? (
