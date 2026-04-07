@@ -50,6 +50,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 
 const statusOptions = [
+  { value: 'interest', label: 'Interés', color: 'bg-sky-500/20 text-sky-600' },
   { value: 'pending', label: 'Pendiente', color: 'bg-yellow-500/20 text-yellow-600' },
   { value: 'paid', label: 'Pagado', color: 'bg-green-500/20 text-green-600' },
   { value: 'processing', label: 'Procesando', color: 'bg-blue-500/20 text-blue-600' },
@@ -103,10 +104,61 @@ const AdminPedidos = () => {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled' }) => {
+    mutationFn: async ({ orderId, status, previousStatus }: { orderId: string; status: string; previousStatus?: string }) => {
+      // Stock management: interest → pending = decrease stock
+      if (previousStatus === 'interest' && status === 'pending') {
+        // Get order items to adjust stock
+        const { data: orderItems } = await supabase
+          .from('order_items')
+          .select('product_id, quantity')
+          .eq('order_id', orderId);
+
+        if (orderItems) {
+          for (const item of orderItems) {
+            if (!item.product_id) continue;
+            const { data: product } = await supabase
+              .from('products')
+              .select('stock, is_active')
+              .eq('id', item.product_id)
+              .single();
+
+            if (product) {
+              const newStock = Math.max(0, (product.stock || 0) - item.quantity);
+              const updates: any = { stock: newStock };
+              if (newStock <= 0) updates.is_active = false;
+              await supabase.from('products').update(updates).eq('id', item.product_id);
+            }
+          }
+        }
+      }
+
+      // Stock management: pending → interest/cancelled = restore stock
+      if (previousStatus === 'pending' && (status === 'interest' || status === 'cancelled')) {
+        const { data: orderItems } = await supabase
+          .from('order_items')
+          .select('product_id, quantity')
+          .eq('order_id', orderId);
+
+        if (orderItems) {
+          for (const item of orderItems) {
+            if (!item.product_id) continue;
+            const { data: product } = await supabase
+              .from('products')
+              .select('stock, is_active')
+              .eq('id', item.product_id)
+              .single();
+
+            if (product) {
+              const newStock = (product.stock || 0) + item.quantity;
+              await supabase.from('products').update({ stock: newStock, is_active: true }).eq('id', item.product_id);
+            }
+          }
+        }
+      }
+
       const { error } = await supabase
         .from('orders')
-        .update({ status })
+        .update({ status: status as any })
         .eq('id', orderId);
       
       if (error) throw error;
@@ -414,7 +466,7 @@ const AdminPedidos = () => {
                     <TableCell className="hidden md:table-cell">
                     <Select
                       value={order.status}
-                      onValueChange={(value) => updateStatusMutation.mutate({ orderId: order.id, status: value as 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled' })}
+                      onValueChange={(value) => updateStatusMutation.mutate({ orderId: order.id, status: value, previousStatus: order.status })}
                     >
                       <SelectTrigger className="w-32 h-8">
                         <SelectValue />

@@ -227,7 +227,7 @@ const Checkout = () => {
 
     setIsProcessing(true);
     try {
-      await createOrder(`Pago SPEI - Ref: ${transferReference}`, 'pending');
+      await createOrder(`Pago SPEI - Ref: ${transferReference}`, 'interest');
       toast({ title: '¡Pedido registrado!', description: 'Verificaremos tu pago y te notificaremos.' });
       navigate('/mi-cuenta/mis-compras');
     } catch (error) {
@@ -248,7 +248,7 @@ const Checkout = () => {
     setIsProcessing(true);
     try {
       const sucursal = SUCURSALES.find(s => s.id === selectedSucursal);
-      await createOrder(`Pago en terminal - Sucursal: ${sucursal?.name || selectedSucursal}`, 'pending');
+      await createOrder(`Pago en terminal - Sucursal: ${sucursal?.name || selectedSucursal}`, 'interest');
       toast({ title: '¡Pedido reservado!', description: `Acude a la sucursal ${sucursal?.name} para completar tu pago en terminal.` });
       navigate('/mi-cuenta/mis-compras');
     } catch (error) {
@@ -268,7 +268,7 @@ const Checkout = () => {
 
     setIsProcessing(true);
     try {
-      await createOrder('Pago PayPal - Pendiente verificación', 'pending');
+      await createOrder('Pago PayPal - Pendiente verificación', 'interest');
       // Redirect to PayPal.me link with amount
       const paypalUrl = `https://www.paypal.com/paypalme/mercadoindustrial/${total.toFixed(2)}MXN`;
       await clearCart();
@@ -284,7 +284,7 @@ const Checkout = () => {
   };
 
   // ---- Shared order creation ----
-  const createOrder = async (notes: string, status: 'pending' | 'paid' = 'pending') => {
+  const createOrder = async (notes: string, status: 'interest' | 'pending' | 'paid' = 'interest') => {
     const shippingAddr = paymentMethod === 'terminal'
       ? `Recoger en sucursal: ${SUCURSALES.find(s => s.id === selectedSucursal)?.name}`
       : shippingInfo.address;

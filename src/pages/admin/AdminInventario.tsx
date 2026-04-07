@@ -989,11 +989,18 @@ const AdminInventario = () => {
                     </p>
                   </div>
 
-                  {isStaff && (
-                    <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <div className={`flex items-center gap-3 p-3 rounded-lg border ${formData.is_active ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}`}>
                       <Switch id="is_active" checked={formData.is_active}
                         onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })} />
-                      <Label htmlFor="is_active">Publicar (visible en catálogo)</Label>
+                      <div>
+                        <Label htmlFor="is_active" className="font-semibold">
+                          {formData.is_active ? '✅ Publicado en catálogo' : '⏸️ Pausado — no visible en catálogo'}
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {formData.is_active ? 'Los clientes pueden ver y comprar este producto' : 'Este producto no aparece en el catálogo público'}
+                        </p>
+                      </div>
                     </div>
                   )}
 

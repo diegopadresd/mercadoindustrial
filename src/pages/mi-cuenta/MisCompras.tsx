@@ -54,6 +54,7 @@ const MisCompras = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
+      interest: { label: 'Interés', className: 'bg-sky-500/20 text-sky-600' },
       pending: { label: 'Pendiente', className: 'bg-yellow-500/20 text-yellow-600' },
       paid: { label: 'Pagado', className: 'bg-green-500/20 text-green-600' },
       processing: { label: 'Procesando', className: 'bg-blue-500/20 text-blue-600' },
