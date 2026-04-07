@@ -1,71 +1,100 @@
 
 
-## SEO Infrastructure Fix — Make the Site Visible to Google
+## Admin Panel Full Audit — Bugs Found & Fix Plan
 
-### Problem
-The site is invisible to search engines due to 4 infrastructure-level issues:
-1. **Sitemap URLs point to `mercadoindustrial.lovable.app`** instead of `mercado.alcance.co`
-2. **Canonical tags and OG URLs point to wrong domains** (`mercadoindustrial.lovable.app` or `mercadoindustrial.com.mx`)
-3. **robots.txt sitemap URL points to raw Supabase function** instead of `/sitemap.xml`
-4. **No `/sitemap.xml` path** — returns 404 on the live domain
-
-### Solution: Single Source of Truth for Domain
-
-Define `SITE_URL = "https://mercado.alcance.co"` everywhere. Fix the sitemap path. All changes are string replacements — no logic changes.
+After reading all 18 admin files (Dashboard, AdminResumen, AdminInventario, AdminPedidos, AdminOfertas, AdminUsuarios, AdminClientes, AdminFacturacion, AdminAjustes, AdminSoporte, AdminPreguntas, AdminVendedores, AdminManejo, AdminBlog, AdminExtraccionIA, AdminMigracion, AdminCotizador, VendorLeads), here are the concrete issues:
 
 ---
 
-### Fix 1: Sitemap edge function — wrong domain
-**File:** `supabase/functions/sitemap/index.ts`
-- Change `SITE_URL` from `"https://mercadoindustrial.lovable.app"` → `"https://mercado.alcance.co"`
+### Bug 1 (MEDIUM): Console error — ProductsSection ref warning
+The homepage console shows `Function components cannot be given refs` from `ProductsSection`. The `AnimatePresence` in the tab rendering tries to pass a ref to a function component child. This causes the warning on every page load including when navigating from admin.
 
-### Fix 2: Dynamic render edge function — wrong domain
-**File:** `supabase/functions/dynamic-render/index.ts`
-- Change `SITE_URL` from `"https://mercadoindustrial.lovable.app"` → `"https://mercado.alcance.co"`
+**Fix:** Wrap the tab content in `motion.div` with `forwardRef`, or remove `AnimatePresence mode="wait"` from the tab switcher since it's not actually animating between tabs properly anyway.
 
-### Fix 3: Product detail page — wrong domain for canonicals/OG
-**File:** `src/pages/ProductoDetalle.tsx`
-- Change `SITE_URL` from `"https://mercadoindustrial.lovable.app"` → `"https://mercado.alcance.co"`
-
-### Fix 4: Homepage JSON-LD — wrong domain
-**File:** `src/pages/Index.tsx`
-- Change `SITE_URL` from `"https://mercadoindustrial.com.mx"` → `"https://mercado.alcance.co"`
-
-### Fix 5: index.html — hardcoded OG/Twitter meta with no canonical
-**File:** `index.html`
-- Add `<link rel="canonical" href="https://mercado.alcance.co/" />`
-- Update `og:url` to `https://mercado.alcance.co/`
-
-### Fix 6: robots.txt — sitemap URL
-**File:** `public/robots.txt`
-- Change sitemap URL from raw Supabase function URL → `https://mercado.alcance.co/sitemap.xml`
-- Note: `/sitemap.xml` will need a redirect or proxy to the edge function. Since Lovable hosting doesn't support redirects, the sitemap edge function path can be kept but referenced via the domain. Alternative: keep pointing to the edge function but use the production domain proxy.
-
-Actually, since Lovable SPA hosting serves `index.html` for unknown paths (no server-side routing), `/sitemap.xml` will return the SPA HTML, not XML. The sitemap must remain hosted on the edge function. The robots.txt should point to the full edge function URL, but proxied through the domain if Cloudflare is in front.
-
-**Revised approach for robots.txt:** Point to `https://mercado.alcance.co/functions/v1/sitemap` — if Cloudflare proxies to the Supabase functions. Otherwise keep the direct Supabase URL but ensure it returns `mercado.alcance.co` URLs in the XML body.
-
-The critical fix is that the **sitemap XML content** uses the correct domain. The robots.txt sitemap URL can remain the Supabase function URL since Google just needs to fetch it — what matters is the URLs inside the XML.
-
-### Fix 7: MercadoPago function — wrong fallback domain
-**File:** `supabase/functions/mercadopago-create-preference/index.ts`
-- Change fallback origin from `mercadoindustrial.lovable.app` → `mercado.alcance.co` (2 occurrences)
-
-### Fix 8: Sharing utility — uses VITE_SUPABASE_URL
-**File:** `src/lib/sharing.ts`
-- This is fine as-is (uses edge function URL for social bot rendering). No change needed.
+**File:** `src/components/home/ProductsSection.tsx`
 
 ---
 
-### Files to change
+### Bug 2 (HIGH): Sidebar missing routes — hidden admin pages unreachable
+These routes exist in Dashboard.tsx but have NO sidebar entry, making them invisible and only reachable if you know the URL:
+- `/admin/importar-clientes` (AdminImportClients)
+- `/admin/importar-slugs` (AdminImportSlugs)
+- `/admin/migracion` (AdminMigracion)
+
+**Fix:** Add sidebar entries for these 3 routes under an "admin tools" section, or at minimum add them to the sidebar items array with `adminOnly: true`.
+
+**File:** `src/pages/admin/Dashboard.tsx` — add 3 entries to `allSidebarItems`
+
+---
+
+### Bug 3 (MEDIUM): ManejoFacturacion email sends raw storage path as download link
+In `AdminManejo.tsx` line 1050, the invoice email body uses `fileUrl` which is a storage path like `{orderId}/FAC-xxx.pdf`, NOT a valid URL. The user gets a broken download button in their email.
+
+The same bug does NOT exist in `AdminFacturacion.tsx` — that version correctly omits the direct download link and says "available in Mis Compras".
+
+**Fix:** Remove the download button from the Manejo invoice email template, or generate a signed URL before sending (but signed URLs expire). Best approach: match the AdminFacturacion email template which directs users to "Mis Compras".
+
+**File:** `src/pages/admin/AdminManejo.tsx` — fix email template around line 1050
+
+---
+
+### Bug 4 (LOW): Admin password validation mismatch
+`AdminUsuarios.tsx` line 455 validates min 6 characters, but the manage-users edge function validates min 8 characters. The frontend will let you type 6-7 chars, submit, and get a server error.
+
+**Fix:** Change the frontend validation from 6 to 8 characters. Also update the placeholder text from "Mínimo 6 caracteres" to "Mínimo 8 caracteres".
+
+**File:** `src/pages/admin/AdminUsuarios.tsx` — lines 455, 846
+
+---
+
+### Bug 5 (MEDIUM): Sidebar collapse hides ALL nav labels but bottom user section overlaps nav
+When sidebar is collapsed (`sidebarCollapsed = true`), the bottom user section with "Ver Tienda" / logout buttons has `absolute bottom-0` positioning. On screens with many sidebar items, the nav items can scroll underneath this absolute-positioned footer, making the last few items unclickable.
+
+**Fix:** Add `pb-40` (or similar) to the nav container to ensure items don't render behind the absolute footer. Or convert the footer to sticky positioning within a flex layout.
+
+**File:** `src/pages/admin/Dashboard.tsx` — line 245 nav container
+
+---
+
+### Bug 6 (LOW): Admin search bar does nothing useful
+The desktop top bar search (line 378-389) navigates to `/admin/inventario?search=...` on Enter. But the AdminInventario component reads searchParams only on mount for the initial value — it works. However, the search bar stays in the top bar with no visual feedback that it only searches inventory, which is confusing.
+
+**Fix:** Add placeholder text "Buscar productos en inventario..." to make it clear. Not a code bug, but a UX confusion.
+
+**File:** `src/pages/admin/Dashboard.tsx` — line 379
+
+---
+
+### Bug 7 (MEDIUM): ManejoDestacados only shows products with `seller_id IS NULL`
+Line 1272: `.is('seller_id', null)` means vendor products can never be featured through this panel. This is intentional for the homepage "Destacados" section, but the label doesn't make this clear.
+
+**Fix:** Add a note to the info banner explaining this only shows MI-official products, not vendor products.
+
+**File:** `src/pages/admin/AdminManejo.tsx` — info banner around line 1322
+
+---
+
+### Bug 8 (MEDIUM): AdminOfertas — `vendedoresOficiales` state is declared but never used
+Line 82: `const [vendedoresOficiales, setVendedoresOficiales] = useState<any[]>([])` is declared but never populated. The `vendedores` query result is used directly instead. Dead state variable.
+
+**Fix:** Remove the unused state variable to clean up.
+
+**File:** `src/pages/admin/AdminOfertas.tsx` — line 82
+
+---
+
+### Summary of fixes needed
+
 ```
-supabase/functions/sitemap/index.ts                    → SITE_URL → mercado.alcance.co
-supabase/functions/dynamic-render/index.ts             → SITE_URL → mercado.alcance.co
-src/pages/ProductoDetalle.tsx                          → SITE_URL → mercado.alcance.co
-src/pages/Index.tsx                                    → SITE_URL → mercado.alcance.co
-index.html                                             → add canonical, fix og:url
-supabase/functions/mercadopago-create-preference/index.ts → fallback origin
+src/pages/admin/Dashboard.tsx           → #2: add missing sidebar entries
+                                        → #5: fix nav padding for collapsed sidebar
+                                        → #6: clarify search placeholder
+src/pages/admin/AdminUsuarios.tsx       → #4: fix password min from 6→8
+src/pages/admin/AdminManejo.tsx         → #3: fix broken email download link
+                                        → #7: clarify destacados scope
+src/pages/admin/AdminOfertas.tsx        → #8: remove dead state
+src/components/home/ProductsSection.tsx → #1: fix AnimatePresence ref warning
 ```
 
-No database or migration changes needed. Backend edge functions deploy automatically.
+No database or migration changes needed. All fixes are frontend-only.
 
