@@ -2,6 +2,20 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export interface PriceReference {
+  name: string;
+  price: number;
+  source: string;
+  condition?: string;
+}
+
+export interface PriceComparison {
+  estimatedPrice: number;
+  priceRange: { min: number; max: number };
+  references: PriceReference[];
+  notes?: string;
+}
+
 export interface ProductAIResult {
   identified: boolean;
   title?: string;
@@ -12,10 +26,12 @@ export interface ProductAIResult {
   description?: string;
   confidence?: 'alta' | 'media' | 'baja';
   notes?: string;
+  priceComparison?: PriceComparison;
 }
 
 export const useProductAI = () => {
   const [identifying, setIdentifying] = useState(false);
+  const [comparingPrices, setComparingPrices] = useState(false);
   const { toast } = useToast();
 
   const identifyProduct = async (
@@ -30,13 +46,8 @@ export const useProductAI = () => {
         body: { imageUrl, existingProducts, productNameHint },
       });
 
-      if (error) {
-        throw error;
-      }
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
       return data as ProductAIResult;
     } catch (error: any) {
@@ -52,8 +63,38 @@ export const useProductAI = () => {
     }
   };
 
+  const comparePrices = async (
+    productName: string,
+    brand?: string
+  ): Promise<PriceComparison | null> => {
+    try {
+      setComparingPrices(true);
+
+      const { data, error } = await supabase.functions.invoke('compare-product-prices', {
+        body: { productName, brand },
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      return data as PriceComparison;
+    } catch (error: any) {
+      console.error('Error comparing prices:', error);
+      toast({
+        title: 'Error en comparación de precios',
+        description: error.message || 'No se pudieron obtener precios de referencia',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setComparingPrices(false);
+    }
+  };
+
   return {
     identifying,
+    comparingPrices,
     identifyProduct,
+    comparePrices,
   };
 };
